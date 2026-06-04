@@ -526,6 +526,8 @@ function startEdit(id, clickEvent){
   el.addEventListener('keydown',e=>{
     if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();el.blur();}
     if(e.key==='Escape'){el.blur();return;}
+    // Cmd+Z/Y는 document 핸들러로 넘김
+    if((e.metaKey||e.ctrlKey)&&(e.key==='z'||e.key==='y'))return;
 
     // Cmd+← / Cmd+→ : 커서 위치 글자 kern 조정
     if((e.metaKey||e.ctrlKey)&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
