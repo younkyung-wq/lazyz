@@ -440,7 +440,7 @@ function makeEl(t){
   applyStyle(el,t); placeEl(el,t);
   renderChars(el,t);
   el.addEventListener('mousedown',e=>startDrag(e,t.id));
-  el.addEventListener('click',e=>{e.stopPropagation();startEdit(t.id);});
+  el.addEventListener('click',e=>{e.stopPropagation();startEdit(t.id,e);});
   return el;
 }
 
@@ -486,7 +486,7 @@ function selectText(id){
   });
   refreshTextList(); refreshStylePanel();
 }
-function startEdit(id){
+function startEdit(id, clickEvent){
   saveUndo();
   selTextId=id;
   refreshTextList(); refreshStylePanel();
@@ -494,10 +494,20 @@ function startEdit(id){
   if(!el)return;
   const t=getTxt(id); if(!t)return;
 
-  // span 구조 그대로 유지하며 contenteditable
   el.setAttribute('contenteditable','true');
-  // 클릭 위치에 커서 유지 (focus 강제 이동 방지)
-  requestAnimationFrame(()=>el.focus({preventScroll:true}));
+  el.focus({preventScroll:true});
+
+  // 클릭한 좌표로 커서 위치 직접 지정
+  if(clickEvent){
+    const range=document.caretRangeFromPoint
+      ? document.caretRangeFromPoint(clickEvent.clientX, clickEvent.clientY)
+      : null;
+    if(range){
+      const sel=window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  }
 
   el.addEventListener('blur',()=>{
     el.removeAttribute('contenteditable');
