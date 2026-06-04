@@ -53,7 +53,9 @@ STORY_EDITOR_HTML = """
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <style>
+* { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
@@ -314,24 +316,24 @@ const W=344, H=612, RW=1080, RH=1920, SX=344/1080, SY=612/1920;
 
 let templates=[
   {id:1,name:'템플릿 1 — 세일 배너',bgData:null,texts:[
-    {id:1,text:'5/6(WED) - 5/16(SAT)',x:540,y:1300,fs:44,color:'#ffffff',bold:false,italic:false,ff:'sans-serif',shadow:true},
-    {id:2,text:'24H HOUR',x:540,y:1400,fs:112,color:'#ffffff',bold:true,italic:false,ff:'sans-serif',shadow:true},
-    {id:3,text:'26SS ~45%',x:540,y:1560,fs:112,color:'#ffffff',bold:true,italic:false,ff:'sans-serif',shadow:true},
+    {id:1,text:'5/6(WED) - 5/16(SAT)',x:540,y:930,fs:44,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
+    {id:2,text:'24H HOUR',x:540,y:1020,fs:118,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
+    {id:3,text:'26SS ~45%',x:540,y:1170,fs:118,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
   ]},
   {id:2,name:'템플릿 2 — 브랜드 위크',bgData:null,texts:[
-    {id:1,text:'BRAND WEEK',x:80,y:160,fs:110,color:'#ffffff',bold:true,italic:false,ff:'sans-serif',shadow:true},
-    {id:2,text:'UP TO 45%',x:80,y:300,fs:110,color:'#ffffff',bold:true,italic:false,ff:'sans-serif',shadow:true},
-    {id:3,text:'5/4-5/10',x:80,y:440,fs:52,color:'#ffffff',bold:false,italic:false,ff:'sans-serif',shadow:true},
+    {id:1,text:'BRAND WEEK',x:80,y:120,fs:114,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
+    {id:2,text:'UP TO 45%',x:80,y:260,fs:114,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
+    {id:3,text:'5/4-5/10',x:80,y:400,fs:52,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
   ]},
   {id:3,name:'템플릿 3 — 상품 프로모션',bgData:null,texts:[
     {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',bold:true,italic:true,ff:'Georgia, serif',shadow:true},
-    {id:2,text:'컬리 반짝특가',x:780,y:940,fs:48,color:'#ffffff',bold:true,italic:false,ff:'sans-serif',shadow:true},
-    {id:3,text:'정가 109,000원 → 46,300원',x:80,y:1680,fs:46,color:'#ffffff',bold:false,italic:false,ff:'sans-serif',shadow:true},
+    {id:2,text:'컬리 반짝특가',x:750,y:920,fs:48,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
+    {id:3,text:'정가 109,000원 → 46,300원',x:80,y:1640,fs:46,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
   ]},
   {id:4,name:'템플릿 4 — 단독 세일',bgData:null,texts:[
-    {id:1,text:'단독 브랜드 위크',x:80,y:430,fs:60,color:'#ffffff',bold:false,italic:false,ff:'sans-serif',shadow:true},
-    {id:2,text:'~52% OFF',x:80,y:530,fs:110,color:'#ffffff',bold:true,italic:false,ff:'sans-serif',shadow:true},
-    {id:3,text:'5.18(MON) - 5.24(SUN)',x:80,y:760,fs:46,color:'#ffffff',bold:false,italic:false,ff:'sans-serif',shadow:true},
+    {id:1,text:'단독 브랜드 위크',x:80,y:410,fs:62,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
+    {id:2,text:'~52% OFF',x:80,y:510,fs:114,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
+    {id:3,text:'5.18(MON) - 5.24(SUN)',x:80,y:720,fs:46,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
   ]},
 ];
 
@@ -517,6 +519,7 @@ function refreshStylePanel(){
       <div class="style-row">
         <span class="style-row-label">폰트</span>
         <select onchange="setS('ff',this.value)">
+          <option value="Pretendard, sans-serif" ${t.ff==='Pretendard, sans-serif'?'selected':''}>Pretendard</option>
           <option value="sans-serif" ${t.ff==='sans-serif'?'selected':''}>Sans-serif</option>
           <option value="Georgia, serif" ${t.ff==='Georgia, serif'?'selected':''}>Georgia</option>
           <option value="'Helvetica Neue',sans-serif" ${t.ff==="'Helvetica Neue',sans-serif"?'selected':''}>Helvetica</option>
