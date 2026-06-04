@@ -318,24 +318,24 @@ const REPO_RAW = 'https://raw.githubusercontent.com/younkyung-wq/lazyz/main/';
 
 let templates=[
   {id:1,name:'템플릿 1 — 세일 배너',bgData:REPO_RAW+'1.jpg',texts:[
-    {id:1,text:'5/6(WED) - 5/16(SAT)',x:0,y:930,fs:44,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true,ta:'center'},
-    {id:2,text:'24H HOUR',x:0,y:1020,fs:118,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true,ta:'center'},
-    {id:3,text:'26SS ~45%',x:0,y:1170,fs:118,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true,ta:'center'},
+    {id:1,text:'5/6(WED) - 5/16(SAT)',x:0,y:930,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center'},
+    {id:2,text:'24H HOUR',x:0,y:1020,fs:118,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center'},
+    {id:3,text:'26SS ~45%',x:0,y:1170,fs:118,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center'},
   ]},
   {id:2,name:'템플릿 2 — 브랜드 위크',bgData:REPO_RAW+'2.jpg',texts:[
-    {id:1,text:'BRAND WEEK',x:80,y:120,fs:114,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
-    {id:2,text:'UP TO 45%',x:80,y:260,fs:114,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
-    {id:3,text:'5/4-5/10',x:80,y:400,fs:52,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
+    {id:1,text:'BRAND WEEK',x:80,y:120,fs:114,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false},
+    {id:2,text:'UP TO 45%',x:80,y:260,fs:114,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false},
+    {id:3,text:'5/4-5/10',x:80,y:400,fs:52,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false},
   ]},
   {id:3,name:'템플릿 3 — 상품 프로모션',bgData:REPO_RAW+'3.jpg',texts:[
-    {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',bold:true,italic:true,ff:'Georgia, serif',shadow:true},
-    {id:2,text:'컬리 반짝특가',x:750,y:920,fs:48,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
-    {id:3,text:'정가 109,000원 → 46,300원',x:80,y:1640,fs:46,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
+    {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',fw:700,italic:true,ff:'Georgia, serif',shadow:false},
+    {id:2,text:'컬리 반짝특가',x:750,y:920,fs:48,color:'#ffffff',fw:700,italic:false,ff:'Pretendard, sans-serif',shadow:false},
+    {id:3,text:'정가 109,000원 → 46,300원',x:80,y:1640,fs:46,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false},
   ]},
   {id:4,name:'템플릿 4 — 단독 세일',bgData:REPO_RAW+'4.jpg',texts:[
-    {id:1,text:'단독 브랜드 위크',x:80,y:410,fs:62,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
-    {id:2,text:'~52% OFF',x:80,y:510,fs:114,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
-    {id:3,text:'5.18(MON) - 5.24(SUN)',x:80,y:720,fs:46,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
+    {id:1,text:'단독 브랜드 위크',x:80,y:410,fs:62,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false},
+    {id:2,text:'~52% OFF',x:80,y:510,fs:114,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false},
+    {id:3,text:'5.18(MON) - 5.24(SUN)',x:80,y:720,fs:46,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false},
   ]},
 ];
 
@@ -422,12 +422,11 @@ function makeEl(t){
 function applyStyle(el,t){
   el.style.fontSize=(t.fs*SY)+'px';
   el.style.color=t.color;
-  el.style.fontWeight=t.bold?'bold':'normal';
+  el.style.fontWeight=t.fw||400;
   el.style.fontStyle=t.italic?'italic':'normal';
   el.style.fontFamily=t.ff;
   el.style.lineHeight='1.15';
-  el.style.textShadow=t.shadow
-    ?'1px 1px 6px rgba(0,0,0,0.9),2px 2px 14px rgba(0,0,0,0.7)':'none';
+  el.style.textShadow='none';
 }
 function placeEl(el,t){
   if(t.ta==='center'){
@@ -493,7 +492,7 @@ function onCanvasClick(e){
 }
 function addText(){
   const tpl=getTpl(); if(!tpl)return;
-  const t={id:nextId++,text:'텍스트',x:540,y:960,fs:70,color:'#ffffff',bold:true,italic:false,ff:'sans-serif',shadow:true};
+  const t={id:nextId++,text:'텍스트',x:540,y:960,fs:70,color:'#ffffff',fw:700,italic:false,ff:'Pretendard, sans-serif',shadow:false};
   tpl.texts.push(t);
   document.getElementById('storyOuter').appendChild(makeEl(t));
   refreshTextList(); selectText(t.id);
@@ -543,19 +542,25 @@ function refreshStylePanel(){
         <span id="fsv" style="font-size:11px;color:#999;min-width:26px;">${t.fs}</span>
       </div>
       <div class="style-row">
+        <span class="style-row-label">굵기</span>
+        <select onchange="setS('fw',+this.value)">
+          <option value="100" ${t.fw===100?'selected':''}>100 Thin</option>
+          <option value="200" ${t.fw===200?'selected':''}>200 ExtraLight</option>
+          <option value="300" ${t.fw===300?'selected':''}>300 Light</option>
+          <option value="400" ${t.fw===400?'selected':''}>400 Regular</option>
+          <option value="500" ${t.fw===500?'selected':''}>500 Medium</option>
+          <option value="600" ${t.fw===600?'selected':''}>600 SemiBold</option>
+          <option value="700" ${t.fw===700?'selected':''}>700 Bold</option>
+          <option value="800" ${t.fw===800?'selected':''}>800 ExtraBold</option>
+          <option value="900" ${t.fw===900?'selected':''}>900 Black</option>
+        </select>
+      </div>
+      <div class="style-row">
         <span class="style-row-label">색상</span>
         <input type="color" value="${t.color}" oninput="setS('color',this.value)">
         <div class="style-btns">
-          <button class="style-btn ${t.bold?'on':''}" onclick="toggleBold()"><b>B</b></button>
           <button class="style-btn ${t.italic?'on':''}" onclick="toggleItalic()"><i>I</i></button>
         </div>
-      </div>
-      <div class="style-row">
-        <span class="style-row-label">그림자</span>
-        <select onchange="setS('shadow',this.value==='true')">
-          <option value="true" ${t.shadow?'selected':''}>있음</option>
-          <option value="false" ${!t.shadow?'selected':''}>없음</option>
-        </select>
       </div>
     </div>`;
 }
@@ -564,11 +569,6 @@ function setS(prop,val){
   t[prop]=val;
   const el=document.querySelector(`.text-layer[data-tid="${selTextId}"]`);
   if(el){applyStyle(el,t);placeEl(el,t);}
-}
-function toggleBold(){
-  const t=getTxt(selTextId); if(!t)return; t.bold=!t.bold;
-  const el=document.querySelector(`.text-layer[data-tid="${selTextId}"]`); if(el)applyStyle(el,t);
-  refreshStylePanel();
 }
 function toggleItalic(){
   const t=getTxt(selTextId); if(!t)return; t.italic=!t.italic;
@@ -609,7 +609,7 @@ function downloadPNG(){
     ctx.drawImage(img,sx,sy,sw,sh,0,0,RW,RH);
     tpl.texts.forEach(t=>{
       ctx.save();
-      ctx.font=`${t.italic?'italic':'normal'} ${t.bold?'bold':'normal'} ${t.fs}px ${t.ff}`;
+      ctx.font=`${t.italic?'italic':'normal'} ${t.fw||400} ${t.fs}px ${t.ff}`;
       ctx.fillStyle=t.color; ctx.textBaseline='top';
       ctx.textAlign=t.ta==='center'?'center':'left';
       if(t.shadow){ctx.shadowColor='rgba(0,0,0,0.85)';ctx.shadowOffsetX=2;ctx.shadowOffsetY=2;ctx.shadowBlur=18;}
