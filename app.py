@@ -319,22 +319,22 @@ const W=344, H=612, RW=1080, RH=1920, SX=344/1080, SY=612/1920;
 const REPO_RAW = 'https://raw.githubusercontent.com/younkyung-wq/lazyz/main/';
 
 let templates=[
-  {id:1,name:'템플릿 1 — 세일 배너',bgData:REPO_RAW+'1b.jpg',bgThumb:REPO_RAW+'1.jpg',texts:[
+  {id:1,name:'템플릿 1',bgData:REPO_RAW+'1b.jpg',bgThumb:REPO_RAW+'1.jpg',texts:[
     {id:1,text:'5/6(WED) - 5/16(SAT)',x:0,y:1195,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em'},
     {id:2,text:'24H HOUR',x:0,y:1290,fs:120,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em',lh:1.083},
     {id:3,text:'26SS ~45%',x:0,y:1420,fs:120,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em',lh:1.083},
   ]},
-  {id:2,name:'템플릿 2 — 브랜드 위크',bgData:REPO_RAW+'2b.jpg',bgThumb:REPO_RAW+'2.jpg',texts:[
+  {id:2,name:'템플릿 2',bgData:REPO_RAW+'2b.jpg',bgThumb:REPO_RAW+'2.jpg',texts:[
     {id:1,text:'BRAND WEEK',x:72,y:100,fs:126,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em'},
     {id:2,text:'UP TO 45%',x:72,y:260,fs:126,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em'},
     {id:3,text:'5/4-5/10',x:72,y:420,fs:50,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
   ]},
-  {id:3,name:'템플릿 3 — 상품 프로모션',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'3.jpg',texts:[
+  {id:3,name:'템플릿 3',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'3.jpg',texts:[
     {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',fw:700,italic:true,ff:'Georgia, serif',shadow:false,ls:'-0.01em'},
     {id:2,text:'컬리 반짝특가',x:750,y:930,fs:48,color:'#ffffff',fw:700,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.01em'},
     {id:3,text:'정가 109,000원 → 46,300원',x:72,y:1650,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
   ]},
-  {id:4,name:'템플릿 4 — 단독 세일',bgData:REPO_RAW+'4b.jpg',bgThumb:REPO_RAW+'4.jpg',texts:[
+  {id:4,name:'템플릿 4',bgData:REPO_RAW+'4b.jpg',bgThumb:REPO_RAW+'4.jpg',texts:[
     {id:1,text:'단독 브랜드 위크',x:72,y:400,fs:60,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
     {id:2,text:'~52% OFF',x:72,y:500,fs:126,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em'},
     {id:3,text:'5.18(MON) - 5.24(SUN)',x:72,y:700,fs:46,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
