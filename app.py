@@ -155,7 +155,7 @@ body {
   padding: 2px 4px; border-radius: 2px; line-height: 1.15;
   white-space: nowrap; z-index: 10; transition: outline 0.1s;
 }
-.text-layer.selected { outline: 1.5px dashed rgba(255,255,255,0.7); }
+.text-layer.selected { outline: none; }
 .text-layer[contenteditable="true"] {
   cursor: text; outline: 2px solid #ff4b4b !important;
   background: rgba(0,0,0,0.25); white-space: pre; min-width: 40px;
