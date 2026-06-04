@@ -597,9 +597,19 @@ function refreshTextList(){
   getTexts().forEach(t=>{
     const item=document.createElement('div');
     item.className='text-item'+(selTextId===t.id?' active':'');
-    item.innerHTML=`<span class="text-item-text">${t.text}</span>
+    item.innerHTML=`
+      <input class="text-item-input" value="${t.text.replace(/"/g,'&quot;')}"
+        style="flex:1;border:none;background:transparent;font-size:12px;color:#444;outline:none;min-width:0;">
       <span class="text-item-del" onclick="event.stopPropagation();deleteText(${t.id})">×</span>`;
-    item.addEventListener('click',()=>{selectText(t.id);refreshLayers();});
+    const input=item.querySelector('input');
+    input.addEventListener('focus',()=>{selTextId=t.id;refreshStylePanel();document.querySelectorAll('.text-item').forEach(el=>el.classList.remove('active'));item.classList.add('active');});
+    input.addEventListener('input',()=>{
+      saveUndo();
+      t.text=input.value;
+      const el=document.querySelector(`.text-layer[data-tid="${t.id}"]`);
+      if(el)renderChars(el,t);
+    });
+    item.addEventListener('click',e=>{if(e.target!==input){selectText(t.id);refreshLayers();}});
     list.appendChild(item);
   });
 }
