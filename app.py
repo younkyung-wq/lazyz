@@ -440,8 +440,7 @@ function makeEl(t){
   el.textContent=t.text;
   applyStyle(el,t); placeEl(el,t);
   el.addEventListener('mousedown',e=>startDrag(e,t.id));
-  el.addEventListener('dblclick',e=>{e.stopPropagation();startEdit(t.id);});
-  el.addEventListener('click',e=>{e.stopPropagation();selectText(t.id);});
+  el.addEventListener('click',e=>{e.stopPropagation();startEdit(t.id);});
   return el;
 }
 function applyStyle(el,t){
