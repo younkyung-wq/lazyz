@@ -496,7 +496,8 @@ function startEdit(id){
 
   // span 구조 그대로 유지하며 contenteditable
   el.setAttribute('contenteditable','true');
-  el.focus();
+  // 클릭 위치에 커서 유지 (focus 강제 이동 방지)
+  requestAnimationFrame(()=>el.focus({preventScroll:true}));
 
   el.addEventListener('blur',()=>{
     el.removeAttribute('contenteditable');
