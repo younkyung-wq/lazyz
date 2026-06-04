@@ -318,24 +318,24 @@ const REPO_RAW = 'https://raw.githubusercontent.com/younkyung-wq/lazyz/main/';
 
 let templates=[
   {id:1,name:'템플릿 1 — 세일 배너',bgData:REPO_RAW+'1b.jpg',bgThumb:REPO_RAW+'1.jpg',texts:[
-    {id:1,text:'5/6(WED) - 5/16(SAT)',x:0,y:930,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center'},
-    {id:2,text:'24H HOUR',x:0,y:1020,fs:118,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center'},
-    {id:3,text:'26SS ~45%',x:0,y:1170,fs:118,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center'},
+    {id:1,text:'5/6(WED) - 5/16(SAT)',x:0,y:930,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'0.02em'},
+    {id:2,text:'24H HOUR',x:0,y:1010,fs:130,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.02em'},
+    {id:3,text:'26SS ~45%',x:0,y:1170,fs:130,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.02em'},
   ]},
   {id:2,name:'템플릿 2 — 브랜드 위크',bgData:REPO_RAW+'2b.jpg',bgThumb:REPO_RAW+'2.jpg',texts:[
-    {id:1,text:'BRAND WEEK',x:80,y:120,fs:114,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false},
-    {id:2,text:'UP TO 45%',x:80,y:260,fs:114,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false},
-    {id:3,text:'5/4-5/10',x:80,y:400,fs:52,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false},
+    {id:1,text:'BRAND WEEK',x:72,y:100,fs:126,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em'},
+    {id:2,text:'UP TO 45%',x:72,y:260,fs:126,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em'},
+    {id:3,text:'5/4-5/10',x:72,y:420,fs:50,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
   ]},
   {id:3,name:'템플릿 3 — 상품 프로모션',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'3.jpg',texts:[
-    {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',fw:700,italic:true,ff:'Georgia, serif',shadow:false},
-    {id:2,text:'컬리 반짝특가',x:750,y:920,fs:48,color:'#ffffff',fw:700,italic:false,ff:'Pretendard, sans-serif',shadow:false},
-    {id:3,text:'정가 109,000원 → 46,300원',x:80,y:1640,fs:46,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false},
+    {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',fw:700,italic:true,ff:'Georgia, serif',shadow:false,ls:'-0.01em'},
+    {id:2,text:'컬리 반짝특가',x:750,y:930,fs:48,color:'#ffffff',fw:700,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.01em'},
+    {id:3,text:'정가 109,000원 → 46,300원',x:72,y:1650,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
   ]},
   {id:4,name:'템플릿 4 — 단독 세일',bgData:REPO_RAW+'4b.jpg',bgThumb:REPO_RAW+'4.jpg',texts:[
-    {id:1,text:'단독 브랜드 위크',x:80,y:410,fs:62,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false},
-    {id:2,text:'~52% OFF',x:80,y:510,fs:114,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false},
-    {id:3,text:'5.18(MON) - 5.24(SUN)',x:80,y:720,fs:46,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false},
+    {id:1,text:'단독 브랜드 위크',x:72,y:400,fs:60,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
+    {id:2,text:'~52% OFF',x:72,y:500,fs:126,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em'},
+    {id:3,text:'5.18(MON) - 5.24(SUN)',x:72,y:700,fs:46,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
   ]},
 ];
 
@@ -425,7 +425,8 @@ function applyStyle(el,t){
   el.style.fontWeight=t.fw||400;
   el.style.fontStyle=t.italic?'italic':'normal';
   el.style.fontFamily=t.ff;
-  el.style.lineHeight='1.15';
+  el.style.lineHeight='1.1';
+  el.style.letterSpacing=t.ls||'0em';
   el.style.textShadow='none';
 }
 function placeEl(el,t){
@@ -562,6 +563,12 @@ function refreshStylePanel(){
           <button class="style-btn ${t.italic?'on':''}" onclick="toggleItalic()"><i>I</i></button>
         </div>
       </div>
+      <div class="style-row">
+        <span class="style-row-label">자간</span>
+        <input type="range" min="-10" max="20" step="1" value="${Math.round(parseFloat(t.ls||'0')*100)}"
+          oninput="setS('ls',(this.value/100)+'em');document.getElementById('lsv').textContent=this.value">
+        <span id="lsv" style="font-size:11px;color:#999;min-width:26px;">${Math.round(parseFloat(t.ls||'0')*100)}</span>
+      </div>
     </div>`;
 }
 function setS(prop,val){
@@ -612,6 +619,7 @@ function downloadPNG(){
       ctx.font=`${t.italic?'italic':'normal'} ${t.fw||400} ${t.fs}px ${t.ff}`;
       ctx.fillStyle=t.color; ctx.textBaseline='top';
       ctx.textAlign=t.ta==='center'?'center':'left';
+      ctx.letterSpacing=t.ls||'0em';
       if(t.shadow){ctx.shadowColor='rgba(0,0,0,0.85)';ctx.shadowOffsetX=2;ctx.shadowOffsetY=2;ctx.shadowBlur=18;}
       const drawX=t.ta==='center'?RW/2:t.x;
       ctx.fillText(t.text,drawX,t.y); ctx.restore();
