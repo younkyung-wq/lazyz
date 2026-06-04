@@ -481,8 +481,6 @@ function startEdit(id){
   if(!el)return;
   el.setAttribute('contenteditable','true');
   el.focus();
-  const r=document.createRange(); r.selectNodeContents(el);
-  const s=window.getSelection(); s.removeAllRanges(); s.addRange(r);
   el.addEventListener('blur',()=>{
     el.removeAttribute('contenteditable');
     const t=getTxt(id); if(t)t.text=el.textContent;
