@@ -319,8 +319,8 @@ const REPO_RAW = 'https://raw.githubusercontent.com/younkyung-wq/lazyz/main/';
 let templates=[
   {id:1,name:'템플릿 1 — 세일 배너',bgData:REPO_RAW+'1b.jpg',bgThumb:REPO_RAW+'1.jpg',texts:[
     {id:1,text:'5/6(WED) - 5/16(SAT)',x:0,y:1175,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em'},
-    {id:2,text:'24H HOUR',x:0,y:1270,fs:120,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em',lh:1.25},
-    {id:3,text:'26SS ~45%',x:0,y:1420,fs:120,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em',lh:1.25},
+    {id:2,text:'24H HOUR',x:0,y:1270,fs:120,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em',lh:1.083},
+    {id:3,text:'26SS ~45%',x:0,y:1400,fs:120,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em',lh:1.083},
   ]},
   {id:2,name:'템플릿 2 — 브랜드 위크',bgData:REPO_RAW+'2b.jpg',bgThumb:REPO_RAW+'2.jpg',texts:[
     {id:1,text:'BRAND WEEK',x:72,y:100,fs:126,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em'},
