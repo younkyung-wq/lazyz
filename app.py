@@ -493,8 +493,8 @@ function startEdit(id){
   const el=document.querySelector(`.text-layer[data-tid="${id}"]`);
   if(!el)return;
   const t=getTxt(id); if(!t)return;
-  // 편집 중엔 plain text로 전환
-  el.textContent=t.text;
+
+  // span 구조 그대로 유지하며 contenteditable
   el.setAttribute('contenteditable','true');
   el.focus();
 
@@ -514,23 +514,28 @@ function startEdit(id){
       e.preventDefault();
       const sel=window.getSelection();
       if(!sel.rangeCount)return;
-      const pos=sel.getRangeAt(0).startOffset;
-      // 왼쪽 화살표: 커서 왼쪽 글자(pos-1) kern 조정, 오른쪽: 커서 위치(pos) kern 조정
-      const idx=e.key==='ArrowLeft'?Math.max(0,pos-1):pos;
+
+      // 커서가 어느 span(=글자) 안에 있는지 찾기
+      const anchor=sel.getRangeAt(0).startContainer;
+      const spans=[...el.querySelectorAll('span')];
+      let spanIdx=-1;
+      if(anchor.nodeType===Node.TEXT_NODE&&anchor.parentElement.tagName==='SPAN'){
+        spanIdx=spans.indexOf(anchor.parentElement);
+      } else if(anchor===el){
+        spanIdx=sel.getRangeAt(0).startOffset;
+      }
+      if(spanIdx<0)return;
+
+      // ← : 커서 왼쪽(spanIdx-1) 글자 kern 조정 / → : 현재 위치(spanIdx) 글자
+      const adjustIdx=e.key==='ArrowLeft'?Math.max(0,spanIdx-1):spanIdx;
       if(!t.kerns)t.kerns={};
-      t.kerns[idx]=(t.kerns[idx]||0)+(e.key==='ArrowRight'?2:-2);
-      // 실시간 미리보기: 잠깐 span으로 전환 후 다시 편집모드
-      const curPos=sel.getRangeAt(0).startOffset;
-      el.removeAttribute('contenteditable');
-      renderChars(el,t);
-      // 다시 편집모드로 - 커서 복원
-      el.setAttribute('contenteditable','true');
-      el.focus();
-      try{
-        const range=document.createRange();
-        const textNode=el.childNodes[Math.min(curPos,el.childNodes.length-1)];
-        if(textNode){range.setStart(textNode,0);range.collapse(true);sel.removeAllRanges();sel.addRange(range);}
-      }catch(_){}
+      t.kerns[adjustIdx]=(t.kerns[adjustIdx]||0)+(e.key==='ArrowRight'?2:-2);
+
+      // 해당 span만 실시간 업데이트
+      if(spans[adjustIdx]){
+        const baseLs=Math.round(parseFloat(t.ls||'0')*1000);
+        spans[adjustIdx].style.letterSpacing=((baseLs+(t.kerns[adjustIdx]||0))/1000)+'em';
+      }
       refreshStylePanel();
       return;
     }
