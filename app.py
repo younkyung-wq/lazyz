@@ -271,6 +271,8 @@ select:focus { outline: none; border-color: #ff4b4b; }
         <div style="font-size:11px;opacity:0.6;">또는 우측 패널에서 업로드</div>
       </div>
       <img id="storyBgImg" class="story-bg-img hidden" src="" alt="">
+      <div id="guideV" style="display:none;position:absolute;top:0;bottom:0;left:50%;width:0;border-left:1.5px dashed rgba(255,75,75,0.85);pointer-events:none;z-index:50;"></div>
+      <div id="guideH" style="display:none;position:absolute;left:0;right:0;top:50%;height:0;border-top:1.5px dashed rgba(255,75,75,0.85);pointer-events:none;z-index:50;"></div>
       <div class="size-badge">1080 × 1920</div>
     </div>
   </div>
@@ -444,6 +446,11 @@ function makeEl(t){
   return el;
 }
 
+function hideGuides(){
+  document.getElementById('guideV').style.display='none';
+  document.getElementById('guideH').style.display='none';
+}
+
 function renderChars(el,t){
   el.innerHTML='';
   [...t.text].forEach((ch,i)=>{
@@ -558,14 +565,44 @@ function startDrag(e,id){
   e.preventDefault(); saveUndo(); selectText(id);
   const t=getTxt(id);
   dragInfo={id,sx:e.clientX,sy:e.clientY,tx:t.x,ty:t.y};
+  const SNAP=8;
   const onMove=e=>{
     if(!dragInfo)return;
     t.x=Math.round(dragInfo.tx+(e.clientX-dragInfo.sx)/SX);
     t.y=Math.round(dragInfo.ty+(e.clientY-dragInfo.sy)/SY);
     const el=document.querySelector(`.text-layer[data-tid="${id}"]`);
-    if(el)placeEl(el,t);
+    if(!el){hideGuides();return;}
+
+    // 수직 중앙 스냅 (텍스트 세로 중심 ↔ 캔버스 세로 중심)
+    const elH=el.offsetHeight;
+    const elCy=(t.y*SY)+elH/2;
+    if(Math.abs(elCy-H/2)<SNAP){
+      t.y=Math.round((H/2-elH/2)/SY);
+      document.getElementById('guideH').style.display='block';
+    } else {
+      document.getElementById('guideH').style.display='none';
+    }
+
+    // 수평 중앙 스냅 (ta=center 제외)
+    if(t.ta!=='center'){
+      const elW=el.offsetWidth;
+      const elCx=(t.x*SX)+elW/2;
+      if(Math.abs(elCx-W/2)<SNAP){
+        t.x=Math.round((W/2-elW/2)/SX);
+        document.getElementById('guideV').style.display='block';
+      } else {
+        document.getElementById('guideV').style.display='none';
+      }
+    }
+
+    placeEl(el,t);
   };
-  const onUp=()=>{dragInfo=null;document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);};
+  const onUp=()=>{
+    dragInfo=null;
+    hideGuides();
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+  };
   document.addEventListener('mousemove',onMove);
   document.addEventListener('mouseup',onUp);
 }
