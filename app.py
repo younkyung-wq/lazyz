@@ -435,14 +435,27 @@ function refreshLayers(){
 }
 function makeEl(t){
   const el=document.createElement('div');
-  el.className='text-layer'+(selTextId===t.id?' selected':'');
+  el.className='text-layer';
   el.dataset.tid=t.id;
-  el.textContent=t.text;
   applyStyle(el,t); placeEl(el,t);
+  renderChars(el,t);
   el.addEventListener('mousedown',e=>startDrag(e,t.id));
   el.addEventListener('click',e=>{e.stopPropagation();startEdit(t.id);});
   return el;
 }
+
+function renderChars(el,t){
+  el.innerHTML='';
+  [...t.text].forEach((ch,i)=>{
+    const sp=document.createElement('span');
+    sp.textContent=ch===' '?' ':ch;
+    const baseLs=Math.round(parseFloat(t.ls||'0')*1000);
+    const kern=(t.kerns&&t.kerns[i])||0;
+    sp.style.letterSpacing=((baseLs+kern)/1000)+'em';
+    el.appendChild(sp);
+  });
+}
+
 function applyStyle(el,t){
   el.style.fontSize=(t.fs*SY)+'px';
   el.style.color=t.color;
@@ -450,7 +463,7 @@ function applyStyle(el,t){
   el.style.fontStyle=t.italic?'italic':'normal';
   el.style.fontFamily=t.ff;
   el.style.lineHeight=t.lh||'1.1';
-  el.style.letterSpacing=t.ls||'0em';
+  el.style.letterSpacing='0em'; // handled per-char
   el.style.textShadow='none';
 }
 function placeEl(el,t){
@@ -475,28 +488,49 @@ function selectText(id){
 }
 function startEdit(id){
   saveUndo();
-  selectText(id);
+  selTextId=id;
+  refreshTextList(); refreshStylePanel();
   const el=document.querySelector(`.text-layer[data-tid="${id}"]`);
   if(!el)return;
+  const t=getTxt(id); if(!t)return;
+  // 편집 중엔 plain text로 전환
+  el.textContent=t.text;
   el.setAttribute('contenteditable','true');
   el.focus();
+
   el.addEventListener('blur',()=>{
     el.removeAttribute('contenteditable');
-    const t=getTxt(id); if(t)t.text=el.textContent;
+    t.text=el.textContent;
+    renderChars(el,t);
     refreshTextList();
   },{once:true});
+
   el.addEventListener('keydown',e=>{
     if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();el.blur();}
-    if(e.key==='Escape')el.blur();
-    // Cmd+← / Cmd+→ 자간 조절
+    if(e.key==='Escape'){el.blur();return;}
+
+    // Cmd+← / Cmd+→ : 커서 위치 글자 kern 조정
     if((e.metaKey||e.ctrlKey)&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
       e.preventDefault();
-      const t=getTxt(id); if(!t)return;
-      const cur=Math.round(parseFloat(t.ls||'0')*1000);
-      const delta=e.shiftKey?5:20;
-      const next=e.key==='ArrowRight'?cur+delta:cur-delta;
-      t.ls=(next/1000)+'em';
-      applyStyle(el,t);
+      const sel=window.getSelection();
+      if(!sel.rangeCount)return;
+      const pos=sel.getRangeAt(0).startOffset;
+      // 왼쪽 화살표: 커서 왼쪽 글자(pos-1) kern 조정, 오른쪽: 커서 위치(pos) kern 조정
+      const idx=e.key==='ArrowLeft'?Math.max(0,pos-1):pos;
+      if(!t.kerns)t.kerns={};
+      t.kerns[idx]=(t.kerns[idx]||0)+(e.key==='ArrowRight'?2:-2);
+      // 실시간 미리보기: 잠깐 span으로 전환 후 다시 편집모드
+      const curPos=sel.getRangeAt(0).startOffset;
+      el.removeAttribute('contenteditable');
+      renderChars(el,t);
+      // 다시 편집모드로 - 커서 복원
+      el.setAttribute('contenteditable','true');
+      el.focus();
+      try{
+        const range=document.createRange();
+        const textNode=el.childNodes[Math.min(curPos,el.childNodes.length-1)];
+        if(textNode){range.setStart(textNode,0);range.collapse(true);sel.removeAllRanges();sel.addRange(range);}
+      }catch(_){}
       refreshStylePanel();
       return;
     }
@@ -653,11 +687,22 @@ function downloadPNG(){
       ctx.save();
       ctx.font=`${t.italic?'italic':'normal'} ${t.fw||400} ${t.fs}px ${t.ff}`;
       ctx.fillStyle=t.color; ctx.textBaseline='top';
-      ctx.textAlign=t.ta==='center'?'center':'left';
-      ctx.letterSpacing=t.ls||'0em';
       if(t.shadow){ctx.shadowColor='rgba(0,0,0,0.85)';ctx.shadowOffsetX=2;ctx.shadowOffsetY=2;ctx.shadowBlur=18;}
-      const drawX=t.ta==='center'?RW/2:t.x;
-      ctx.fillText(t.text,drawX,t.y); ctx.restore();
+      const chars=[...t.text];
+      const baseLs=parseFloat(t.ls||'0')*t.fs;
+      // 전체 너비 계산 (center용)
+      let totalW=0;
+      chars.forEach((ch,i)=>{
+        const kern=((t.kerns&&t.kerns[i])||0)/1000*t.fs;
+        totalW+=ctx.measureText(ch).width+baseLs+kern;
+      });
+      let x=t.ta==='center'?RW/2-totalW/2:t.x;
+      chars.forEach((ch,i)=>{
+        ctx.fillText(ch,x,t.y);
+        const kern=((t.kerns&&t.kerns[i])||0)/1000*t.fs;
+        x+=ctx.measureText(ch).width+baseLs+kern;
+      });
+      ctx.restore();
     });
     const a=document.createElement('a');
     a.download=`lazyz_story_${tpl.id}_${Date.now()}.png`;
