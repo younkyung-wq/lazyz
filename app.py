@@ -157,8 +157,8 @@ body {
 }
 .text-layer.selected { outline: none; }
 .text-layer[contenteditable="true"] {
-  cursor: text; outline: 2px solid #ff4b4b !important;
-  background: rgba(0,0,0,0.25); white-space: pre; min-width: 40px;
+  cursor: text; outline: none !important;
+  background: rgba(0,0,0,0.15); white-space: pre; min-width: 40px;
 }
 
 /* Controls */
