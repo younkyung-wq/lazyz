@@ -488,6 +488,18 @@ function startEdit(id){
   el.addEventListener('keydown',e=>{
     if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();el.blur();}
     if(e.key==='Escape')el.blur();
+    // Cmd+← / Cmd+→ 자간 조절
+    if((e.metaKey||e.ctrlKey)&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
+      e.preventDefault();
+      const t=getTxt(id); if(!t)return;
+      const cur=Math.round(parseFloat(t.ls||'0')*1000);
+      const delta=e.shiftKey?5:20;
+      const next=e.key==='ArrowRight'?cur+delta:cur-delta;
+      t.ls=(next/1000)+'em';
+      applyStyle(el,t);
+      refreshStylePanel();
+      return;
+    }
     e.stopPropagation();
   });
 }
