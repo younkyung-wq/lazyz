@@ -340,9 +340,34 @@ let templates=[
 ];
 
 let activeTplId=null, selTextId=null, dragInfo=null, nextId=200;
+let undoStack=[], redoStack=[];
 const getTpl=()=>templates.find(t=>t.id===activeTplId);
 const getTexts=()=>getTpl()?.texts??[];
 const getTxt=id=>getTexts().find(t=>t.id===id);
+
+function saveUndo(){
+  undoStack.push(JSON.stringify(getTpl()?.texts));
+  if(undoStack.length>30)undoStack.shift();
+  redoStack=[];
+}
+function undo(){
+  if(!undoStack.length)return;
+  redoStack.push(JSON.stringify(getTpl()?.texts));
+  const tpl=getTpl(); if(!tpl)return;
+  tpl.texts=JSON.parse(undoStack.pop());
+  refreshLayers(); refreshTextList(); refreshStylePanel();
+}
+function redo(){
+  if(!redoStack.length)return;
+  undoStack.push(JSON.stringify(getTpl()?.texts));
+  const tpl=getTpl(); if(!tpl)return;
+  tpl.texts=JSON.parse(redoStack.pop());
+  refreshLayers(); refreshTextList(); refreshStylePanel();
+}
+document.addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo();}
+  if((e.metaKey||e.ctrlKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo();}
+});
 
 // ── GRID ──
 function renderGrid(){
@@ -450,6 +475,7 @@ function selectText(id){
   refreshTextList(); refreshStylePanel();
 }
 function startEdit(id){
+  saveUndo();
   selectText(id);
   const el=document.querySelector(`.text-layer[data-tid="${id}"]`);
   if(!el)return;
@@ -470,7 +496,7 @@ function startEdit(id){
 }
 function startDrag(e,id){
   if(e.target.contentEditable==='true')return;
-  e.preventDefault(); selectText(id);
+  e.preventDefault(); saveUndo(); selectText(id);
   const t=getTxt(id);
   dragInfo={id,sx:e.clientX,sy:e.clientY,tx:t.x,ty:t.y};
   const onMove=e=>{
