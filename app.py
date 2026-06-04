@@ -314,23 +314,25 @@ select:focus { outline: none; border-color: #ff4b4b; }
 <script>
 const W=344, H=612, RW=1080, RH=1920, SX=344/1080, SY=612/1920;
 
+const REPO_RAW = 'https://raw.githubusercontent.com/younkyung-wq/lazyz/main/';
+
 let templates=[
-  {id:1,name:'템플릿 1 — 세일 배너',bgData:null,texts:[
-    {id:1,text:'5/6(WED) - 5/16(SAT)',x:540,y:930,fs:44,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
-    {id:2,text:'24H HOUR',x:540,y:1020,fs:118,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
-    {id:3,text:'26SS ~45%',x:540,y:1170,fs:118,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
+  {id:1,name:'템플릿 1 — 세일 배너',bgData:REPO_RAW+'1.jpg',texts:[
+    {id:1,text:'5/6(WED) - 5/16(SAT)',x:0,y:930,fs:44,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true,ta:'center'},
+    {id:2,text:'24H HOUR',x:0,y:1020,fs:118,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true,ta:'center'},
+    {id:3,text:'26SS ~45%',x:0,y:1170,fs:118,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true,ta:'center'},
   ]},
-  {id:2,name:'템플릿 2 — 브랜드 위크',bgData:null,texts:[
+  {id:2,name:'템플릿 2 — 브랜드 위크',bgData:REPO_RAW+'2.jpg',texts:[
     {id:1,text:'BRAND WEEK',x:80,y:120,fs:114,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
     {id:2,text:'UP TO 45%',x:80,y:260,fs:114,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
     {id:3,text:'5/4-5/10',x:80,y:400,fs:52,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
   ]},
-  {id:3,name:'템플릿 3 — 상품 프로모션',bgData:null,texts:[
+  {id:3,name:'템플릿 3 — 상품 프로모션',bgData:REPO_RAW+'3.jpg',texts:[
     {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',bold:true,italic:true,ff:'Georgia, serif',shadow:true},
     {id:2,text:'컬리 반짝특가',x:750,y:920,fs:48,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
     {id:3,text:'정가 109,000원 → 46,300원',x:80,y:1640,fs:46,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
   ]},
-  {id:4,name:'템플릿 4 — 단독 세일',bgData:null,texts:[
+  {id:4,name:'템플릿 4 — 단독 세일',bgData:REPO_RAW+'4.jpg',texts:[
     {id:1,text:'단독 브랜드 위크',x:80,y:410,fs:62,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
     {id:2,text:'~52% OFF',x:80,y:510,fs:114,color:'#ffffff',bold:true,italic:false,ff:'Pretendard, sans-serif',shadow:true},
     {id:3,text:'5.18(MON) - 5.24(SUN)',x:80,y:720,fs:46,color:'#ffffff',bold:false,italic:false,ff:'Pretendard, sans-serif',shadow:true},
@@ -428,7 +430,15 @@ function applyStyle(el,t){
     ?'1px 1px 6px rgba(0,0,0,0.9),2px 2px 14px rgba(0,0,0,0.7)':'none';
 }
 function placeEl(el,t){
-  el.style.left=(t.x*SX)+'px';
+  if(t.ta==='center'){
+    el.style.left='0px';
+    el.style.width=W+'px';
+    el.style.textAlign='center';
+  } else {
+    el.style.left=(t.x*SX)+'px';
+    el.style.width='auto';
+    el.style.textAlign='left';
+  }
   el.style.top=(t.y*SY)+'px';
 }
 function selectText(id){
@@ -601,8 +611,10 @@ function downloadPNG(){
       ctx.save();
       ctx.font=`${t.italic?'italic':'normal'} ${t.bold?'bold':'normal'} ${t.fs}px ${t.ff}`;
       ctx.fillStyle=t.color; ctx.textBaseline='top';
+      ctx.textAlign=t.ta==='center'?'center':'left';
       if(t.shadow){ctx.shadowColor='rgba(0,0,0,0.85)';ctx.shadowOffsetX=2;ctx.shadowOffsetY=2;ctx.shadowBlur=18;}
-      ctx.fillText(t.text,t.x,t.y); ctx.restore();
+      const drawX=t.ta==='center'?RW/2:t.x;
+      ctx.fillText(t.text,drawX,t.y); ctx.restore();
     });
     const a=document.createElement('a');
     a.download=`lazyz_story_${tpl.id}_${Date.now()}.png`;
