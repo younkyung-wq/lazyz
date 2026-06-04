@@ -474,14 +474,14 @@ function applyStyle(el,t){
   el.style.textShadow='none';
 }
 function placeEl(el,t){
+  el.style.width='auto';
+  el.style.textAlign=t.ta||'left';
   if(t.ta==='center'){
-    el.style.left='0px';
-    el.style.width=W+'px';
-    el.style.textAlign='center';
+    el.style.left=(t.x*SX)+'px';
+    el.style.transform='translateX(-50%)';
   } else {
     el.style.left=(t.x*SX)+'px';
-    el.style.width='auto';
-    el.style.textAlign='left';
+    el.style.transform='none';
   }
   el.style.top=(t.y*SY)+'px';
 }
@@ -583,16 +583,15 @@ function startDrag(e,id){
       document.getElementById('guideH').style.display='none';
     }
 
-    // 수평 중앙 스냅 (ta=center 제외)
-    if(t.ta!=='center'){
-      const elW=el.offsetWidth;
-      const elCx=(t.x*SX)+elW/2;
-      if(Math.abs(elCx-W/2)<SNAP){
-        t.x=Math.round((W/2-elW/2)/SX);
-        document.getElementById('guideV').style.display='block';
-      } else {
-        document.getElementById('guideV').style.display='none';
-      }
+    // 수평 중앙 스냅
+    const elW=el.offsetWidth;
+    const elCx=t.ta==='center'?t.x*SX:(t.x*SX)+elW/2;
+    const snapTargetX=t.ta==='center'?W/2:W/2;
+    if(Math.abs(elCx-snapTargetX)<SNAP){
+      t.x=Math.round(W/2/SX); // center = 540 in real coords
+      document.getElementById('guideV').style.display='block';
+    } else {
+      document.getElementById('guideV').style.display='none';
     }
 
     placeEl(el,t);
@@ -759,7 +758,8 @@ function downloadPNG(){
         const kern=((t.kerns&&t.kerns[i])||0)/1000*t.fs;
         totalW+=ctx.measureText(ch).width+baseLs+kern;
       });
-      let x=t.ta==='center'?RW/2-totalW/2:t.x;
+      const originX=t.ta==='center'?t.x:t.x;
+      let x=t.ta==='center'?originX-totalW/2:originX;
       chars.forEach((ch,i)=>{
         ctx.fillText(ch,x,t.y);
         const kern=((t.kerns&&t.kerns[i])||0)/1000*t.fs;
