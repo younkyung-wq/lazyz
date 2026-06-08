@@ -415,8 +415,8 @@ let templates=[
     {id:3,text:'레이지지 최대 45% 할인\\n5.04 - 5.08',x:82,y:473,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em',lh:1.333,sw:0.3},
   ]},
   {id:3,name:'템플릿 3',bgData:REPO_RAW+'t3bg.jpg',bgThumb:REPO_RAW+'thumb3.jpg',
-   imgs:[{id:50,src:REPO_RAW+'wweek.png',x:180,y:1162,w:720,h:156}],texts:[
-    {id:3,text:'단 2주간, 최대 50% 할인',x:540,y:1335,fs:44,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.02em'},
+   imgs:[{id:50,src:REPO_RAW+'wweek.png',anchor:'bc',by:1310,w:720,h:156}],texts:[
+    {id:3,text:'단 2주간, 최대 50% 할인',x:540,y:1350,fs:42,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.03em',lh:1.4286},
     {id:1,text:'5.31(SUN) -\\n6.15(MON)',x:935,y:145,fs:38,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.02em',lh:1.4},
   ]},
   {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',texts:[
@@ -558,12 +558,18 @@ function refreshLayers(){
 let selImgId=null;
 const getImgs=()=>{const t=getTpl();if(!t)return [];if(!t.imgs)t.imgs=[];return t.imgs;};
 const getImg=id=>getImgs().find(m=>m.id===id);
+// 실제 위치/크기 (bottom-center 앵커면 계산)
+function imgRect(m){
+  if(m.anchor==='bc') return {x:Math.round((RW-m.w)/2), y:Math.round(m.by-m.h), w:m.w, h:m.h};
+  return {x:m.x, y:m.y, w:m.w, h:m.h};
+}
 function makeImgEl(im){
+  const r=imgRect(im);
   const el=document.createElement('div');
   el.className='img-layer'+(selImgId===im.id?' selected':'');
   el.dataset.iid=im.id;
-  el.style.left=(im.x*SX)+'px'; el.style.top=(im.y*SY)+'px';
-  el.style.width=(im.w*SX)+'px'; el.style.height=(im.h*SY)+'px';
+  el.style.left=(r.x*SX)+'px'; el.style.top=(r.y*SY)+'px';
+  el.style.width=(r.w*SX)+'px'; el.style.height=(r.h*SY)+'px';
   const img=document.createElement('img'); img.src=im.src; el.appendChild(img);
   if(selImgId===im.id){
     ['nw','ne','sw','se'].forEach(pos=>{
@@ -607,9 +613,10 @@ function onImgMouseDown(e,id){
   if(e.target.classList.contains('img-handle'))return;
   e.preventDefault(); e.stopPropagation();
   const m=getImg(id); if(!m)return;
+  selectImg(id);
+  if(m.anchor==='bc')return; // 중앙+하단 고정 이미지는 이동 잠금
   const sx=e.clientX, sy=e.clientY, x0=m.x, y0=m.y;
   let moved=false;
-  selectImg(id);
   const mv=ev=>{
     if(!moved&&(Math.abs(ev.clientX-sx)>3||Math.abs(ev.clientY-sy)>3)){moved=true;saveUndo();}
     if(!moved)return;
@@ -627,11 +634,17 @@ function startImgResize(e,id,pos){
   const sx=e.clientX, w0=m.w, h0=m.h, x0=m.x, y0=m.y, ar=m.w/m.h;
   const mv=ev=>{
     const dx=(ev.clientX-sx)/SX;
+    if(m.anchor==='bc'){
+      // 중앙 정렬 + 하단 고정: 좌우 대칭으로 너비 변경, 위로만 자람
+      const sign=(pos==='ne'||pos==='se')?1:-1;
+      let nw=Math.max(60,w0+sign*dx*2);
+      m.w=Math.round(nw); m.h=Math.round(nw/ar);
+      refreshLayers(); return;
+    }
     let nw=(pos==='ne'||pos==='se')?w0+dx:w0-dx;
     nw=Math.max(40,nw);
     const nh=Math.round(nw/ar);
     m.w=Math.round(nw); m.h=nh;
-    // 좌측 핸들이면 x 보정, 상단 핸들이면 y 보정
     if(pos==='nw'||pos==='sw') m.x=Math.round(x0+(w0-nw));
     if(pos==='nw'||pos==='ne') m.y=Math.round(y0+(h0-nh));
     refreshLayers();
@@ -875,8 +888,7 @@ function refreshTextList(){
     const item=document.createElement('div');
     item.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:7px;';
     item.innerHTML=`
-      <button onclick="event.stopPropagation();replaceImg(${m.id})" style="flex:1;padding:10px;border:none;border-radius:8px;background:#ff4b4b;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">타이틀 이미지 교체</button>
-      <span class="text-item-del" onclick="event.stopPropagation();deleteImg(${m.id})">×</span>`;
+      <button onclick="event.stopPropagation();replaceImg(${m.id})" style="flex:1;padding:10px;border:none;border-radius:8px;background:#ff4b4b;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">타이틀 이미지 교체</button>`;
     list.appendChild(item);
   });
   // 텍스트 레이어
@@ -1050,7 +1062,8 @@ function downloadPNG(fmt){
     // 이미지 레이어 먼저 그리고(비동기) → 텍스트 → 내보내기
     const imgs=(tpl.imgs||[]);
     Promise.all(imgs.map(m=>new Promise(res=>{
-      const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>{ctx.drawImage(im,m.x,m.y,m.w,m.h);res();}; im.onerror=()=>res(); im.src=m.src;
+      const r=imgRect(m);
+      const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>{ctx.drawImage(im,r.x,r.y,r.w,r.h);res();}; im.onerror=()=>res(); im.src=m.src;
     }))).then(()=>{ drawTextsAndExport(); });
 
     function drawTextsAndExport(){
