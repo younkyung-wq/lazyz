@@ -468,18 +468,19 @@ document.addEventListener('keydown',e=>{
   const ae=document.activeElement;
   if(ae&&(ae.isContentEditable||ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT'))return;
   if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;
+  e.preventDefault(); // 페이지 스크롤 방지
   const step=e.shiftKey?10:1;
   const dx=(e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0);
   const dy=(e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0);
   if(selTextId){
     const t=getTxt(selTextId); if(!t)return;
-    e.preventDefault(); saveUndo();
+    saveUndo();
     t.x+=dx; t.y+=dy;
     const el=document.querySelector(`.text-layer[data-tid="${selTextId}"]`); if(el)placeEl(el,t);
     showMeasure();
   } else if(selImgId){
     const m=getImg(selImgId); if(!m)return;
-    e.preventDefault(); saveUndo();
+    saveUndo();
     if(m.anchor==='bc'){ m.by+=dy; }
     else if(m.anchor==='lc'){ m.x+=dx; m.cy+=dy; }
     else { m.x+=dx; m.y+=dy; }
