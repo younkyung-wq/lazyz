@@ -438,8 +438,8 @@ let templates=[
     {name:'이벤트',
      imgs:[{id:70,src:REPO_RAW+'logo_kurly.png',logo:'kurly',picker:true,anchor:'lc',x:60,cy:905,w:340,h:168}],
      texts:[
-       {id:5,text:'단독 이벤트',x:1030,y:880,fs:50,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4},
-       {id:6,text:'기간 한정 혜택을\\n지금 확인하세요',x:60,y:1470,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.02em',lh:1.3},
+       {id:5,text:'컬리 반짝특가',x:1030,y:880,fs:50,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4},
+       {id:6,text:'Loose Fit Classic Solid Shirt\\n45% Sale',x:60,y:1440,fs:46,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.02em',lh:1.3},
      ]},
    ]},
 ];
