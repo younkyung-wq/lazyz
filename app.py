@@ -108,7 +108,7 @@ body {
 .card-edit-btn:hover { background: #ffe0e0; }
 
 /* ── EDITOR VIEW ── */
-.editor-view { display: flex; height: 820px; background: white; justify-content: center; }
+.editor-view { display: flex; height: 820px; background: white; justify-content: flex-start; }
 
 .editor-canvas-area {
   flex: 1 1 auto; max-width: 760px; background: #ffffff;
@@ -123,7 +123,7 @@ body {
 .back-btn:hover { color: #111; }
 
 .story-outer {
-  position: relative; width: 344px; height: 612px;
+  position: relative; width: 405px; height: 720px;
   border-radius: 10px; overflow: hidden;
   background: #2a2a2a; flex-shrink: 0;
 }
@@ -337,7 +337,7 @@ select:focus { outline: none; border-color: #ff4b4b; }
 </div>
 
 <script>
-const W=344, H=612, RW=1080, RH=1920, SX=344/1080, SY=612/1920;
+const W=405, H=720, RW=1080, RH=1920, SX=405/1080, SY=720/1920;
 
 const REPO_RAW = 'https://raw.githubusercontent.com/younkyung-wq/lazyz/main/';
 
