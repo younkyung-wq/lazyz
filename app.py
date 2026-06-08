@@ -478,6 +478,12 @@ document.addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey)return;
   const ae=document.activeElement;
   if(ae&&(ae.isContentEditable||ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT'))return;
+  // Delete/Backspace = 선택 레이어 삭제
+  if(e.key==='Delete'||e.key==='Backspace'){
+    if(selTextId){ e.preventDefault(); deleteText(selTextId); selTextId=null; refreshStylePanel(); document.getElementById('measure').style.display='none'; return; }
+    if(selImgId){ e.preventDefault(); deleteImg(selImgId); return; }
+    return;
+  }
   if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;
   e.preventDefault(); // 페이지 스크롤 방지
   const step=e.shiftKey?10:1;
