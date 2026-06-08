@@ -989,7 +989,7 @@ function refreshTextList(){
       const opts=LOGOS.map(L=>`<option value="${L.key}" ${m.logo===L.key?'selected':''}>${L.label}</option>`).join('');
       item.innerHTML=`
         <div style="font-size:11px;font-weight:700;color:#bbb;letter-spacing:0.5px;margin-bottom:6px;">로고 선택</div>
-        <select onchange="setLogo(${m.id},this.value)" style="width:100%;padding:9px 10px;border:1.5px solid #eee;border-radius:8px;font-size:13px;color:#333;background:white;cursor:pointer;">${opts}</select>`;
+        <select onchange="setLogo(${m.id},this.value)" style="width:100%;padding:9px 32px 9px 12px;border:1.5px solid #eee;border-radius:8px;font-size:13px;color:#333;cursor:pointer;-webkit-appearance:none;appearance:none;background:white url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23999%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22/></svg>') no-repeat right 12px center;">${opts}</select>`;
     } else {
       item.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:7px;';
       item.innerHTML=`<button onclick="event.stopPropagation();replaceImg(${m.id})" style="flex:1;padding:10px;border:none;border-radius:8px;background:#111;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">타이틀 이미지 교체</button>`;
