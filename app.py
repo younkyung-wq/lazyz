@@ -903,16 +903,11 @@ function refreshTextList(){
     const item=document.createElement('div');
     item.style.cssText='margin-bottom:9px;';
     if(m.picker){
-      // 로고 선택 UI
-      const btns=LOGOS.map(L=>`
-        <button onclick="event.stopPropagation();setLogo(${m.id},'${L.key}')"
-          style="flex:1;padding:8px 4px;border:1.5px solid ${m.logo===L.key?'#ff4b4b':'#eee'};border-radius:7px;background:${m.logo===L.key?'#fff5f5':'#fff'};cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;">
-          <img src="${L.src}" style="height:18px;max-width:60px;object-fit:contain;${L.key==='kurly'?'':''}filter:${L.key==='kurly'?'none':'none'};">
-          <span style="font-size:10px;color:${m.logo===L.key?'#ff4b4b':'#888'};font-weight:600;">${L.label}</span>
-        </button>`).join('');
+      // 로고 선택 드롭다운
+      const opts=LOGOS.map(L=>`<option value="${L.key}" ${m.logo===L.key?'selected':''}>${L.label}</option>`).join('');
       item.innerHTML=`
         <div style="font-size:11px;font-weight:700;color:#bbb;letter-spacing:0.5px;margin-bottom:6px;">로고 선택</div>
-        <div style="display:flex;gap:6px;background:#2a2a2a;padding:8px;border-radius:8px;">${btns}</div>`;
+        <select onchange="setLogo(${m.id},this.value)" style="width:100%;padding:9px 10px;border:1.5px solid #eee;border-radius:8px;font-size:13px;color:#333;background:white;cursor:pointer;">${opts}</select>`;
     } else {
       item.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:7px;';
       item.innerHTML=`<button onclick="event.stopPropagation();replaceImg(${m.id})" style="flex:1;padding:10px;border:none;border-radius:8px;background:#ff4b4b;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">타이틀 이미지 교체</button>`;
