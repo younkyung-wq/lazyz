@@ -406,7 +406,7 @@ const REPO_RAW = 'https://raw.githubusercontent.com/younkyung-wq/lazyz/main/';
 // 유통채널 로고 (가로 폭 유지, 비율로 높이 계산)
 const LOGOS=[
   {key:'kurly',label:'컬리',src:REPO_RAW+'logo_kurly.png',ar:501/247,w:340},
-  {key:'wconcept',label:'W컨셉',src:REPO_RAW+'logo_wconcept.png',ar:478/60,w:370},
+  {key:'wconcept',label:'W컨셉',src:REPO_RAW+'logo_wconcept.png',ar:478/60,w:400},
   {key:'lotteon',label:'롯데온',src:REPO_RAW+'logo_lotteon.png',ar:336/68,w:370},
 ];
 
