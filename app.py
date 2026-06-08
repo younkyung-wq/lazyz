@@ -400,7 +400,7 @@ let templates=[
   ]},
   {id:2,name:'템플릿 2',bgData:REPO_RAW+'2b.jpg',bgThumb:REPO_RAW+'2.jpg',texts:[
     {id:1,text:'BRAND WEEK\\nUP TO 45%',x:72,y:160,fs:120,color:'#ffffff',fw:600,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.04em',lh:1.083},
-    {id:3,text:'레이지지 최대 45% 할인\\n5.04 - 5.08',x:82,y:463,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.04em',lh:1.333},
+    {id:3,text:'레이지지 최대 45% 할인\\n5.04 - 5.08',x:82,y:463,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em',lh:1.333,sw:0.3},
   ]},
   {id:3,name:'템플릿 3',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'3.jpg',texts:[
     {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',fw:700,italic:true,ff:'Georgia, serif',shadow:false,ls:'-0.01em'},
