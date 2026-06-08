@@ -1314,7 +1314,7 @@ with st.sidebar:
         label_visibility="collapsed"
     )
 
-    st.markdown("<div style='height:62vh'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:48vh'></div>", unsafe_allow_html=True)
     st.markdown("""<div style="padding: 0 16px;">
         <div style="color:#555; font-size:11px; letter-spacing:1px; margin-bottom:8px; font-weight:600;">API KEY</div>
     </div>""", unsafe_allow_html=True)
