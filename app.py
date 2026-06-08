@@ -154,6 +154,10 @@ body {
   font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;
   transform: translate(-50%,-50%); white-space: nowrap; pointer-events: none;
 }
+.xf-handle {
+  position: absolute; width: 10px; height: 10px;
+  background: #fff; border: 1.5px solid #2b8cff; border-radius: 2px;
+}
 
 /* Text layers */
 .text-layer {
@@ -310,6 +314,15 @@ select:focus { outline: none; border-color: #ff4b4b; }
         <div id="mzT" class="mz-tag"></div>
         <div id="mzB" class="mz-tag"></div>
       </div>
+      <!-- 이미지 변형 핸들 -->
+      <div id="imgXf" style="display:none;position:absolute;inset:0;z-index:80;">
+        <div id="imgXfBox" style="position:absolute;border:1.5px solid #2b8cff;cursor:move;">
+          <div class="xf-handle" data-h="nw" style="top:-5px;left:-5px;cursor:nwse-resize;"></div>
+          <div class="xf-handle" data-h="ne" style="top:-5px;right:-5px;cursor:nesw-resize;"></div>
+          <div class="xf-handle" data-h="sw" style="bottom:-5px;left:-5px;cursor:nesw-resize;"></div>
+          <div class="xf-handle" data-h="se" style="bottom:-5px;right:-5px;cursor:nwse-resize;"></div>
+        </div>
+      </div>
       <div class="size-badge">1080 × 1920</div>
     </div>
   </div>
@@ -333,6 +346,10 @@ select:focus { outline: none; border-color: #ff4b4b; }
         <p style="font-size:10px;">JPG · PNG · WEBP</p>
       </div>
       <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="onFileInput(event)">
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
+        <button id="imgModeBtn" onclick="toggleImgMode()" style="flex:1;padding:8px;border:1.5px solid #eee;border-radius:8px;background:#fafafa;font-size:12px;color:#666;cursor:pointer;font-weight:600;">🖼 이미지 크기/위치 조절</button>
+        <button onclick="resetBgTransform()" style="padding:8px 12px;border:1.5px solid #eee;border-radius:8px;background:#fff;font-size:12px;color:#999;cursor:pointer;">초기화</button>
+      </div>
     </div>
 
     <div class="ctrl-section">
@@ -453,6 +470,7 @@ function renderGrid(){
 // ── EDITOR ──
 function openEditor(id){
   activeTplId=id; selTextId=null;
+  if(imgMode)toggleImgMode();
   document.getElementById('gridView').classList.add('hidden');
   document.getElementById('editorView').classList.remove('hidden');
   document.getElementById('editorTemplName').textContent=getTpl().name;
@@ -469,6 +487,24 @@ function refreshBg(){
   const ov=document.getElementById('storyDropOverlay');
   if(tpl.bgData){img.src=tpl.bgData;img.classList.remove('hidden');ov.classList.add('hidden');}
   else{img.classList.add('hidden');ov.classList.remove('hidden');}
+  applyBgTransform();
+}
+function applyBgTransform(){
+  const tpl=getTpl(); if(!tpl)return;
+  const img=document.getElementById('storyBgImg');
+  const s=tpl.bgScale||1, ox=tpl.bgX||0, oy=tpl.bgY||0;
+  img.style.transformOrigin='center';
+  img.style.transform=`translate(${ox*SX}px,${oy*SY}px) scale(${s})`;
+  if(imgMode)updateXfBox();
+}
+function updateXfBox(){
+  const tpl=getTpl(); if(!tpl)return;
+  const s=tpl.bgScale||1, ox=tpl.bgX||0, oy=tpl.bgY||0;
+  const boxW=W*s, boxH=H*s;
+  const box=document.getElementById('imgXfBox');
+  box.style.width=boxW+'px'; box.style.height=boxH+'px';
+  box.style.left=((W-boxW)/2+ox*SX)+'px';
+  box.style.top=((H-boxH)/2+oy*SY)+'px';
 }
 
 // ── TEXT LAYERS ──
@@ -839,7 +875,14 @@ function downloadPNG(fmt){
     let sx,sy,sw,sh;
     if(ia>ca){sh=img.height;sw=sh*ca;sx=(img.width-sw)/2;sy=0;}
     else{sw=img.width;sh=sw/ca;sx=0;sy=(img.height-sh)/2;}
+    // 배경 변형 적용 (중심 기준 scale + offset)
+    const bs=tpl.bgScale||1, bx=tpl.bgX||0, by=tpl.bgY||0;
+    ctx.save();
+    ctx.translate(RW/2+bx,RH/2+by);
+    ctx.scale(bs,bs);
+    ctx.translate(-RW/2,-RH/2);
     ctx.drawImage(img,sx,sy,sw,sh,0,0,RW,RH);
+    ctx.restore();
     tpl.texts.forEach(t=>{
       ctx.save();
       ctx.font=`${t.italic?'italic':'normal'} ${t.fw||400} ${t.fs}px ${t.ff}`;
@@ -896,6 +939,65 @@ function downloadPNG(fmt){
   };
   img.src=tpl.bgData;
 }
+
+// ── 배경 이미지 변형 ──
+let imgMode=false;
+function toggleImgMode(){
+  imgMode=!imgMode;
+  const btn=document.getElementById('imgModeBtn');
+  const xf=document.getElementById('imgXf');
+  if(imgMode){
+    // 텍스트 선택 해제
+    selTextId=null;
+    document.querySelectorAll('.text-layer').forEach(el=>{el.classList.remove('selected');el.removeAttribute('contenteditable');el.style.pointerEvents='none';});
+    document.getElementById('measure').style.display='none';
+    refreshTextList(); refreshStylePanel();
+    xf.style.display='block'; updateXfBox();
+    btn.textContent='✓ 이미지 조절 중 (클릭하여 종료)';
+    btn.style.background='#fff0f0'; btn.style.borderColor='#ff4b4b'; btn.style.color='#ff4b4b';
+  } else {
+    document.querySelectorAll('.text-layer').forEach(el=>{el.style.pointerEvents='';});
+    xf.style.display='none';
+    btn.textContent='🖼 이미지 크기/위치 조절';
+    btn.style.background='#fafafa'; btn.style.borderColor='#eee'; btn.style.color='#666';
+  }
+}
+function resetBgTransform(){
+  const tpl=getTpl(); if(!tpl)return;
+  tpl.bgScale=1; tpl.bgX=0; tpl.bgY=0;
+  applyBgTransform();
+}
+(function initImgXf(){
+  const box=document.getElementById('imgXfBox');
+  // 박스 내부 드래그 = 이동
+  box.addEventListener('mousedown',e=>{
+    if(e.target.classList.contains('xf-handle'))return;
+    e.preventDefault(); e.stopPropagation();
+    const tpl=getTpl(); if(!tpl)return;
+    const sx=e.clientX, sy=e.clientY, ox0=tpl.bgX||0, oy0=tpl.bgY||0;
+    const mv=ev=>{ tpl.bgX=ox0+(ev.clientX-sx)/SX; tpl.bgY=oy0+(ev.clientY-sy)/SY; applyBgTransform(); };
+    const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);};
+    document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+  });
+  // 코너 핸들 = 중심 기준 균등 확대/축소
+  box.querySelectorAll('.xf-handle').forEach(h=>{
+    h.addEventListener('mousedown',e=>{
+      e.preventDefault(); e.stopPropagation();
+      const tpl=getTpl(); if(!tpl)return;
+      const outer=document.getElementById('storyOuter').getBoundingClientRect();
+      const cx=outer.left+W/2+(tpl.bgX||0)*SX, cy=outer.top+H/2+(tpl.bgY||0)*SY;
+      const startDist=Math.hypot(e.clientX-cx,e.clientY-cy);
+      const s0=tpl.bgScale||1;
+      const mv=ev=>{
+        const d=Math.hypot(ev.clientX-cx,ev.clientY-cy);
+        tpl.bgScale=Math.max(0.2,Math.min(5,s0*(d/startDist)));
+        applyBgTransform();
+      };
+      const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);};
+      document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+    });
+  });
+})();
 
 // ── 저장 폴더 지정 (File System Access API) ──
 let saveDir=null;
