@@ -1302,7 +1302,6 @@ with st.sidebar:
     st.markdown("""
     <div style="padding: 32px 20px 24px; border-bottom: 1px solid #222;">
         <div style="color:#fff; font-size:22px; font-weight:800; letter-spacing:5px;">LAZYZ</div>
-        <div style="color:#555; font-size:10px; letter-spacing:3px; margin-top:5px;">INSTAGRAM DASHBOARD</div>
     </div>
     """, unsafe_allow_html=True)
 
