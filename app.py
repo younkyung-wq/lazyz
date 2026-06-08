@@ -1314,23 +1314,12 @@ with st.sidebar:
         label_visibility="collapsed"
     )
 
-    st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+    st.markdown("<div style='height:62vh'></div>", unsafe_allow_html=True)
     st.markdown("""<div style="padding: 0 16px;">
         <div style="color:#555; font-size:11px; letter-spacing:1px; margin-bottom:8px; font-weight:600;">API KEY</div>
     </div>""", unsafe_allow_html=True)
     st.text_input("", type="password", placeholder="••••••••••••••••••••••••••",
                   label_visibility="collapsed", key="api_key")
-
-    st.markdown("""
-    <div style="padding: 24px 20px 0; color:#444; font-size:11px; line-height:2;">
-        사용법<br>
-        ① 템플릿 선택<br>
-        ② 이미지 드롭 → 배경 교체<br>
-        ③ 텍스트 드래그 → 이동<br>
-        ④ 텍스트 더블클릭 → 편집<br>
-        ⑤ PNG 다운로드
-    </div>
-    """, unsafe_allow_html=True)
 
 # ── Main content ─────────────────────────────────────────────
 if "스토리 모듈" in menu:
