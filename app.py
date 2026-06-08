@@ -165,7 +165,7 @@ body {
   padding: 2px 4px; border-radius: 2px;
   white-space: normal; z-index: 10; transition: outline 0.1s;
 }
-.text-layer.selected { outline: 1.5px solid #2b8cff; outline-offset: 3px; }
+.text-layer.selected { outline: 1.5px solid #00d4b8; outline-offset: 3px; }
 .text-layer[contenteditable="true"] {
   cursor: text; outline: none !important;
   background: rgba(0,0,0,0.15); white-space: pre; min-width: 40px;
