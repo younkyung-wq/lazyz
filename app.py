@@ -165,8 +165,8 @@ body {
 .img-layer img { display: block; width: 100%; height: 100%; pointer-events: none; }
 .img-layer.selected { outline: 1.5px solid #54fffd; }
 .img-handle {
-  position: absolute; width: 11px; height: 11px;
-  background: #fff; border: 1.5px solid #54fffd; border-radius: 2px; z-index: 20;
+  position: absolute; width: 14px; height: 14px;
+  background: #fff; border: 2px solid #54fffd; border-radius: 3px; z-index: 20;
 }
 
 /* Text layers */
@@ -642,7 +642,7 @@ function makeImgEl(im){
   if(selImgId===im.id){
     ['nw','ne','sw','se'].forEach(pos=>{
       const h=document.createElement('div'); h.className='img-handle'; h.dataset.pos=pos;
-      const s='-6px';
+      const s='-8px';
       if(pos==='nw'){h.style.top=s;h.style.left=s;h.style.cursor='nwse-resize';}
       if(pos==='ne'){h.style.top=s;h.style.right=s;h.style.cursor='nesw-resize';}
       if(pos==='sw'){h.style.bottom=s;h.style.left=s;h.style.cursor='nesw-resize';}
@@ -682,21 +682,13 @@ function onImgMouseDown(e,id){
   e.preventDefault(); e.stopPropagation();
   const m=getImg(id); if(!m)return;
   selectImg(id);
-  const sx=e.clientX, sy=e.clientY, x0=m.x, y0=m.y, w0=m.w, ar=m.w/m.h;
+  if(m.anchor==='bc'||m.anchor==='lc')return; // 고정 앵커: 클릭=선택만, 크기는 핸들로
+  const sx=e.clientX, sy=e.clientY, x0=m.x, y0=m.y;
   let moved=false, saved=false;
   const mv=ev=>{
     if(!moved&&(Math.abs(ev.clientX-sx)>3||Math.abs(ev.clientY-sy)>3)){moved=true;}
     if(!moved)return;
     if(!saved){saveUndo();saved=true;}
-    if(m.anchor==='bc'||m.anchor==='lc'){
-      // 고정 앵커: 본체 드래그 = 크기 조절 (오른쪽으로 끌면 커짐)
-      const dx=(ev.clientX-sx)/SX;
-      const factor=(m.anchor==='bc')?2:1;
-      let nw=Math.max(60,w0+dx*factor);
-      m.w=Math.round(nw); m.h=Math.round(nw/ar);
-      refreshLayers();
-      return;
-    }
     let ddx=ev.clientX-sx, ddy=ev.clientY-sy;
     if(ev.shiftKey){ if(Math.abs(ddx)>Math.abs(ddy)) ddy=0; else ddx=0; }
     m.x=Math.round(x0+ddx/SX); m.y=Math.round(y0+ddy/SY);
