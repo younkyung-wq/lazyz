@@ -425,13 +425,23 @@ let templates=[
     {id:3,text:'단 2주간, 최대 50% 할인',x:540,y:1350,fs:42,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.03em',lh:1.4286},
     {id:1,text:'5.31(SUN) -\\n6.15(MON)',x:1000,y:150,fs:35,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4286},
   ]},
-  {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',
-   imgs:[{id:60,src:REPO_RAW+'logo_kurly.png',logo:'kurly',picker:true,anchor:'lc',x:60,cy:905,w:340,h:168},
-         {id:61,src:REPO_RAW+'arrow.png',hideList:true,x:55,y:1514,w:340,h:16}],texts:[
-    {id:2,text:'컬리 반짝특가',x:1030,y:880,fs:50,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4},
-    {id:3,text:'정가 109,000원',x:72,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
-    {id:4,text:'46,300원',x:415,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
-  ]},
+  {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',ver:0,
+   versions:[
+    {name:'가격',
+     imgs:[{id:60,src:REPO_RAW+'logo_kurly.png',logo:'kurly',picker:true,anchor:'lc',x:60,cy:905,w:340,h:168},
+           {id:61,src:REPO_RAW+'arrow.png',hideList:true,x:55,y:1514,w:340,h:16}],
+     texts:[
+       {id:2,text:'컬리 반짝특가',x:1030,y:880,fs:50,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4},
+       {id:3,text:'정가 109,000원',x:72,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
+       {id:4,text:'46,300원',x:415,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
+     ]},
+    {name:'이벤트',
+     imgs:[{id:70,src:REPO_RAW+'logo_kurly.png',logo:'kurly',picker:true,anchor:'lc',x:60,cy:905,w:340,h:168}],
+     texts:[
+       {id:5,text:'단독 이벤트',x:1030,y:880,fs:50,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4},
+       {id:6,text:'기간 한정 혜택을\\n지금 확인하세요',x:60,y:1470,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.02em',lh:1.3},
+     ]},
+   ]},
 ];
 
 let activeTplId=null, selTextId=null, dragInfo=null, nextId=200;
@@ -441,7 +451,7 @@ const getTexts=()=>getTpl()?.texts??[];
 const getTxt=id=>getTexts().find(t=>t.id===id);
 
 function snapTpl(){const t=getTpl();return JSON.stringify({texts:t?.texts||[],imgs:t?.imgs||[],bgX:t?.bgX||0,bgY:t?.bgY||0,bgScale:t?.bgScale||1});}
-function restoreTpl(s){const tpl=getTpl();if(!tpl)return;const d=JSON.parse(s);tpl.texts=d.texts;tpl.imgs=d.imgs;tpl.bgX=d.bgX;tpl.bgY=d.bgY;tpl.bgScale=d.bgScale;applyBgTransform();}
+function restoreTpl(s){const tpl=getTpl();if(!tpl)return;const d=JSON.parse(s);tpl.texts=d.texts;tpl.imgs=d.imgs;tpl.bgX=d.bgX;tpl.bgY=d.bgY;tpl.bgScale=d.bgScale;if(tpl.versions){tpl.versions[tpl.ver||0].texts=d.texts;tpl.versions[tpl.ver||0].imgs=d.imgs;}applyBgTransform();}
 function saveUndo(){
   undoStack.push(snapTpl());
   if(undoStack.length>30)undoStack.shift();
@@ -533,12 +543,23 @@ function renderGrid(){
 
 // ── EDITOR ──
 function openEditor(id){
-  activeTplId=id; selTextId=null;
+  activeTplId=id; selTextId=null; selImgId=null;
   if(imgMode)toggleImgMode();
+  const tpl=getTpl();
+  // 버전 템플릿이면 현재 버전 내용 연결
+  if(tpl.versions){ const v=tpl.versions[tpl.ver||0]; tpl.texts=v.texts; tpl.imgs=v.imgs; }
   document.getElementById('gridView').classList.add('hidden');
   document.getElementById('editorView').classList.remove('hidden');
-  document.getElementById('editorTemplName').textContent=getTpl().name;
+  document.getElementById('editorTemplName').textContent=tpl.name;
   refreshBg(); refreshLayers(); refreshTextList(); refreshStylePanel();
+}
+function switchVersion(idx){
+  const tpl=getTpl(); if(!tpl||!tpl.versions)return;
+  selTextId=null; selImgId=null;
+  tpl.ver=idx;
+  const v=tpl.versions[idx];
+  tpl.texts=v.texts; tpl.imgs=v.imgs;
+  refreshLayers(); refreshTextList(); refreshStylePanel();
 }
 function showGrid(){
   document.getElementById('editorView').classList.add('hidden');
@@ -946,6 +967,18 @@ function deleteText(id){
 // ── TEXT LIST ──
 function refreshTextList(){
   const list=document.getElementById('textList'); list.innerHTML='';
+  // 버전 선택 (versions 있을 때)
+  const tpl=getTpl();
+  if(tpl&&tpl.versions){
+    const tabs=tpl.versions.map((v,i)=>`
+      <button onclick="switchVersion(${i})" style="flex:1;padding:9px;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;
+        background:${(tpl.ver||0)===i?'#111':'#f0f0f0'};color:${(tpl.ver||0)===i?'#fff':'#888'};">${v.name}</button>`).join('');
+    const box=document.createElement('div');
+    box.style.cssText='margin-bottom:14px;';
+    box.innerHTML=`<div style="font-size:11px;font-weight:700;color:#bbb;letter-spacing:0.5px;margin-bottom:6px;">버전</div>
+      <div style="display:flex;gap:6px;background:#fafafa;padding:5px;border-radius:9px;">${tabs}</div>`;
+    list.appendChild(box);
+  }
   // 이미지 레이어 = 맨 위
   getImgs().forEach((m)=>{
     if(m.hideList)return;
