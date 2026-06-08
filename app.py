@@ -627,7 +627,9 @@ function onImgMouseDown(e,id){
   const mv=ev=>{
     if(!moved&&(Math.abs(ev.clientX-sx)>3||Math.abs(ev.clientY-sy)>3)){moved=true;saveUndo();}
     if(!moved)return;
-    m.x=Math.round(x0+(ev.clientX-sx)/SX); m.y=Math.round(y0+(ev.clientY-sy)/SY);
+    let ddx=ev.clientX-sx, ddy=ev.clientY-sy;
+    if(ev.shiftKey){ if(Math.abs(ddx)>Math.abs(ddy)) ddy=0; else ddx=0; }
+    m.x=Math.round(x0+ddx/SX); m.y=Math.round(y0+ddy/SY);
     const el=document.querySelector(`.img-layer[data-iid="${id}"]`);
     if(el){el.style.left=(m.x*SX)+'px';el.style.top=(m.y*SY)+'px';}
   };
@@ -848,8 +850,10 @@ function onTextMouseDown(e,id){
       if(!undoSaved){saveUndo();undoSaved=true;}
     }
     if(!moved)return;
-    t.x=Math.round(startTx+(ev.clientX-startX)/SX);
-    t.y=Math.round(startTy+(ev.clientY-startY)/SY);
+    let ddx=ev.clientX-startX, ddy=ev.clientY-startY;
+    if(ev.shiftKey){ if(Math.abs(ddx)>Math.abs(ddy)) ddy=0; else ddx=0; } // 직선 이동
+    t.x=Math.round(startTx+ddx/SX);
+    t.y=Math.round(startTy+ddy/SY);
     if(!el){hideGuides();return;}
 
     // 수직 중앙 스냅
