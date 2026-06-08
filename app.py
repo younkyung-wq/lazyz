@@ -896,10 +896,11 @@ function refreshTextList(){
   getImgs().forEach((m,i)=>{
     const item=document.createElement('div');
     item.className='text-item'+(selImgId===m.id?' active':'');
-    item.innerHTML=`<span class="text-item-text">🖼 이미지 ${i+1}</span>
-      <span class="img-replace" onclick="event.stopPropagation();replaceImg(${m.id})" style="font-size:11px;color:#ff4b4b;cursor:pointer;font-weight:600;margin-right:4px;">교체</span>
+    item.innerHTML=`
+      <img src="${m.src}" style="height:26px;max-width:120px;object-fit:contain;border-radius:3px;background:#f0f0f0;flex:0 0 auto;">
+      <span class="img-replace" onclick="event.stopPropagation();replaceImg(${m.id})" style="margin-left:auto;font-size:11px;color:#ff4b4b;cursor:pointer;font-weight:600;margin-right:4px;">교체</span>
       <span class="text-item-del" onclick="event.stopPropagation();deleteImg(${m.id})">×</span>`;
-    item.addEventListener('click',e=>{if(!e.target.classList.contains('text-item-del')&&!e.target.classList.contains('img-replace'))selectImg(m.id);});
+    item.addEventListener('click',e=>{if(e.target.tagName==='IMG')selectImg(m.id);});
     list.appendChild(item);
   });
 }
