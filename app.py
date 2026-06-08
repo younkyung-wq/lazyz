@@ -400,7 +400,7 @@ let templates=[
   ]},
   {id:2,name:'템플릿 2',bgData:REPO_RAW+'2b.jpg',bgThumb:REPO_RAW+'2.jpg',texts:[
     {id:1,text:'BRAND WEEK\\nUP TO 45%',x:72,y:160,fs:120,color:'#ffffff',fw:600,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.04em',lh:1.083},
-    {id:3,text:'레이지지 최대 45% 할인\\n5.04 - 5.08',x:72,y:463,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.04em',lh:1.333},
+    {id:3,text:'레이지지 최대 45% 할인\\n5.04 - 5.08',x:82,y:463,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.04em',lh:1.333},
   ]},
   {id:3,name:'템플릿 3',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'3.jpg',texts:[
     {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',fw:700,italic:true,ff:'Georgia, serif',shadow:false,ls:'-0.01em'},
@@ -566,7 +566,7 @@ function renderChars(el,t){
       const sp=document.createElement('span');
       const baseLs=Math.round(parseFloat(t.ls||'0')*1000);
       const kern=(t.kerns&&t.kerns[i])||0;
-      if(ch===' '){ sp.style.display='inline-block'; sp.style.width=(t.sw||0.22)+'em'; } else { sp.textContent=ch; }
+      if(ch===' '){ sp.style.display='inline-block'; sp.style.width=(t.sw||0.15)+'em'; } else { sp.textContent=ch; }
       sp.style.letterSpacing=((baseLs+kern)/1000)+'em';
       el.appendChild(sp);
     }
@@ -919,7 +919,7 @@ function downloadPNG(fmt){
       let charOffset=0;
       lines.forEach((line,li)=>{
         const chars=[...line];
-        const swEm=(t.sw||0.22)*t.fs; // 공백 폭
+        const swEm=(t.sw||0.15)*t.fs; // 공백 폭
         const chW=ch=>(ch===' '?swEm:ctx.measureText(ch).width);
         // 전체 너비 계산 (center용)
         let totalW=0;
