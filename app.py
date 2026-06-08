@@ -427,7 +427,8 @@ let templates=[
   {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',
    imgs:[{id:60,src:REPO_RAW+'logo_kurly.png',logo:'kurly',picker:true,anchor:'lc',x:60,cy:905,w:340,h:168}],texts:[
     {id:2,text:'컬리 반짝특가',x:1030,y:880,fs:50,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4},
-    {id:3,text:'정가 109,000원 → 46,300원',x:72,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
+    {id:3,text:'정가 109,000원',x:72,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em',strike:true},
+    {id:4,text:'→ 46,300원',x:455,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
   ]},
 ];
 
@@ -726,6 +727,8 @@ function applyStyle(el,t){
   el.style.lineHeight=t.lh||'1.1';
   el.style.letterSpacing='0em'; // handled per-char
   el.style.textShadow='none';
+  el.style.textDecoration=t.strike?'line-through':'none';
+  el.style.textDecorationThickness=t.strike?Math.max(1,t.fs*SY*0.045)+'px':'';
 }
 function placeEl(el,t){
   el.style.width='auto';
@@ -1030,8 +1033,17 @@ function refreshStylePanel(){
           <span class="fld-label">기울임</span>
           <button class="style-btn ${t.italic?'on':''}" onclick="toggleItalic()" style="height:34px;width:38px;"><i>I</i></button>
         </div>
+        <div class="fld" style="flex:0 0 auto;">
+          <span class="fld-label">취소선</span>
+          <button class="style-btn ${t.strike?'on':''}" onclick="toggleStrike()" style="height:34px;width:38px;text-decoration:line-through;">S</button>
+        </div>
       </div>
     </div>`;
+}
+function toggleStrike(){
+  const t=getTxt(selTextId); if(!t)return; t.strike=!t.strike;
+  const el=document.querySelector(`.text-layer[data-tid="${selTextId}"]`); if(el)applyStyle(el,t);
+  refreshStylePanel();
 }
 function setS(prop,val){
   const t=getTxt(selTextId); if(!t)return;
@@ -1122,12 +1134,20 @@ function downloadPNG(fmt){
           totalW+=chW(ch)+baseLs+kern;
         });
         let x=t.ta==='center'?t.x-totalW/2:t.ta==='right'?t.x-totalW:t.x;
+        const startX=x;
         const y=t.y+li*lineH;
         chars.forEach((ch,i)=>{
           if(ch!==' ')ctx.fillText(ch,x,y);
           const kern=((t.kerns&&t.kerns[charOffset+i])||0)/1000*t.fs;
           x+=chW(ch)+baseLs+kern;
         });
+        if(t.strike){
+          const ly=y+t.fs*0.42;
+          ctx.save();
+          ctx.strokeStyle=t.color; ctx.lineWidth=Math.max(1,t.fs*0.045);
+          ctx.beginPath(); ctx.moveTo(startX,ly); ctx.lineTo(x-baseLs,ly); ctx.stroke();
+          ctx.restore();
+        }
         charOffset+=chars.length+1; // +1 for the newline
       });
       ctx.restore();
