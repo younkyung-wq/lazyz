@@ -360,9 +360,9 @@ const REPO_RAW = 'https://raw.githubusercontent.com/younkyung-wq/lazyz/main/';
 
 let templates=[
   {id:1,name:'템플릿 1',bgData:REPO_RAW+'1b.jpg',bgThumb:REPO_RAW+'1.jpg',texts:[
-    {id:1,text:'5/6(WED) - 5/16(SAT)',x:540,y:1037,fs:35,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em'},
-    {id:2,text:'24H HOUR\\n26SS ~45%',x:540,y:1125,fs:120,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em',lh:1.083},
-    {id:3,text:'레이지지 26ss 최대 45% 할인',x:540,y:1475,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em'},
+    {id:1,text:'5/6(WED) - 5/16(SAT)',x:540,y:1085,fs:35,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em'},
+    {id:2,text:'24H HOUR\\n26SS ~45%',x:540,y:1152,fs:120,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em',lh:1.083},
+    {id:3,text:'레이지지 26ss 최대 45% 할인',x:540,y:1478,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em'},
   ]},
   {id:2,name:'템플릿 2',bgData:REPO_RAW+'2b.jpg',bgThumb:REPO_RAW+'2.jpg',texts:[
     {id:1,text:'BRAND WEEK',x:72,y:100,fs:126,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em'},
@@ -536,7 +536,7 @@ function selectText(id){
     el.removeAttribute('contenteditable');
   });
   refreshTextList(); refreshStylePanel();
-  if(measureOn)showMeasure();
+  showMeasure();
 }
 function startEdit(id, clickEvent){
   saveUndo();
@@ -548,6 +548,7 @@ function startEdit(id, clickEvent){
 
   el.setAttribute('contenteditable','true');
   el.focus({preventScroll:true});
+  showMeasure();
 
   // 클릭한 좌표로 커서 위치 직접 지정
   if(clickEvent){
@@ -660,7 +661,7 @@ function onTextMouseDown(e,id){
     } else { document.getElementById('guideV').style.display='none'; }
 
     placeEl(el,t);
-    if(measureOn)showMeasure();
+    showMeasure();
   };
   const onUp=ev=>{
     hideGuides();
@@ -680,6 +681,7 @@ function onCanvasClick(e){
   selTextId=null;
   document.querySelectorAll('.text-layer').forEach(el=>{el.classList.remove('selected');el.removeAttribute('contenteditable');});
   refreshTextList(); refreshStylePanel();
+  document.getElementById('measure').style.display='none';
 }
 function addText(){
   const tpl=getTpl(); if(!tpl)return;
@@ -710,7 +712,7 @@ function refreshTextList(){
     const input=item.querySelector('textarea');
     const autosize=()=>{input.style.height='auto';input.style.height=input.scrollHeight+'px';};
     setTimeout(autosize,0);
-    input.addEventListener('focus',()=>{selTextId=t.id;refreshStylePanel();document.querySelectorAll('.text-item').forEach(el=>el.classList.remove('active'));item.classList.add('active');});
+    input.addEventListener('focus',()=>{selTextId=t.id;refreshStylePanel();document.querySelectorAll('.text-item').forEach(el=>el.classList.remove('active'));item.classList.add('active');showMeasure();});
     input.addEventListener('input',()=>{
       saveUndo();
       t.text=input.value;
@@ -787,12 +789,14 @@ function setS(prop,val){
   t[prop]=val;
   const el=document.querySelector(`.text-layer[data-tid="${selTextId}"]`);
   if(el){applyStyle(el,t);placeEl(el,t);renderChars(el,t);}
+  showMeasure();
 }
 function setLh(px){
   const t=getTxt(selTextId); if(!t)return;
   t.lh=px/t.fs;
   const el=document.querySelector(`.text-layer[data-tid="${selTextId}"]`);
   if(el){el.style.lineHeight=t.lh;placeEl(el,t);}
+  showMeasure();
 }
 function toggleItalic(){
   const t=getTxt(selTextId); if(!t)return; t.italic=!t.italic;
@@ -877,7 +881,7 @@ function setMeasure(on){
 }
 function showMeasure(){
   const m=document.getElementById('measure');
-  if(!measureOn||!selTextId){m.style.display='none';return;}
+  if(!selTextId){m.style.display='none';return;}
   const outer=document.getElementById('storyOuter');
   const el=document.querySelector(`.text-layer[data-tid="${selTextId}"]`);
   if(!el){m.style.display='none';return;}
@@ -901,10 +905,6 @@ function showMeasure(){
   set('mzT',cx,by/2,toReal(by,'y')+'');
   set('mzB',cx,by+bh+(o.height-by-bh)/2,toReal(o.height-by-bh,'y')+'');
 }
-document.addEventListener('keydown',e=>{ if(e.key==='Meta'||e.key==='Control')setMeasure(true); });
-document.addEventListener('keyup',e=>{ if(e.key==='Meta'||e.key==='Control')setMeasure(false); });
-window.addEventListener('blur',()=>setMeasure(false));
-
 renderGrid();
 </script>
 </body>
