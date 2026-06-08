@@ -830,6 +830,8 @@ function downloadPNG(fmt){
   canvas.width=RW; canvas.height=RH;
   const ctx=canvas.getContext('2d');
   const img=new Image();
+  img.crossOrigin='anonymous';
+  img.onerror=()=>{alert('이미지를 불러오지 못했어요. 다시 시도해주세요.');};
   img.onload=()=>{
     const ia=img.width/img.height, ca=RW/RH;
     let sx,sy,sw,sh;
@@ -864,11 +866,15 @@ function downloadPNG(fmt){
       });
       ctx.restore();
     });
-    const a=document.createElement('a');
-    const isJpg=fmt==='jpg';
-    const mime=isJpg?'image/jpeg':'image/png';
-    a.download=`lazyz_story_${tpl.id}_${Date.now()}.${isJpg?'jpg':'png'}`;
-    a.href=canvas.toDataURL(mime,isJpg?0.95:undefined); a.click();
+    try{
+      const isJpg=fmt==='jpg';
+      const mime=isJpg?'image/jpeg':'image/png';
+      const a=document.createElement('a');
+      a.download=`lazyz_story_${tpl.id}_${Date.now()}.${isJpg?'jpg':'png'}`;
+      a.href=canvas.toDataURL(mime,isJpg?0.95:undefined); a.click();
+    }catch(err){
+      alert('다운로드 실패: '+err.message);
+    }
   };
   img.src=tpl.bgData;
 }
