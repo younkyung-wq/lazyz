@@ -681,6 +681,7 @@ function onTextMouseDown(e,id){
   e.preventDefault();
   e.stopPropagation();
   const t=getTxt(id);
+  const onGlyph=(e.target.tagName==='SPAN'); // 글자 위 클릭 여부
   const startX=e.clientX, startY=e.clientY;
   const startTx=t.x, startTy=t.y;
   let moved=false, undoSaved=false;
@@ -720,8 +721,8 @@ function onTextMouseDown(e,id){
     document.removeEventListener('mousemove',onMove);
     document.removeEventListener('mouseup',onUp);
     if(!moved){
-      // 클릭 → 편집모드 진입 (클릭 좌표에 커서)
-      startEdit(id, ev);
+      // 글자 위 클릭만 편집 진입, 가장자리/여백 클릭은 선택만
+      if(onGlyph) startEdit(id, ev);
     }
   };
   document.addEventListener('mousemove',onMove);
