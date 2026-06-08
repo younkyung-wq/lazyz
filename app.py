@@ -983,6 +983,10 @@ function resetBgTransform(){
 }
 (function initImgXf(){
   const box=document.getElementById('imgXfBox');
+  // 빈 공간(박스 밖) 클릭 시 조절 모드 종료
+  document.querySelector('.editor-canvas-area').addEventListener('click',e=>{
+    if(imgMode && !e.target.closest('#imgXfBox')) toggleImgMode();
+  });
   // 박스 내부 드래그 = 이동
   box.addEventListener('mousedown',e=>{
     if(e.target.classList.contains('xf-handle'))return;
