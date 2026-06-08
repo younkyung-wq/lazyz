@@ -403,6 +403,12 @@ select:focus { outline: none; border-color: #ff4b4b; }
 const W=405, H=720, RW=1080, RH=1920, SX=405/1080, SY=720/1920;
 
 const REPO_RAW = 'https://raw.githubusercontent.com/younkyung-wq/lazyz/main/';
+// 유통채널 로고 (가로 폭 유지, 비율로 높이 계산)
+const LOGOS=[
+  {key:'kurly',label:'컬리',src:REPO_RAW+'logo_kurly.png',ar:501/247},
+  {key:'wconcept',label:'W컨셉',src:REPO_RAW+'logo_wconcept.png',ar:478/60},
+  {key:'lotteon',label:'롯데온',src:REPO_RAW+'logo_lotteon.png',ar:336/68},
+];
 
 let templates=[
   {id:1,name:'템플릿 1',bgData:REPO_RAW+'1b.jpg',bgThumb:REPO_RAW+'thumb1.jpg',texts:[
@@ -419,8 +425,8 @@ let templates=[
     {id:3,text:'단 2주간, 최대 50% 할인',x:540,y:1350,fs:42,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.03em',lh:1.4286},
     {id:1,text:'5.31(SUN) -\\n6.15(MON)',x:1000,y:150,fs:35,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4286},
   ]},
-  {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',texts:[
-    {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',fw:700,italic:true,ff:'Georgia, serif',shadow:false,ls:'-0.01em'},
+  {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',
+   imgs:[{id:60,src:REPO_RAW+'logo_kurly.png',logo:'kurly',picker:true,x:80,y:820,w:360,h:177}],texts:[
     {id:2,text:'컬리 반짝특가',x:750,y:930,fs:48,color:'#ffffff',fw:700,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.01em'},
     {id:3,text:'정가 109,000원 → 46,300원',x:72,y:1650,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
   ]},
@@ -659,6 +665,14 @@ function deleteImg(id){
   if(selImgId===id)selImgId=null;
   refreshLayers(); refreshTextList();
 }
+function setLogo(id,key){
+  const m=getImg(id); if(!m)return;
+  const L=LOGOS.find(x=>x.key===key); if(!L)return;
+  saveUndo();
+  m.src=L.src; m.logo=key;
+  m.h=Math.round(m.w/L.ar); // 가로 폭 유지, 비율로 높이
+  refreshLayers(); refreshTextList();
+}
 function makeEl(t){
   const el=document.createElement('div');
   el.className='text-layer';
@@ -884,12 +898,25 @@ function deleteText(id){
 // ── TEXT LIST ──
 function refreshTextList(){
   const list=document.getElementById('textList'); list.innerHTML='';
-  // 이미지 레이어 = 맨 위, 빨간 "타이틀 이미지 교체" 버튼
+  // 이미지 레이어 = 맨 위
   getImgs().forEach((m)=>{
     const item=document.createElement('div');
-    item.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:7px;';
-    item.innerHTML=`
-      <button onclick="event.stopPropagation();replaceImg(${m.id})" style="flex:1;padding:10px;border:none;border-radius:8px;background:#ff4b4b;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">타이틀 이미지 교체</button>`;
+    item.style.cssText='margin-bottom:9px;';
+    if(m.picker){
+      // 로고 선택 UI
+      const btns=LOGOS.map(L=>`
+        <button onclick="event.stopPropagation();setLogo(${m.id},'${L.key}')"
+          style="flex:1;padding:8px 4px;border:1.5px solid ${m.logo===L.key?'#ff4b4b':'#eee'};border-radius:7px;background:${m.logo===L.key?'#fff5f5':'#fff'};cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px;">
+          <img src="${L.src}" style="height:18px;max-width:60px;object-fit:contain;${L.key==='kurly'?'':''}filter:${L.key==='kurly'?'none':'none'};">
+          <span style="font-size:10px;color:${m.logo===L.key?'#ff4b4b':'#888'};font-weight:600;">${L.label}</span>
+        </button>`).join('');
+      item.innerHTML=`
+        <div style="font-size:11px;font-weight:700;color:#bbb;letter-spacing:0.5px;margin-bottom:6px;">로고 선택</div>
+        <div style="display:flex;gap:6px;background:#2a2a2a;padding:8px;border-radius:8px;">${btns}</div>`;
+    } else {
+      item.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:7px;';
+      item.innerHTML=`<button onclick="event.stopPropagation();replaceImg(${m.id})" style="flex:1;padding:10px;border:none;border-radius:8px;background:#ff4b4b;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">타이틀 이미지 교체</button>`;
+    }
     list.appendChild(item);
   });
   // 텍스트 레이어
