@@ -173,8 +173,12 @@ body {
 
 /* Controls */
 .editor-controls {
-  flex: 0 0 400px; width: 400px; padding: 20px 24px; overflow-y: auto;
+  flex: 0 0 360px; width: 360px; padding: 20px 22px; overflow-y: auto;
   border-left: 1px solid #f0f0f0;
+}
+.editor-style {
+  flex: 0 0 340px; width: 340px; padding: 20px 22px; overflow-y: auto;
+  border-left: 1px solid #f0f0f0; background: #fcfcfc;
 }
 .ctrl-section { margin-bottom: 22px; }
 .ctrl-label {
@@ -368,19 +372,17 @@ select:focus { outline: none; border-color: #ff4b4b; }
       </div>
     </div>
 
-    <div class="ctrl-section" id="secStyle">
-      <div class="ctrl-label" onclick="toggleSection('secStyle')">선택된 텍스트 스타일 <span class="caret">▾</span></div>
-      <div class="sec-body">
-        <div id="stylePanel" class="no-select-hint">텍스트를 클릭하여 선택하세요</div>
-      </div>
-    </div>
-
     <button id="pickDirBtn" onclick="pickSaveDir()" style="width:100%;padding:9px;border:1.5px solid #eee;border-radius:8px;background:#fafafa;font-size:12px;color:#666;cursor:pointer;margin-bottom:8px;font-weight:600;">📁 저장 폴더 지정 (선택)</button>
     <div id="dirStatus" style="font-size:11px;color:#aaa;margin-bottom:10px;text-align:center;"></div>
     <div style="display:flex;gap:8px;">
       <button class="dl-btn" style="flex:1;" onclick="downloadPNG('png')">↓ PNG</button>
       <button class="dl-btn" style="flex:1;" onclick="downloadPNG('jpg')">↓ JPG</button>
     </div>
+  </div>
+
+  <div class="editor-style">
+    <div class="ctrl-label" style="cursor:default;">선택된 텍스트 스타일</div>
+    <div id="stylePanel" class="no-select-hint">텍스트를 클릭하여 선택하세요</div>
   </div>
 </div>
 
@@ -999,7 +1001,14 @@ function resetBgTransform(){
   const box=document.getElementById('imgXfBox');
   // 빈 공간(박스 밖) 클릭 시 조절 모드 종료 (박스/핸들 드래그는 stopPropagation으로 제외됨)
   document.querySelector('.editor-canvas-area').addEventListener('mousedown',e=>{
-    if(imgMode && !e.target.closest('#imgXfBox')) toggleImgMode();
+    if(imgMode){ if(!e.target.closest('#imgXfBox')) toggleImgMode(); return; }
+    // 빈 여백(텍스트 아님) 클릭 시 선택 해제
+    if(!e.target.closest('.text-layer') && selTextId!==null){
+      selTextId=null;
+      document.querySelectorAll('.text-layer').forEach(el=>{el.classList.remove('selected');el.removeAttribute('contenteditable');});
+      refreshTextList(); refreshStylePanel();
+      document.getElementById('measure').style.display='none';
+    }
   });
   // 박스 내부 드래그 = 이동
   box.addEventListener('mousedown',e=>{
