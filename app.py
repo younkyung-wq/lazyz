@@ -440,8 +440,8 @@ const getTpl=()=>templates.find(t=>t.id===activeTplId);
 const getTexts=()=>getTpl()?.texts??[];
 const getTxt=id=>getTexts().find(t=>t.id===id);
 
-function snapTpl(){const t=getTpl();return JSON.stringify({texts:t?.texts||[],imgs:t?.imgs||[]});}
-function restoreTpl(s){const tpl=getTpl();if(!tpl)return;const d=JSON.parse(s);tpl.texts=d.texts;tpl.imgs=d.imgs;}
+function snapTpl(){const t=getTpl();return JSON.stringify({texts:t?.texts||[],imgs:t?.imgs||[],bgX:t?.bgX||0,bgY:t?.bgY||0,bgScale:t?.bgScale||1});}
+function restoreTpl(s){const tpl=getTpl();if(!tpl)return;const d=JSON.parse(s);tpl.texts=d.texts;tpl.imgs=d.imgs;tpl.bgX=d.bgX;tpl.bgY=d.bgY;tpl.bgScale=d.bgScale;applyBgTransform();}
 function saveUndo(){
   undoStack.push(snapTpl());
   if(undoStack.length>30)undoStack.shift();
@@ -473,7 +473,12 @@ document.addEventListener('keydown',e=>{
   const step=e.shiftKey?10:1;
   const dx=(e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0);
   const dy=(e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0);
-  if(selTextId){
+  if(imgMode){ // 배경 이미지 조절 모드
+    const tpl=getTpl(); if(!tpl)return;
+    saveUndo();
+    tpl.bgX=(tpl.bgX||0)+dx; tpl.bgY=(tpl.bgY||0)+dy;
+    applyBgTransform();
+  } else if(selTextId){
     const t=getTxt(selTextId); if(!t)return;
     saveUndo();
     t.x+=dx; t.y+=dy;
