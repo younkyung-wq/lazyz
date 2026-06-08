@@ -321,7 +321,7 @@ const REPO_RAW = 'https://raw.githubusercontent.com/younkyung-wq/lazyz/main/';
 let templates=[
   {id:1,name:'템플릿 1',bgData:REPO_RAW+'1b.jpg',bgThumb:REPO_RAW+'1.jpg',texts:[
     {id:1,text:'5/6(WED) - 5/16(SAT)',x:540,y:1195,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em'},
-    {id:2,text:'24H HOUR\n26SS ~45%',x:540,y:1290,fs:120,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em',lh:1.083},
+    {id:2,text:'24H HOUR\\n26SS ~45%',x:540,y:1290,fs:120,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em',lh:1.083},
   ]},
   {id:2,name:'템플릿 2',bgData:REPO_RAW+'2b.jpg',bgThumb:REPO_RAW+'2.jpg',texts:[
     {id:1,text:'BRAND WEEK',x:72,y:100,fs:126,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em'},
@@ -454,7 +454,7 @@ function renderChars(el,t){
   el.innerHTML='';
   let i=0;
   for(const ch of t.text){
-    if(ch==='\n'){
+    if(ch==='\\n'){
       el.appendChild(document.createElement('br'));
     } else {
       const sp=document.createElement('span');
@@ -524,7 +524,7 @@ function startEdit(id, clickEvent){
   el.addEventListener('blur',()=>{
     el.removeAttribute('contenteditable');
     // innerText로 줄바꿈 보존
-    t.text=el.innerText.replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\n$/,'');
+    t.text=el.innerText.replace(/\\r\\n/g,'\\n').replace(/\\r/g,'\\n').replace(/\\n$/,'');
     renderChars(el,t);
     refreshTextList();
   },{once:true});
@@ -784,7 +784,7 @@ function downloadPNG(){
       if(t.shadow){ctx.shadowColor='rgba(0,0,0,0.85)';ctx.shadowOffsetX=2;ctx.shadowOffsetY=2;ctx.shadowBlur=18;}
       const baseLs=parseFloat(t.ls||'0')*t.fs;
       const lineH=(parseFloat(t.lh||'1.1'))*t.fs;
-      const lines=t.text.split('\n');
+      const lines=t.text.split('\\n');
       let charOffset=0;
       lines.forEach((line,li)=>{
         const chars=[...line];
@@ -801,7 +801,7 @@ function downloadPNG(){
           const kern=((t.kerns&&t.kerns[charOffset+i])||0)/1000*t.fs;
           x+=ctx.measureText(ch).width+baseLs+kern;
         });
-        charOffset+=chars.length+1; // +1 for the \n
+        charOffset+=chars.length+1; // +1 for the newline
       });
       ctx.restore();
     });
