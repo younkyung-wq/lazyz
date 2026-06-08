@@ -378,7 +378,6 @@ select:focus { outline: none; border-color: #ff4b4b; }
       <div class="sec-body">
         <div id="textList"></div>
         <button class="add-text-btn" onclick="addText()">+ 텍스트 추가</button>
-        <button class="add-text-btn" style="margin-top:7px;" onclick="document.getElementById('imgLayerInput').click()">+ 이미지 추가</button>
         <input type="file" id="imgLayerInput" accept="image/*" class="hidden" onchange="onAddImgLayer(event)">
         <input type="file" id="imgReplaceInput" accept="image/*" class="hidden" onchange="onReplaceImg(event)">
       </div>
