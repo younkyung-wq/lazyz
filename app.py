@@ -462,6 +462,30 @@ document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo();}
   if((e.metaKey||e.ctrlKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo();}
 });
+// 화살표키 미세조정 (선택된 텍스트/이미지, Shift=10px)
+document.addEventListener('keydown',e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey)return;
+  const ae=document.activeElement;
+  if(ae&&(ae.isContentEditable||ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT'))return;
+  if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;
+  const step=e.shiftKey?10:1;
+  const dx=(e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0);
+  const dy=(e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0);
+  if(selTextId){
+    const t=getTxt(selTextId); if(!t)return;
+    e.preventDefault(); saveUndo();
+    t.x+=dx; t.y+=dy;
+    const el=document.querySelector(`.text-layer[data-tid="${selTextId}"]`); if(el)placeEl(el,t);
+    showMeasure();
+  } else if(selImgId){
+    const m=getImg(selImgId); if(!m)return;
+    e.preventDefault(); saveUndo();
+    if(m.anchor==='bc'){ m.by+=dy; }
+    else if(m.anchor==='lc'){ m.x+=dx; m.cy+=dy; }
+    else { m.x+=dx; m.y+=dy; }
+    refreshLayers();
+  }
+});
 
 // ── GRID ──
 function renderGrid(){
