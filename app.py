@@ -152,8 +152,8 @@ body {
 /* Text layers */
 .text-layer {
   position: absolute; cursor: move; user-select: none;
-  padding: 2px 4px; border-radius: 2px; line-height: 1.15;
-  white-space: nowrap; z-index: 10; transition: outline 0.1s;
+  padding: 2px 4px; border-radius: 2px;
+  white-space: normal; z-index: 10; transition: outline 0.1s;
 }
 .text-layer.selected { outline: none; }
 .text-layer[contenteditable="true"] {
@@ -321,8 +321,7 @@ const REPO_RAW = 'https://raw.githubusercontent.com/younkyung-wq/lazyz/main/';
 let templates=[
   {id:1,name:'템플릿 1',bgData:REPO_RAW+'1b.jpg',bgThumb:REPO_RAW+'1.jpg',texts:[
     {id:1,text:'5/6(WED) - 5/16(SAT)',x:540,y:1195,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em'},
-    {id:2,text:'24H HOUR',x:540,y:1290,fs:120,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em',lh:1.083},
-    {id:3,text:'26SS ~45%',x:540,y:1420,fs:120,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em',lh:1.083},
+    {id:2,text:'24H HOUR\n26SS ~45%',x:540,y:1290,fs:120,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.04em',lh:1.083},
   ]},
   {id:2,name:'템플릿 2',bgData:REPO_RAW+'2b.jpg',bgThumb:REPO_RAW+'2.jpg',texts:[
     {id:1,text:'BRAND WEEK',x:72,y:100,fs:126,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em'},
@@ -453,14 +452,20 @@ function hideGuides(){
 
 function renderChars(el,t){
   el.innerHTML='';
-  [...t.text].forEach((ch,i)=>{
-    const sp=document.createElement('span');
-    sp.textContent=ch===' '?' ':ch;
-    const baseLs=Math.round(parseFloat(t.ls||'0')*1000);
-    const kern=(t.kerns&&t.kerns[i])||0;
-    sp.style.letterSpacing=((baseLs+kern)/1000)+'em';
-    el.appendChild(sp);
-  });
+  let i=0;
+  for(const ch of t.text){
+    if(ch==='\n'){
+      el.appendChild(document.createElement('br'));
+    } else {
+      const sp=document.createElement('span');
+      sp.textContent=ch===' '?' ':ch;
+      const baseLs=Math.round(parseFloat(t.ls||'0')*1000);
+      const kern=(t.kerns&&t.kerns[i])||0;
+      sp.style.letterSpacing=((baseLs+kern)/1000)+'em';
+      el.appendChild(sp);
+    }
+    i++;
+  }
 }
 
 function applyStyle(el,t){
@@ -518,16 +523,29 @@ function startEdit(id, clickEvent){
 
   el.addEventListener('blur',()=>{
     el.removeAttribute('contenteditable');
-    t.text=el.textContent;
+    // innerText로 줄바꿈 보존
+    t.text=el.innerText.replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\n$/,'');
     renderChars(el,t);
     refreshTextList();
   },{once:true});
 
   el.addEventListener('keydown',e=>{
-    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();el.blur();}
+    // Enter = 줄바꿈 (기본동작), Cmd+Enter = 편집완료
+    if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();el.blur();}
     if(e.key==='Escape'){el.blur();return;}
     // Cmd+Z/Y는 document 핸들러로 넘김
     if((e.metaKey||e.ctrlKey)&&(e.key==='z'||e.key==='y'))return;
+
+    // Cmd+↑/↓ : 행간 조절
+    if((e.metaKey||e.ctrlKey)&&(e.key==='ArrowUp'||e.key==='ArrowDown')){
+      e.preventDefault();
+      const curLh=parseFloat(t.lh||'1.1');
+      const delta=2/t.fs;
+      t.lh=e.key==='ArrowUp'?Math.max(0.5,curLh-delta):curLh+delta;
+      el.style.lineHeight=t.lh;
+      refreshStylePanel();
+      return;
+    }
 
     // Cmd+← / Cmd+→ : 커서 위치 글자 kern 조정
     if((e.metaKey||e.ctrlKey)&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){
@@ -702,13 +720,25 @@ function refreshStylePanel(){
           oninput="setS('ls',(this.value/100)+'em');document.getElementById('lsv').textContent=this.value">
         <span id="lsv" style="font-size:11px;color:#999;min-width:26px;">${Math.round(parseFloat(t.ls||'0')*100)}</span>
       </div>
+      <div class="style-row">
+        <span class="style-row-label">행간</span>
+        <input type="range" min="50" max="300" step="1" value="${Math.round((parseFloat(t.lh||'1.1'))*t.fs)}"
+          oninput="setLh(this.value/1);document.getElementById('lhv').textContent=this.value">
+        <span id="lhv" style="font-size:11px;color:#999;min-width:26px;">${Math.round((parseFloat(t.lh||'1.1'))*t.fs)}</span>
+      </div>
     </div>`;
 }
 function setS(prop,val){
   const t=getTxt(selTextId); if(!t)return;
   t[prop]=val;
   const el=document.querySelector(`.text-layer[data-tid="${selTextId}"]`);
-  if(el){applyStyle(el,t);placeEl(el,t);}
+  if(el){applyStyle(el,t);placeEl(el,t);renderChars(el,t);}
+}
+function setLh(px){
+  const t=getTxt(selTextId); if(!t)return;
+  t.lh=px/t.fs;
+  const el=document.querySelector(`.text-layer[data-tid="${selTextId}"]`);
+  if(el)el.style.lineHeight=t.lh;
 }
 function toggleItalic(){
   const t=getTxt(selTextId); if(!t)return; t.italic=!t.italic;
@@ -752,20 +782,26 @@ function downloadPNG(){
       ctx.font=`${t.italic?'italic':'normal'} ${t.fw||400} ${t.fs}px ${t.ff}`;
       ctx.fillStyle=t.color; ctx.textBaseline='top';
       if(t.shadow){ctx.shadowColor='rgba(0,0,0,0.85)';ctx.shadowOffsetX=2;ctx.shadowOffsetY=2;ctx.shadowBlur=18;}
-      const chars=[...t.text];
       const baseLs=parseFloat(t.ls||'0')*t.fs;
-      // 전체 너비 계산 (center용)
-      let totalW=0;
-      chars.forEach((ch,i)=>{
-        const kern=((t.kerns&&t.kerns[i])||0)/1000*t.fs;
-        totalW+=ctx.measureText(ch).width+baseLs+kern;
-      });
-      const originX=t.ta==='center'?t.x:t.x;
-      let x=t.ta==='center'?originX-totalW/2:originX;
-      chars.forEach((ch,i)=>{
-        ctx.fillText(ch,x,t.y);
-        const kern=((t.kerns&&t.kerns[i])||0)/1000*t.fs;
-        x+=ctx.measureText(ch).width+baseLs+kern;
+      const lineH=(parseFloat(t.lh||'1.1'))*t.fs;
+      const lines=t.text.split('\n');
+      let charOffset=0;
+      lines.forEach((line,li)=>{
+        const chars=[...line];
+        // 전체 너비 계산 (center용)
+        let totalW=0;
+        chars.forEach((ch,i)=>{
+          const kern=((t.kerns&&t.kerns[charOffset+i])||0)/1000*t.fs;
+          totalW+=ctx.measureText(ch).width+baseLs+kern;
+        });
+        let x=t.ta==='center'?t.x-totalW/2:t.x;
+        const y=t.y+li*lineH;
+        chars.forEach((ch,i)=>{
+          ctx.fillText(ch,x,y);
+          const kern=((t.kerns&&t.kerns[charOffset+i])||0)/1000*t.fs;
+          x+=ctx.measureText(ch).width+baseLs+kern;
+        });
+        charOffset+=chars.length+1; // +1 for the \n
       });
       ctx.restore();
     });
