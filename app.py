@@ -165,7 +165,7 @@ body {
   padding: 2px 4px; border-radius: 2px;
   white-space: normal; z-index: 10; transition: outline 0.1s;
 }
-.text-layer.selected { outline: 1.5px solid #00d4b8; outline-offset: 3px; }
+.text-layer.selected { outline: 1.5px solid #54fffd; outline-offset: 3px; }
 .text-layer[contenteditable="true"] {
   cursor: text; outline: none !important;
   background: rgba(0,0,0,0.15); white-space: pre; min-width: 40px;
@@ -180,7 +180,12 @@ body {
 .ctrl-label {
   font-size: 11px; font-weight: 700; color: #bbb;
   letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; user-select: none;
 }
+.ctrl-label .caret { transition: transform 0.15s; font-size: 10px; }
+.ctrl-section.collapsed .caret { transform: rotate(-90deg); }
+.ctrl-section.collapsed .sec-body { display: none; }
 
 .upload-zone {
   border: 2px dashed #e5e5e5; border-radius: 10px;
@@ -331,8 +336,9 @@ select:focus { outline: none; border-color: #ff4b4b; }
   <div class="editor-controls">
     <div id="editorTemplName" style="font-size:16px;font-weight:800;color:#111;margin-bottom:20px;"></div>
 
-    <div class="ctrl-section">
-      <div class="ctrl-label">배경 이미지</div>
+    <div class="ctrl-section" id="secBg">
+      <div class="ctrl-label" onclick="toggleSection('secBg')">배경 이미지 <span class="caret">▾</span></div>
+      <div class="sec-body">
       <div class="upload-zone" id="uploadZone"
            onclick="document.getElementById('fileInput').click()"
            ondragover="onUploadDragOver(event)"
@@ -351,17 +357,22 @@ select:focus { outline: none; border-color: #ff4b4b; }
         <button id="imgModeBtn" onclick="toggleImgMode()" style="flex:1;padding:8px;border:1.5px solid #eee;border-radius:8px;background:#fafafa;font-size:12px;color:#666;cursor:pointer;font-weight:600;">🖼 이미지 크기/위치 조절</button>
         <button onclick="resetBgTransform()" style="padding:8px 12px;border:1.5px solid #eee;border-radius:8px;background:#fff;font-size:12px;color:#999;cursor:pointer;">초기화</button>
       </div>
+      </div>
     </div>
 
-    <div class="ctrl-section">
-      <div class="ctrl-label">텍스트 레이어</div>
-      <div id="textList"></div>
-      <button class="add-text-btn" onclick="addText()">+ 텍스트 추가</button>
+    <div class="ctrl-section" id="secText">
+      <div class="ctrl-label" onclick="toggleSection('secText')">텍스트 레이어 <span class="caret">▾</span></div>
+      <div class="sec-body">
+        <div id="textList"></div>
+        <button class="add-text-btn" onclick="addText()">+ 텍스트 추가</button>
+      </div>
     </div>
 
-    <div class="ctrl-section">
-      <div class="ctrl-label">선택된 텍스트 스타일</div>
-      <div id="stylePanel" class="no-select-hint">텍스트를 클릭하여 선택하세요</div>
+    <div class="ctrl-section" id="secStyle">
+      <div class="ctrl-label" onclick="toggleSection('secStyle')">선택된 텍스트 스타일 <span class="caret">▾</span></div>
+      <div class="sec-body">
+        <div id="stylePanel" class="no-select-hint">텍스트를 클릭하여 선택하세요</div>
+      </div>
     </div>
 
     <button id="pickDirBtn" onclick="pickSaveDir()" style="width:100%;padding:9px;border:1.5px solid #eee;border-radius:8px;background:#fafafa;font-size:12px;color:#666;cursor:pointer;margin-bottom:8px;font-weight:600;">📁 저장 폴더 지정 (선택)</button>
@@ -950,6 +961,11 @@ function downloadPNG(fmt){
     }, mime, isJpg?0.95:undefined);
   };
   img.src=tpl.bgData;
+}
+
+// ── 섹션 접기/펴기 ──
+function toggleSection(id){
+  document.getElementById(id).classList.toggle('collapsed');
 }
 
 // ── 배경 이미지 변형 ──
