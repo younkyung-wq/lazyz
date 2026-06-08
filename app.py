@@ -473,18 +473,18 @@ function redo(){
 document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo();}
   if((e.metaKey||e.ctrlKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo();}
-  // Cmd/Ctrl + T : 배경 이미지 크기/위치 조절 토글
-  if((e.metaKey||e.ctrlKey)&&(e.key==='t'||e.key==='T')){
-    if(document.getElementById('editorView') && !document.getElementById('editorView').classList.contains('hidden')){
-      e.preventDefault(); toggleImgMode();
-    }
-  }
 });
 // 화살표키 미세조정 (선택된 텍스트/이미지, Shift=10px)
 document.addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey)return;
   const ae=document.activeElement;
   if(ae&&(ae.isContentEditable||ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT'))return;
+  // T = 배경 이미지 크기/위치 조절 토글
+  if(e.key==='t'||e.key==='T'){
+    const ev=document.getElementById('editorView');
+    if(ev&&!ev.classList.contains('hidden')){ e.preventDefault(); toggleImgMode(); }
+    return;
+  }
   // Delete/Backspace = 선택 레이어 삭제
   if(e.key==='Delete'||e.key==='Backspace'){
     if(selTextId){ e.preventDefault(); deleteText(selTextId); selTextId=null; refreshStylePanel(); document.getElementById('measure').style.display='none'; return; }
