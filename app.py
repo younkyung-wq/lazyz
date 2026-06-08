@@ -426,7 +426,7 @@ let templates=[
   ]},
   {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',
    imgs:[{id:60,src:REPO_RAW+'logo_kurly.png',logo:'kurly',picker:true,anchor:'lc',x:60,cy:905,w:340,h:168},
-         {id:61,src:REPO_RAW+'arrow.png',hideList:true,onTop:true,x:60,y:1514,w:340,h:16}],texts:[
+         {id:61,src:REPO_RAW+'arrow.png',hideList:true,x:60,y:1514,w:340,h:16}],texts:[
     {id:2,text:'컬리 반짝특가',x:1030,y:880,fs:50,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4},
     {id:3,text:'정가 109,000원',x:72,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
     {id:4,text:'46,300원',x:430,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
