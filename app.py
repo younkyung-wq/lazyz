@@ -682,12 +682,21 @@ function onImgMouseDown(e,id){
   e.preventDefault(); e.stopPropagation();
   const m=getImg(id); if(!m)return;
   selectImg(id);
-  if(m.anchor==='bc'||m.anchor==='lc')return; // 고정 앵커 이미지는 이동 잠금
-  const sx=e.clientX, sy=e.clientY, x0=m.x, y0=m.y;
-  let moved=false;
+  const sx=e.clientX, sy=e.clientY, x0=m.x, y0=m.y, w0=m.w, ar=m.w/m.h;
+  let moved=false, saved=false;
   const mv=ev=>{
-    if(!moved&&(Math.abs(ev.clientX-sx)>3||Math.abs(ev.clientY-sy)>3)){moved=true;saveUndo();}
+    if(!moved&&(Math.abs(ev.clientX-sx)>3||Math.abs(ev.clientY-sy)>3)){moved=true;}
     if(!moved)return;
+    if(!saved){saveUndo();saved=true;}
+    if(m.anchor==='bc'||m.anchor==='lc'){
+      // 고정 앵커: 본체 드래그 = 크기 조절 (오른쪽으로 끌면 커짐)
+      const dx=(ev.clientX-sx)/SX;
+      const factor=(m.anchor==='bc')?2:1;
+      let nw=Math.max(60,w0+dx*factor);
+      m.w=Math.round(nw); m.h=Math.round(nw/ar);
+      refreshLayers();
+      return;
+    }
     let ddx=ev.clientX-sx, ddy=ev.clientY-sy;
     if(ev.shiftKey){ if(Math.abs(ddx)>Math.abs(ddy)) ddy=0; else ddx=0; }
     m.x=Math.round(x0+ddx/SX); m.y=Math.round(y0+ddy/SY);
