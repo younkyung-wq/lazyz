@@ -403,9 +403,9 @@ let templates=[
     {id:3,text:'레이지지 최대 45% 할인\\n5.04 - 5.08',x:82,y:473,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em',lh:1.333,sw:0.3},
   ]},
   {id:3,name:'템플릿 3',bgData:REPO_RAW+'t3bg.jpg',bgThumb:REPO_RAW+'thumb3.jpg',texts:[
-    {id:1,text:'단독 브랜드 위크',x:72,y:400,fs:60,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
-    {id:2,text:'~52% OFF',x:72,y:500,fs:126,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em'},
-    {id:3,text:'5.18(MON) - 5.24(SUN)',x:72,y:700,fs:46,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
+    {id:1,text:'5.31(SUN) -\\n6.15(MON)',x:935,y:145,fs:38,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.02em',lh:1.4},
+    {id:2,text:'더블유위크',x:540,y:1185,fs:108,color:'#ffffff',fw:600,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.02em'},
+    {id:3,text:'단 2주간, 최대 50% 할인',x:540,y:1335,fs:44,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.02em'},
   ]},
   {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',texts:[
     {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',fw:700,italic:true,ff:'Georgia, serif',shadow:false,ls:'-0.01em'},
