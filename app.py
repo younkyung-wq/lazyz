@@ -314,16 +314,17 @@ select:focus { outline: none; border-color: #ff4b4b; }
         <div id="mzT" class="mz-tag"></div>
         <div id="mzB" class="mz-tag"></div>
       </div>
-      <!-- 이미지 변형 핸들 -->
-      <div id="imgXf" style="display:none;position:absolute;inset:0;z-index:80;">
-        <div id="imgXfBox" style="position:absolute;border:1.5px solid #2b8cff;cursor:move;">
-          <div class="xf-handle" data-h="nw" style="top:-5px;left:-5px;cursor:nwse-resize;"></div>
-          <div class="xf-handle" data-h="ne" style="top:-5px;right:-5px;cursor:nesw-resize;"></div>
-          <div class="xf-handle" data-h="sw" style="bottom:-5px;left:-5px;cursor:nesw-resize;"></div>
-          <div class="xf-handle" data-h="se" style="bottom:-5px;right:-5px;cursor:nwse-resize;"></div>
-        </div>
-      </div>
       <div class="size-badge">1080 × 1920</div>
+    </div>
+    <!-- 이미지 변형 핸들 (프레임 밖에서도 보이도록 캔버스 영역에 배치) -->
+    <div id="imgXf" style="display:none;position:absolute;inset:0;z-index:80;pointer-events:none;">
+      <div id="imgXfBox" style="position:absolute;border:1.5px solid #2b8cff;cursor:move;pointer-events:auto;">
+        <div class="xf-handle" data-h="nw" style="top:-5px;left:-5px;cursor:nwse-resize;"></div>
+        <div class="xf-handle" data-h="ne" style="top:-5px;right:-5px;cursor:nesw-resize;"></div>
+        <div class="xf-handle" data-h="sw" style="bottom:-5px;left:-5px;cursor:nesw-resize;"></div>
+        <div class="xf-handle" data-h="se" style="bottom:-5px;right:-5px;cursor:nwse-resize;"></div>
+        <div id="xfScaleTag" style="position:absolute;top:-26px;left:50%;transform:translateX(-50%);background:#2b8cff;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;white-space:nowrap;"></div>
+      </div>
     </div>
   </div>
 
@@ -489,8 +490,18 @@ function refreshBg(){
   else{img.classList.add('hidden');ov.classList.remove('hidden');}
   applyBgTransform();
 }
+function clampBg(tpl){
+  // 항상 프레임을 덮도록 제한 (회색 안 보이게)
+  let s=tpl.bgScale||1; if(s<1)s=1;
+  const maxX=RW*(s-1)/2, maxY=RH*(s-1)/2;
+  let ox=tpl.bgX||0, oy=tpl.bgY||0;
+  ox=Math.max(-maxX,Math.min(maxX,ox));
+  oy=Math.max(-maxY,Math.min(maxY,oy));
+  tpl.bgScale=s; tpl.bgX=ox; tpl.bgY=oy;
+}
 function applyBgTransform(){
   const tpl=getTpl(); if(!tpl)return;
+  clampBg(tpl);
   const img=document.getElementById('storyBgImg');
   const s=tpl.bgScale||1, ox=tpl.bgX||0, oy=tpl.bgY||0;
   img.style.transformOrigin='center';
@@ -500,11 +511,14 @@ function applyBgTransform(){
 function updateXfBox(){
   const tpl=getTpl(); if(!tpl)return;
   const s=tpl.bgScale||1, ox=tpl.bgX||0, oy=tpl.bgY||0;
+  const outer=document.getElementById('storyOuter');
+  const baseL=outer.offsetLeft, baseT=outer.offsetTop;
   const boxW=W*s, boxH=H*s;
   const box=document.getElementById('imgXfBox');
   box.style.width=boxW+'px'; box.style.height=boxH+'px';
-  box.style.left=((W-boxW)/2+ox*SX)+'px';
-  box.style.top=((H-boxH)/2+oy*SY)+'px';
+  box.style.left=(baseL+(W-boxW)/2+ox*SX)+'px';
+  box.style.top=(baseT+(H-boxH)/2+oy*SY)+'px';
+  document.getElementById('xfScaleTag').textContent=Math.round(s*100)+'%';
 }
 
 // ── TEXT LAYERS ──
