@@ -380,6 +380,7 @@ select:focus { outline: none; border-color: #ff4b4b; }
         <button class="add-text-btn" onclick="addText()">+ 텍스트 추가</button>
         <button class="add-text-btn" style="margin-top:7px;" onclick="document.getElementById('imgLayerInput').click()">+ 이미지 추가</button>
         <input type="file" id="imgLayerInput" accept="image/*" class="hidden" onchange="onAddImgLayer(event)">
+        <input type="file" id="imgReplaceInput" accept="image/*" class="hidden" onchange="onReplaceImg(event)">
       </div>
     </div>
 
@@ -896,10 +897,34 @@ function refreshTextList(){
     const item=document.createElement('div');
     item.className='text-item'+(selImgId===m.id?' active':'');
     item.innerHTML=`<span class="text-item-text">🖼 이미지 ${i+1}</span>
+      <span class="img-replace" onclick="event.stopPropagation();replaceImg(${m.id})" style="font-size:11px;color:#ff4b4b;cursor:pointer;font-weight:600;margin-right:4px;">교체</span>
       <span class="text-item-del" onclick="event.stopPropagation();deleteImg(${m.id})">×</span>`;
-    item.addEventListener('click',e=>{if(!e.target.classList.contains('text-item-del'))selectImg(m.id);});
+    item.addEventListener('click',e=>{if(!e.target.classList.contains('text-item-del')&&!e.target.classList.contains('img-replace'))selectImg(m.id);});
     list.appendChild(item);
   });
+}
+let replaceTargetId=null;
+function replaceImg(id){
+  replaceTargetId=id;
+  document.getElementById('imgReplaceInput').click();
+}
+function onReplaceImg(e){
+  const f=e.target.files[0]; if(!f||replaceTargetId==null)return;
+  const m=getImg(replaceTargetId); if(!m){e.target.value='';return;}
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      saveUndo();
+      // 가로 폭 유지, 새 비율로 높이만 재계산
+      m.src=ev.target.result;
+      m.h=Math.round(m.w*img.height/img.width);
+      refreshLayers();
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(f);
+  e.target.value='';
 }
 
 // ── STYLE PANEL ──
