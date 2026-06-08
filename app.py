@@ -417,7 +417,7 @@ let templates=[
   {id:3,name:'템플릿 3',bgData:REPO_RAW+'t3bg.jpg',bgThumb:REPO_RAW+'thumb3.jpg',
    imgs:[{id:50,src:REPO_RAW+'wweek.png',anchor:'bc',by:1310,w:720,h:156}],texts:[
     {id:3,text:'단 2주간, 최대 50% 할인',x:540,y:1350,fs:42,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.03em',lh:1.4286},
-    {id:1,text:'5.31(SUN) -\\n6.15(MON)',x:825,y:150,fs:35,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'left',ls:'-0.03em',lh:1.4286},
+    {id:1,text:'5.31(SUN) -\\n6.15(MON)',x:1010,y:150,fs:35,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4286},
   ]},
   {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',texts:[
     {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',fw:700,italic:true,ff:'Georgia, serif',shadow:false,ls:'-0.01em'},
@@ -710,7 +710,8 @@ function placeEl(el,t){
   const lh=parseFloat(t.lh||'1.1');
   const halfLeading=Math.max(0,(lh-1))*(t.fs*SY)/2;
   const tY='translateY('+(-halfLeading)+'px)';
-  el.style.transform=(t.ta==='center'?'translateX(-50%) ':'')+tY;
+  const tX=(t.ta==='center'?'translateX(-50%) ':t.ta==='right'?'translateX(-100%) ':'');
+  el.style.transform=tX+tY;
   el.style.left=(t.x*SX)+'px';
   el.style.top=(t.y*SY)+'px';
 }
@@ -1086,7 +1087,7 @@ function downloadPNG(fmt){
           const kern=((t.kerns&&t.kerns[charOffset+i])||0)/1000*t.fs;
           totalW+=chW(ch)+baseLs+kern;
         });
-        let x=t.ta==='center'?t.x-totalW/2:t.x;
+        let x=t.ta==='center'?t.x-totalW/2:t.ta==='right'?t.x-totalW:t.x;
         const y=t.y+li*lineH;
         chars.forEach((ch,i)=>{
           if(ch!==' ')ctx.fillText(ch,x,y);
