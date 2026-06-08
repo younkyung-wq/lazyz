@@ -426,7 +426,7 @@ let templates=[
     {id:1,text:'5.31(SUN) -\\n6.15(MON)',x:1000,y:150,fs:35,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4286},
   ]},
   {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',
-   imgs:[{id:60,src:REPO_RAW+'logo_kurly.png',logo:'kurly',picker:true,x:80,y:820,w:360,h:177}],texts:[
+   imgs:[{id:60,src:REPO_RAW+'logo_kurly.png',logo:'kurly',picker:true,anchor:'lc',x:80,cy:905,w:360,h:177}],texts:[
     {id:2,text:'컬리 반짝특가',x:1030,y:880,fs:50,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4},
     {id:3,text:'정가 109,000원 → 46,300원',x:72,y:1650,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
   ]},
@@ -567,6 +567,7 @@ const getImg=id=>getImgs().find(m=>m.id===id);
 // 실제 위치/크기 (bottom-center 앵커면 계산)
 function imgRect(m){
   if(m.anchor==='bc') return {x:Math.round((RW-m.w)/2), y:Math.round(m.by-m.h), w:m.w, h:m.h};
+  if(m.anchor==='lc') return {x:m.x, y:Math.round(m.cy-m.h/2), w:m.w, h:m.h};
   return {x:m.x, y:m.y, w:m.w, h:m.h};
 }
 function makeImgEl(im){
@@ -620,7 +621,7 @@ function onImgMouseDown(e,id){
   e.preventDefault(); e.stopPropagation();
   const m=getImg(id); if(!m)return;
   selectImg(id);
-  if(m.anchor==='bc')return; // 중앙+하단 고정 이미지는 이동 잠금
+  if(m.anchor==='bc'||m.anchor==='lc')return; // 고정 앵커 이미지는 이동 잠금
   const sx=e.clientX, sy=e.clientY, x0=m.x, y0=m.y;
   let moved=false;
   const mv=ev=>{
@@ -644,6 +645,13 @@ function startImgResize(e,id,pos){
       // 중앙 정렬 + 하단 고정: 좌우 대칭으로 너비 변경, 위로만 자람
       const sign=(pos==='ne'||pos==='se')?1:-1;
       let nw=Math.max(60,w0+sign*dx*2);
+      m.w=Math.round(nw); m.h=Math.round(nw/ar);
+      refreshLayers(); return;
+    }
+    if(m.anchor==='lc'){
+      // 왼쪽 고정 + 세로중앙 고정: 우측 핸들로 너비 변경
+      const sign=(pos==='ne'||pos==='se')?1:-1;
+      let nw=Math.max(60,w0+sign*dx);
       m.w=Math.round(nw); m.h=Math.round(nw/ar);
       refreshLayers(); return;
     }
