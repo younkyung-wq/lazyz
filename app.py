@@ -1301,7 +1301,7 @@ renderGrid();
 with st.sidebar:
     st.markdown("""
     <div style="padding: 32px 20px 24px; border-bottom: 1px solid #222;">
-        <div style="color:#fff; font-size:22px; font-weight:800; letter-spacing:5px;">LAZYZ</div>
+        <img src="https://raw.githubusercontent.com/younkyung-wq/lazyz/main/logo.png" style="width:130px;display:block;">
     </div>
     """, unsafe_allow_html=True)
 
