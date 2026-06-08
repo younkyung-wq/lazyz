@@ -298,15 +298,17 @@ select:focus { outline: none; border-color: #ff4b4b; }
       <img id="storyBgImg" class="story-bg-img hidden" src="" alt="">
       <div id="guideV" style="display:none;position:absolute;top:0;bottom:0;left:50%;width:0;border-left:1.5px dashed rgba(255,75,75,0.85);pointer-events:none;z-index:50;"></div>
       <div id="guideH" style="display:none;position:absolute;left:0;right:0;top:50%;height:0;border-top:1.5px dashed rgba(255,75,75,0.85);pointer-events:none;z-index:50;"></div>
-      <!-- 측정 모드 오버레이 (Cmd+hover) -->
+      <!-- 측정 오버레이 (선택된 텍스트 박스 ↔ 가장자리 간격) -->
       <div id="measure" style="display:none;position:absolute;inset:0;pointer-events:none;z-index:90;">
-        <div id="mzV" style="position:absolute;top:0;bottom:0;width:0;border-left:1px solid #00bcd4;"></div>
-        <div id="mzH" style="position:absolute;left:0;right:0;height:0;border-top:1px solid #00bcd4;"></div>
+        <div id="mzBox" style="position:absolute;border:1px solid #00e5ff;box-sizing:border-box;"></div>
+        <div id="mzLineL" style="position:absolute;height:0;border-top:1px dashed #00e5ff;"></div>
+        <div id="mzLineR" style="position:absolute;height:0;border-top:1px dashed #00e5ff;"></div>
+        <div id="mzLineT" style="position:absolute;width:0;border-left:1px dashed #00e5ff;"></div>
+        <div id="mzLineB" style="position:absolute;width:0;border-left:1px dashed #00e5ff;"></div>
         <div id="mzL" class="mz-tag"></div>
         <div id="mzR" class="mz-tag"></div>
         <div id="mzT" class="mz-tag"></div>
         <div id="mzB" class="mz-tag"></div>
-        <div id="mzC" class="mz-tag" style="background:#00bcd4;"></div>
       </div>
       <div class="size-badge">1080 × 1920</div>
     </div>
@@ -534,6 +536,7 @@ function selectText(id){
     el.removeAttribute('contenteditable');
   });
   refreshTextList(); refreshStylePanel();
+  if(measureOn)showMeasure();
 }
 function startEdit(id, clickEvent){
   saveUndo();
@@ -657,6 +660,7 @@ function onTextMouseDown(e,id){
     } else { document.getElementById('guideV').style.display='none'; }
 
     placeEl(el,t);
+    if(measureOn)showMeasure();
   };
   const onUp=ev=>{
     hideGuides();
@@ -865,36 +869,41 @@ function downloadPNG(fmt){
   img.src=tpl.bgData;
 }
 
-// ── 측정 모드 (Cmd 누른 채 마우스 hover) ──
+// ── 측정 모드: 선택된 텍스트 박스 ↔ 가장자리 간격 표시 ──
 let measureOn=false;
 function setMeasure(on){
   measureOn=on;
-  if(!on)document.getElementById('measure').style.display='none';
+  if(on)showMeasure(); else document.getElementById('measure').style.display='none';
+}
+function showMeasure(){
+  const m=document.getElementById('measure');
+  if(!measureOn||!selTextId){m.style.display='none';return;}
+  const outer=document.getElementById('storyOuter');
+  const el=document.querySelector(`.text-layer[data-tid="${selTextId}"]`);
+  if(!el){m.style.display='none';return;}
+  const o=outer.getBoundingClientRect(), b=el.getBoundingClientRect();
+  const bx=b.left-o.left, by=b.top-o.top, bw=b.width, bh=b.height;
+  const cx=bx+bw/2, cy=by+bh/2;
+  const toReal=(px,dim)=>Math.round(px/(dim==='x'?o.width:o.height)*(dim==='x'?RW:RH));
+  m.style.display='block';
+  // 박스
+  const box=document.getElementById('mzBox');
+  box.style.left=bx+'px'; box.style.top=by+'px'; box.style.width=bw+'px'; box.style.height=bh+'px';
+  // 연결선
+  const L=document.getElementById('mzLineL'); L.style.left='0px'; L.style.top=cy+'px'; L.style.width=bx+'px';
+  const R=document.getElementById('mzLineR'); R.style.left=(bx+bw)+'px'; R.style.top=cy+'px'; R.style.width=(o.width-bx-bw)+'px';
+  const T=document.getElementById('mzLineT'); T.style.left=cx+'px'; T.style.top='0px'; T.style.height=by+'px';
+  const B=document.getElementById('mzLineB'); B.style.left=cx+'px'; B.style.top=(by+bh)+'px'; B.style.height=(o.height-by-bh)+'px';
+  // 라벨 (실제 px)
+  const set=(id,x,y,txt)=>{const e=document.getElementById(id);e.style.left=x+'px';e.style.top=y+'px';e.textContent=txt;};
+  set('mzL',bx/2,cy,toReal(bx,'x')+'');
+  set('mzR',bx+bw+(o.width-bx-bw)/2,cy,toReal(o.width-bx-bw,'x')+'');
+  set('mzT',cx,by/2,toReal(by,'y')+'');
+  set('mzB',cx,by+bh+(o.height-by-bh)/2,toReal(o.height-by-bh,'y')+'');
 }
 document.addEventListener('keydown',e=>{ if(e.key==='Meta'||e.key==='Control')setMeasure(true); });
 document.addEventListener('keyup',e=>{ if(e.key==='Meta'||e.key==='Control')setMeasure(false); });
 window.addEventListener('blur',()=>setMeasure(false));
-(function initMeasure(){
-  const outer=document.getElementById('storyOuter');
-  outer.addEventListener('mousemove',e=>{
-    if(!measureOn||dragInfo){document.getElementById('measure').style.display='none';return;}
-    const rect=outer.getBoundingClientRect();
-    const lx=e.clientX-rect.left, ly=e.clientY-rect.top;
-    if(lx<0||ly<0||lx>rect.width||ly>rect.height){document.getElementById('measure').style.display='none';return;}
-    const m=document.getElementById('measure'); m.style.display='block';
-    const realX=Math.round(lx/rect.width*RW), realY=Math.round(ly/rect.height*RH);
-    const left=realX, right=RW-realX, top=realY, bottom=RH-realY;
-    document.getElementById('mzV').style.left=lx+'px';
-    document.getElementById('mzH').style.top=ly+'px';
-    const set=(id,x,y,txt)=>{const el=document.getElementById(id);el.style.left=x+'px';el.style.top=y+'px';el.textContent=txt;};
-    set('mzL',lx/2,ly,left+'');
-    set('mzR',lx+(rect.width-lx)/2,ly,right+'');
-    set('mzT',lx,ly/2,top+'');
-    set('mzB',lx,ly+(rect.height-ly)/2,bottom+'');
-    set('mzC',lx+44,ly-16,realX+', '+realY);
-  });
-  outer.addEventListener('mouseleave',()=>{document.getElementById('measure').style.display='none';});
-})();
 
 renderGrid();
 </script>
