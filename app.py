@@ -381,6 +381,7 @@ select:focus { outline: none; border-color: #ff4b4b; }
   </div>
 
   <div class="editor-style">
+    <div style="font-size:16px;font-weight:800;margin-bottom:20px;visibility:hidden;">.</div>
     <div class="ctrl-label" style="cursor:default;">선택된 텍스트 스타일</div>
     <div id="stylePanel" class="no-select-hint">텍스트를 클릭하여 선택하세요</div>
   </div>
