@@ -983,8 +983,8 @@ function resetBgTransform(){
 }
 (function initImgXf(){
   const box=document.getElementById('imgXfBox');
-  // 빈 공간(박스 밖) 클릭 시 조절 모드 종료
-  document.querySelector('.editor-canvas-area').addEventListener('click',e=>{
+  // 빈 공간(박스 밖) 클릭 시 조절 모드 종료 (박스/핸들 드래그는 stopPropagation으로 제외됨)
+  document.querySelector('.editor-canvas-area').addEventListener('mousedown',e=>{
     if(imgMode && !e.target.closest('#imgXfBox')) toggleImgMode();
   });
   // 박스 내부 드래그 = 이동
