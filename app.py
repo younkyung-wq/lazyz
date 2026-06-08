@@ -207,6 +207,17 @@ body {
 .style-grid { display: flex; flex-direction: column; gap: 10px; }
 .style-row { display: flex; align-items: center; gap: 10px; }
 .style-row-label { font-size: 11px; color: #aaa; min-width: 44px; }
+/* compact field groups */
+.fld-row { display: flex; gap: 8px; }
+.fld { flex: 1; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fld-label { font-size: 10px; color: #bbb; font-weight: 600; letter-spacing: 0.3px; }
+.fld-input-wrap { display: flex; align-items: center; gap: 6px; }
+.fld select, .fld input.num-input {
+  width: 100%; padding: 6px 8px; border: 1.5px solid #eee; border-radius: 7px;
+  font-size: 12px; color: #333; background: white; outline: none; min-width: 0;
+}
+.fld select:focus, .fld input.num-input:focus { border-color: #ff4b4b; }
+.fld .unit { font-size: 10px; color: #bbb; flex-shrink: 0; }
 
 input[type="range"] { flex:1; accent-color: #ff4b4b; height: 4px; cursor:pointer; }
 input.num-input {
@@ -698,8 +709,8 @@ function refreshStylePanel(){
   const t=getTxt(selTextId); if(!t)return;
   panel.innerHTML=`
     <div class="style-grid">
-      <div class="style-row">
-        <span class="style-row-label">폰트</span>
+      <div class="fld">
+        <span class="fld-label">폰트</span>
         <select onchange="setS('ff',this.value)">
           <option value="Pretendard, sans-serif" ${t.ff==='Pretendard, sans-serif'?'selected':''}>Pretendard</option>
           <option value="sans-serif" ${t.ff==='sans-serif'?'selected':''}>Sans-serif</option>
@@ -708,44 +719,45 @@ function refreshStylePanel(){
           <option value="'Courier New',monospace" ${t.ff==="'Courier New',monospace"?'selected':''}>Courier</option>
         </select>
       </div>
-      <div class="style-row">
-        <span class="style-row-label">크기</span>
-        <input class="num-input" type="number" min="1" max="500" step="1" value="${t.fs}"
-          oninput="setS('fs',+this.value)">
-        <span style="font-size:11px;color:#bbb;">px</span>
-      </div>
-      <div class="style-row">
-        <span class="style-row-label">굵기</span>
-        <select onchange="setS('fw',+this.value)">
-          <option value="100" ${t.fw===100?'selected':''}>100 Thin</option>
-          <option value="200" ${t.fw===200?'selected':''}>200 ExtraLight</option>
-          <option value="300" ${t.fw===300?'selected':''}>300 Light</option>
-          <option value="400" ${t.fw===400?'selected':''}>400 Regular</option>
-          <option value="500" ${t.fw===500?'selected':''}>500 Medium</option>
-          <option value="600" ${t.fw===600?'selected':''}>600 SemiBold</option>
-          <option value="700" ${t.fw===700?'selected':''}>700 Bold</option>
-          <option value="800" ${t.fw===800?'selected':''}>800 ExtraBold</option>
-          <option value="900" ${t.fw===900?'selected':''}>900 Black</option>
-        </select>
-      </div>
-      <div class="style-row">
-        <span class="style-row-label">색상</span>
-        <input type="color" value="${t.color}" oninput="setS('color',this.value)">
-        <div class="style-btns">
-          <button class="style-btn ${t.italic?'on':''}" onclick="toggleItalic()"><i>I</i></button>
+      <div class="fld-row">
+        <div class="fld">
+          <span class="fld-label">크기 (px)</span>
+          <input class="num-input" type="number" min="1" max="500" step="1" value="${t.fs}" oninput="setS('fs',+this.value)">
+        </div>
+        <div class="fld">
+          <span class="fld-label">굵기</span>
+          <select onchange="setS('fw',+this.value)">
+            <option value="100" ${t.fw===100?'selected':''}>100 Thin</option>
+            <option value="200" ${t.fw===200?'selected':''}>200 ExtraLight</option>
+            <option value="300" ${t.fw===300?'selected':''}>300 Light</option>
+            <option value="400" ${t.fw===400?'selected':''}>400 Regular</option>
+            <option value="500" ${t.fw===500?'selected':''}>500 Medium</option>
+            <option value="600" ${t.fw===600?'selected':''}>600 SemiBold</option>
+            <option value="700" ${t.fw===700?'selected':''}>700 Bold</option>
+            <option value="800" ${t.fw===800?'selected':''}>800 ExtraBold</option>
+            <option value="900" ${t.fw===900?'selected':''}>900 Black</option>
+          </select>
         </div>
       </div>
-      <div class="style-row">
-        <span class="style-row-label">자간</span>
-        <input class="num-input" type="number" step="1" value="${Math.round(parseFloat(t.ls||'0')*1000)}"
-          oninput="setS('ls',(this.value/1000)+'em')">
-        <span style="font-size:11px;color:#bbb;">‱</span>
+      <div class="fld-row">
+        <div class="fld">
+          <span class="fld-label">자간 (‱)</span>
+          <input class="num-input" type="number" step="1" value="${Math.round(parseFloat(t.ls||'0')*1000)}" oninput="setS('ls',(this.value/1000)+'em')">
+        </div>
+        <div class="fld">
+          <span class="fld-label">행간 (px)</span>
+          <input class="num-input" type="number" step="1" value="${Math.round((parseFloat(t.lh||'1.1'))*t.fs)}" oninput="setLh(+this.value)">
+        </div>
       </div>
-      <div class="style-row">
-        <span class="style-row-label">행간</span>
-        <input class="num-input" type="number" step="1" value="${Math.round((parseFloat(t.lh||'1.1'))*t.fs)}"
-          oninput="setLh(+this.value)">
-        <span style="font-size:11px;color:#bbb;">px</span>
+      <div class="fld-row" style="align-items:flex-end;">
+        <div class="fld" style="flex:0 0 auto;">
+          <span class="fld-label">색상</span>
+          <input type="color" value="${t.color}" oninput="setS('color',this.value)" style="width:38px;height:34px;border:1.5px solid #eee;border-radius:7px;padding:1px;cursor:pointer;background:none;">
+        </div>
+        <div class="fld" style="flex:0 0 auto;">
+          <span class="fld-label">기울임</span>
+          <button class="style-btn ${t.italic?'on':''}" onclick="toggleItalic()" style="height:34px;width:38px;"><i>I</i></button>
+        </div>
       </div>
     </div>`;
 }
