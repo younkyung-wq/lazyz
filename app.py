@@ -670,15 +670,19 @@ function refreshTextList(){
   getTexts().forEach(t=>{
     const item=document.createElement('div');
     item.className='text-item'+(selTextId===t.id?' active':'');
+    const rows=(t.text.match(/\\n/g)||[]).length+1;
     item.innerHTML=`
-      <input class="text-item-input" value="${t.text.replace(/"/g,'&quot;')}"
-        style="flex:1;border:none;background:transparent;font-size:12px;color:#444;outline:none;min-width:0;">
+      <textarea class="text-item-input" rows="${rows}"
+        style="flex:1;border:none;background:transparent;font-size:12px;color:#444;outline:none;min-width:0;resize:none;font-family:inherit;line-height:1.4;overflow:hidden;">${t.text.replace(/</g,'&lt;')}</textarea>
       <span class="text-item-del" onclick="event.stopPropagation();deleteText(${t.id})">×</span>`;
-    const input=item.querySelector('input');
+    const input=item.querySelector('textarea');
+    const autosize=()=>{input.style.height='auto';input.style.height=input.scrollHeight+'px';};
+    setTimeout(autosize,0);
     input.addEventListener('focus',()=>{selTextId=t.id;refreshStylePanel();document.querySelectorAll('.text-item').forEach(el=>el.classList.remove('active'));item.classList.add('active');});
     input.addEventListener('input',()=>{
       saveUndo();
       t.text=input.value;
+      autosize();
       const el=document.querySelector(`.text-layer[data-tid="${t.id}"]`);
       if(el)renderChars(el,t);
     });
