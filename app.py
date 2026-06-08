@@ -408,12 +408,12 @@ const REPO_RAW = 'https://raw.githubusercontent.com/younkyung-wq/lazyz/main/';
 const LOGOS=[
   {key:'wconcept',label:'W컨셉',src:REPO_RAW+'logo_wconcept.png',ar:478/60,w:400},
   {key:'musinsa',label:'무신사',src:REPO_RAW+'logo_musinsa.png',ar:668/126,w:350},
-  {key:'29cm',label:'29CM',src:REPO_RAW+'logo_29cm.png',ar:1000/250,w:250},
+  {key:'29cm',label:'29CM',src:REPO_RAW+'logo_29cm.png',ar:1000/250,w:280},
   {key:'kurly',label:'컬리',src:REPO_RAW+'logo_kurly.png',ar:501/247,w:340},
   {key:'kream',label:'크림',src:REPO_RAW+'logo_kream.png?v=2',ar:1200/191,w:370},
-  {key:'eql',label:'EQL',src:REPO_RAW+'logo_eql.png',ar:994/342,w:250},
+  {key:'eql',label:'EQL',src:REPO_RAW+'logo_eql.png',ar:994/342,w:280},
   {key:'lotteon',label:'롯데온',src:REPO_RAW+'logo_lotteon.png',ar:336/68,w:370},
-  {key:'ohou',label:'오늘의집',src:REPO_RAW+'logo_ohou.png',ar:662/193,w:250},
+  {key:'ohou',label:'오늘의집',src:REPO_RAW+'logo_ohou.png',ar:662/193,w:280},
 ];
 
 let templates=[
