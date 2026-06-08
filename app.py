@@ -317,7 +317,10 @@ select:focus { outline: none; border-color: #ff4b4b; }
       <div id="stylePanel" class="no-select-hint">텍스트를 클릭하여 선택하세요</div>
     </div>
 
-    <button class="dl-btn" onclick="downloadPNG()">↓ PNG 다운로드 (1080×1920)</button>
+    <div style="display:flex;gap:8px;">
+      <button class="dl-btn" style="flex:1;" onclick="downloadPNG('png')">↓ PNG</button>
+      <button class="dl-btn" style="flex:1;" onclick="downloadPNG('jpg')">↓ JPG</button>
+    </div>
   </div>
 </div>
 
@@ -489,13 +492,12 @@ function applyStyle(el,t){
 function placeEl(el,t){
   el.style.width='auto';
   el.style.textAlign=t.ta||'left';
-  if(t.ta==='center'){
-    el.style.left=(t.x*SX)+'px';
-    el.style.transform='translateX(-50%)';
-  } else {
-    el.style.left=(t.x*SX)+'px';
-    el.style.transform='none';
-  }
+  // 행간이 폰트크기보다 클 때 첫 줄 위쪽 leading만큼 위로 보정 → 첫 줄 top 고정 (canvas와 일치)
+  const lh=parseFloat(t.lh||'1.1');
+  const halfLeading=Math.max(0,(lh-1))*(t.fs*SY)/2;
+  const tY='translateY('+(-halfLeading)+'px)';
+  el.style.transform=(t.ta==='center'?'translateX(-50%) ':'')+tY;
+  el.style.left=(t.x*SX)+'px';
   el.style.top=(t.y*SY)+'px';
 }
 function selectText(id){
@@ -551,6 +553,7 @@ function startEdit(id, clickEvent){
       const delta=2/t.fs;
       t.lh=e.key==='ArrowUp'?Math.max(0.5,curLh-delta):curLh+delta;
       el.style.lineHeight=t.lh;
+      placeEl(el,t);
       refreshStylePanel();
       return;
     }
@@ -746,7 +749,7 @@ function setLh(px){
   const t=getTxt(selTextId); if(!t)return;
   t.lh=px/t.fs;
   const el=document.querySelector(`.text-layer[data-tid="${selTextId}"]`);
-  if(el)el.style.lineHeight=t.lh;
+  if(el){el.style.lineHeight=t.lh;placeEl(el,t);}
 }
 function toggleItalic(){
   const t=getTxt(selTextId); if(!t)return; t.italic=!t.italic;
@@ -772,7 +775,8 @@ function onUploadDrop(e){e.preventDefault();document.getElementById('uploadZone'
 function onFileInput(e){const f=e.target.files[0];if(f)loadBg(activeTplId,f);}
 
 // ── DOWNLOAD ──
-function downloadPNG(){
+function downloadPNG(fmt){
+  fmt=fmt||'png';
   const tpl=getTpl();
   if(!tpl.bgData){alert('배경 이미지를 먼저 업로드해주세요.');return;}
   const canvas=document.createElement('canvas');
@@ -814,8 +818,10 @@ function downloadPNG(){
       ctx.restore();
     });
     const a=document.createElement('a');
-    a.download=`lazyz_story_${tpl.id}_${Date.now()}.png`;
-    a.href=canvas.toDataURL('image/png'); a.click();
+    const isJpg=fmt==='jpg';
+    const mime=isJpg?'image/jpeg':'image/png';
+    a.download=`lazyz_story_${tpl.id}_${Date.now()}.${isJpg?'jpg':'png'}`;
+    a.href=canvas.toDataURL(mime,isJpg?0.95:undefined); a.click();
   };
   img.src=tpl.bgData;
 }
