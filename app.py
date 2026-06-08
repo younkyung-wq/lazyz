@@ -1044,15 +1044,20 @@ function flashStatus(msg){
   setTimeout(()=>{el.textContent=prev;el.style.color=prevC;},2500);
 }
 
-// ── 측정 모드: 선택된 텍스트 박스 ↔ 가장자리 간격 표시 ──
-let measureOn=false;
-function setMeasure(on){
-  measureOn=on;
-  if(on)showMeasure(); else document.getElementById('measure').style.display='none';
-}
+// ── 측정 모드: Cmd 누를 때만, 선택 박스 ↔ 가장자리 + 다른 박스 간격 ──
+let cmdHeld=false;
+function setCmd(on){ if(cmdHeld===on)return; cmdHeld=on; showMeasure(); }
+document.addEventListener('keydown',e=>{ if(e.key==='Meta'||e.key==='Control')setCmd(true); });
+document.addEventListener('keyup',e=>{ if(e.key==='Meta'||e.key==='Control')setCmd(false); });
+window.addEventListener('blur',()=>setCmd(false));
+// iframe에서 keydown이 안 잡힐 때 대비: 마우스 이벤트의 metaKey로 동기화
+document.addEventListener('mousemove',e=>{ setCmd(e.metaKey||e.ctrlKey); },true);
+
 function showMeasure(){
   const m=document.getElementById('measure');
-  if(!selTextId){m.style.display='none';return;}
+  // 기존 동적 형제-간격 요소 제거
+  m.querySelectorAll('.mz-sib').forEach(el=>el.remove());
+  if(!cmdHeld||!selTextId){m.style.display='none';return;}
   const outer=document.getElementById('storyOuter');
   const el=document.querySelector(`.text-layer[data-tid="${selTextId}"]`);
   if(!el){m.style.display='none';return;}
@@ -1064,17 +1069,37 @@ function showMeasure(){
   // 박스
   const box=document.getElementById('mzBox');
   box.style.left=bx+'px'; box.style.top=by+'px'; box.style.width=bw+'px'; box.style.height=bh+'px';
-  // 연결선
+  // 가장자리 연결선
   const L=document.getElementById('mzLineL'); L.style.left='0px'; L.style.top=cy+'px'; L.style.width=bx+'px';
   const R=document.getElementById('mzLineR'); R.style.left=(bx+bw)+'px'; R.style.top=cy+'px'; R.style.width=(o.width-bx-bw)+'px';
   const T=document.getElementById('mzLineT'); T.style.left=cx+'px'; T.style.top='0px'; T.style.height=by+'px';
   const B=document.getElementById('mzLineB'); B.style.left=cx+'px'; B.style.top=(by+bh)+'px'; B.style.height=(o.height-by-bh)+'px';
-  // 라벨 (실제 px)
   const set=(id,x,y,txt)=>{const e=document.getElementById(id);e.style.left=x+'px';e.style.top=y+'px';e.textContent=txt;};
   set('mzL',bx/2,cy,toReal(bx,'x')+'');
   set('mzR',bx+bw+(o.width-bx-bw)/2,cy,toReal(o.width-bx-bw,'x')+'');
   set('mzT',cx,by/2,toReal(by,'y')+'');
   set('mzB',cx,by+bh+(o.height-by-bh)/2,toReal(o.height-by-bh,'y')+'');
+
+  // 다른 텍스트 박스와의 간격
+  document.querySelectorAll('.text-layer').forEach(other=>{
+    if(+other.dataset.tid===selTextId)return;
+    const r=other.getBoundingClientRect();
+    const ox2=r.left-o.left, oy2=r.top-o.top, ow=r.width, oh=r.height;
+    const xOverlap=Math.min(bx+bw,ox2+ow)-Math.max(bx,ox2);
+    const yOverlap=Math.min(by+bh,oy2+oh)-Math.max(by,oy2);
+    const addLine=(x,y,w,h)=>{const d=document.createElement('div');d.className='mz-sib';d.style.cssText=`position:absolute;left:${x}px;top:${y}px;${w?('width:'+w+'px;border-top:1px solid #ff3df0;'):('height:'+h+'px;border-left:1px solid #ff3df0;')}`;m.appendChild(d);};
+    const addTag=(x,y,txt)=>{const d=document.createElement('div');d.className='mz-tag mz-sib';d.style.color='#ff3df0';d.style.left=x+'px';d.style.top=y+'px';d.textContent=txt;m.appendChild(d);};
+    if(xOverlap>0){ // 세로 간격
+      const ix=Math.max(bx,ox2)+xOverlap/2;
+      if(oy2+oh<=by){ const g=by-(oy2+oh); addLine(ix,oy2+oh,0,g); addTag(ix,oy2+oh+g/2,toReal(g,'y')+''); }
+      else if(oy2>=by+bh){ const g=oy2-(by+bh); addLine(ix,by+bh,0,g); addTag(ix,by+bh+g/2,toReal(g,'y')+''); }
+    }
+    if(yOverlap>0){ // 가로 간격
+      const iy=Math.max(by,oy2)+yOverlap/2;
+      if(ox2+ow<=bx){ const g=bx-(ox2+ow); addLine(ox2+ow,iy,g,0); addTag(ox2+ow+g/2,iy,toReal(g,'x')+''); }
+      else if(ox2>=bx+bw){ const g=ox2-(bx+bw); addLine(bx+bw,iy,g,0); addTag(bx+bw+g/2,iy,toReal(g,'x')+''); }
+    }
+  });
 }
 renderGrid();
 </script>
