@@ -163,7 +163,7 @@ body {
 .text-layer {
   position: absolute; cursor: move; user-select: none;
   padding: 2px 4px; border-radius: 2px;
-  white-space: normal; z-index: 10; transition: outline 0.1s;
+  white-space: nowrap; z-index: 10; transition: outline 0.1s;
 }
 .text-layer.selected { outline: 1.5px solid #54fffd; outline-offset: 3px; }
 .text-layer[contenteditable="true"] {
