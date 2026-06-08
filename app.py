@@ -108,19 +108,19 @@ body {
 .card-edit-btn:hover { background: #ffe0e0; }
 
 /* ── EDITOR VIEW ── */
-.editor-view { display: flex; height: 820px; background: white; }
+.editor-view { display: flex; height: 820px; background: white; justify-content: center; }
 
 .editor-canvas-area {
-  flex: 1 1 auto; background: #1a1a1a;
-  padding: 16px; display: flex; flex-direction: column; gap: 12px;
-  align-items: center; justify-content: flex-start;
+  flex: 1 1 auto; max-width: 760px; background: #ffffff;
+  padding: 16px; position: relative; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
 }
 .back-btn {
-  background: none; border: none; color: #888; cursor: pointer;
+  background: none; border: none; color: #999; cursor: pointer;
   font-size: 12px; padding: 0; display: flex; align-items: center; gap: 5px;
-  transition: color 0.15s; align-self: flex-start;
+  transition: color 0.15s; position: absolute; top: 16px; left: 16px; z-index: 5;
 }
-.back-btn:hover { color: #fff; }
+.back-btn:hover { color: #111; }
 
 .story-outer {
   position: relative; width: 344px; height: 612px;
