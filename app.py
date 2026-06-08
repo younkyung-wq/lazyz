@@ -564,9 +564,9 @@ function renderChars(el,t){
       el.appendChild(document.createElement('br'));
     } else {
       const sp=document.createElement('span');
-      sp.textContent=ch===' '?' ':ch;
       const baseLs=Math.round(parseFloat(t.ls||'0')*1000);
       const kern=(t.kerns&&t.kerns[i])||0;
+      if(ch===' '){ sp.style.display='inline-block'; sp.style.width=(t.sw||0.22)+'em'; } else { sp.textContent=ch; }
       sp.style.letterSpacing=((baseLs+kern)/1000)+'em';
       el.appendChild(sp);
     }
@@ -919,18 +919,20 @@ function downloadPNG(fmt){
       let charOffset=0;
       lines.forEach((line,li)=>{
         const chars=[...line];
+        const swEm=(t.sw||0.22)*t.fs; // 공백 폭
+        const chW=ch=>(ch===' '?swEm:ctx.measureText(ch).width);
         // 전체 너비 계산 (center용)
         let totalW=0;
         chars.forEach((ch,i)=>{
           const kern=((t.kerns&&t.kerns[charOffset+i])||0)/1000*t.fs;
-          totalW+=ctx.measureText(ch).width+baseLs+kern;
+          totalW+=chW(ch)+baseLs+kern;
         });
         let x=t.ta==='center'?t.x-totalW/2:t.x;
         const y=t.y+li*lineH;
         chars.forEach((ch,i)=>{
-          ctx.fillText(ch,x,y);
+          if(ch!==' ')ctx.fillText(ch,x,y);
           const kern=((t.kerns&&t.kerns[charOffset+i])||0)/1000*t.fs;
-          x+=ctx.measureText(ch).width+baseLs+kern;
+          x+=chW(ch)+baseLs+kern;
         });
         charOffset+=chars.length+1; // +1 for the newline
       });
