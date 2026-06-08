@@ -111,13 +111,14 @@ body {
 .editor-view { display: flex; height: 820px; background: white; }
 
 .editor-canvas-area {
-  flex: 0 0 auto; background: #1a1a1a;
+  flex: 1 1 auto; background: #1a1a1a;
   padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  align-items: center; justify-content: flex-start;
 }
 .back-btn {
   background: none; border: none; color: #888; cursor: pointer;
   font-size: 12px; padding: 0; display: flex; align-items: center; gap: 5px;
-  transition: color 0.15s;
+  transition: color 0.15s; align-self: flex-start;
 }
 .back-btn:hover { color: #fff; }
 
@@ -163,7 +164,7 @@ body {
 
 /* Controls */
 .editor-controls {
-  flex: 1; padding: 20px 22px; overflow-y: auto;
+  flex: 0 0 400px; width: 400px; padding: 20px 24px; overflow-y: auto;
   border-left: 1px solid #f0f0f0;
 }
 .ctrl-section { margin-bottom: 22px; }
