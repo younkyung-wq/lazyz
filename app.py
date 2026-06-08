@@ -158,6 +158,15 @@ body {
   position: absolute; width: 10px; height: 10px;
   background: #fff; border: 1.5px solid #2b8cff; border-radius: 2px;
 }
+.img-layer {
+  position: absolute; cursor: move; z-index: 9;
+}
+.img-layer img { display: block; width: 100%; height: 100%; pointer-events: none; }
+.img-layer.selected { outline: 1.5px solid #54fffd; }
+.img-handle {
+  position: absolute; width: 11px; height: 11px;
+  background: #fff; border: 1.5px solid #54fffd; border-radius: 2px; z-index: 20;
+}
 
 /* Text layers */
 .text-layer {
@@ -369,6 +378,8 @@ select:focus { outline: none; border-color: #ff4b4b; }
       <div class="sec-body">
         <div id="textList"></div>
         <button class="add-text-btn" onclick="addText()">+ 텍스트 추가</button>
+        <button class="add-text-btn" style="margin-top:7px;" onclick="document.getElementById('imgLayerInput').click()">+ 이미지 추가</button>
+        <input type="file" id="imgLayerInput" accept="image/*" class="hidden" onchange="onAddImgLayer(event)">
       </div>
     </div>
 
@@ -538,7 +549,101 @@ function updateXfBox(){
 function refreshLayers(){
   const outer=document.getElementById('storyOuter');
   outer.querySelectorAll('.text-layer').forEach(el=>el.remove());
+  outer.querySelectorAll('.img-layer').forEach(el=>el.remove());
+  getImgs().forEach(im=>outer.appendChild(makeImgEl(im))); // 이미지 먼저(아래)
   getTexts().forEach(t=>outer.appendChild(makeEl(t)));
+}
+// ── 이미지 레이어 ──
+let selImgId=null;
+const getImgs=()=>{const t=getTpl();if(!t)return [];if(!t.imgs)t.imgs=[];return t.imgs;};
+const getImg=id=>getImgs().find(m=>m.id===id);
+function makeImgEl(im){
+  const el=document.createElement('div');
+  el.className='img-layer'+(selImgId===im.id?' selected':'');
+  el.dataset.iid=im.id;
+  el.style.left=(im.x*SX)+'px'; el.style.top=(im.y*SY)+'px';
+  el.style.width=(im.w*SX)+'px'; el.style.height=(im.h*SY)+'px';
+  const img=document.createElement('img'); img.src=im.src; el.appendChild(img);
+  if(selImgId===im.id){
+    ['nw','ne','sw','se'].forEach(pos=>{
+      const h=document.createElement('div'); h.className='img-handle'; h.dataset.pos=pos;
+      const s='-6px';
+      if(pos==='nw'){h.style.top=s;h.style.left=s;h.style.cursor='nwse-resize';}
+      if(pos==='ne'){h.style.top=s;h.style.right=s;h.style.cursor='nesw-resize';}
+      if(pos==='sw'){h.style.bottom=s;h.style.left=s;h.style.cursor='nesw-resize';}
+      if(pos==='se'){h.style.bottom=s;h.style.right=s;h.style.cursor='nwse-resize';}
+      h.addEventListener('mousedown',e=>startImgResize(e,im.id,pos));
+      el.appendChild(h);
+    });
+  }
+  el.addEventListener('mousedown',e=>onImgMouseDown(e,im.id));
+  return el;
+}
+function selectImg(id){
+  selImgId=id; selTextId=null;
+  document.querySelectorAll('.text-layer').forEach(el=>el.classList.remove('selected'));
+  refreshLayers(); refreshTextList();
+}
+function onAddImgLayer(e){
+  const f=e.target.files[0]; if(!f)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const tpl=getTpl(); if(!tpl)return;
+      saveUndo();
+      const w=720, h=Math.round(720*img.height/img.width);
+      const m={id:nextId++,src:ev.target.result,x:Math.round((RW-w)/2),y:Math.round((RH-h)/2),w,h};
+      getImgs().push(m);
+      selectImg(m.id);
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(f);
+  e.target.value='';
+}
+function onImgMouseDown(e,id){
+  if(e.target.classList.contains('img-handle'))return;
+  e.preventDefault(); e.stopPropagation();
+  const m=getImg(id); if(!m)return;
+  const sx=e.clientX, sy=e.clientY, x0=m.x, y0=m.y;
+  let moved=false;
+  selectImg(id);
+  const mv=ev=>{
+    if(!moved&&(Math.abs(ev.clientX-sx)>3||Math.abs(ev.clientY-sy)>3)){moved=true;saveUndo();}
+    if(!moved)return;
+    m.x=Math.round(x0+(ev.clientX-sx)/SX); m.y=Math.round(y0+(ev.clientY-sy)/SY);
+    const el=document.querySelector(`.img-layer[data-iid="${id}"]`);
+    if(el){el.style.left=(m.x*SX)+'px';el.style.top=(m.y*SY)+'px';}
+  };
+  const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);};
+  document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+}
+function startImgResize(e,id,pos){
+  e.preventDefault(); e.stopPropagation();
+  const m=getImg(id); if(!m)return;
+  saveUndo();
+  const sx=e.clientX, w0=m.w, h0=m.h, x0=m.x, y0=m.y, ar=m.w/m.h;
+  const mv=ev=>{
+    const dx=(ev.clientX-sx)/SX;
+    let nw=(pos==='ne'||pos==='se')?w0+dx:w0-dx;
+    nw=Math.max(40,nw);
+    const nh=Math.round(nw/ar);
+    m.w=Math.round(nw); m.h=nh;
+    // 좌측 핸들이면 x 보정, 상단 핸들이면 y 보정
+    if(pos==='nw'||pos==='sw') m.x=Math.round(x0+(w0-nw));
+    if(pos==='nw'||pos==='ne') m.y=Math.round(y0+(h0-nh));
+    refreshLayers();
+  };
+  const up=()=>{document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);};
+  document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+}
+function deleteImg(id){
+  const tpl=getTpl(); if(!tpl)return;
+  saveUndo();
+  tpl.imgs=getImgs().filter(m=>m.id!==id);
+  if(selImgId===id)selImgId=null;
+  refreshLayers(); refreshTextList();
 }
 function makeEl(t){
   const el=document.createElement('div');
@@ -786,6 +891,15 @@ function refreshTextList(){
     item.addEventListener('click',e=>{if(e.target!==input){selectText(t.id);refreshLayers();}});
     list.appendChild(item);
   });
+  // 이미지 레이어 항목
+  getImgs().forEach((m,i)=>{
+    const item=document.createElement('div');
+    item.className='text-item'+(selImgId===m.id?' active':'');
+    item.innerHTML=`<span class="text-item-text">🖼 이미지 ${i+1}</span>
+      <span class="text-item-del" onclick="event.stopPropagation();deleteImg(${m.id})">×</span>`;
+    item.addEventListener('click',e=>{if(!e.target.classList.contains('text-item-del'))selectImg(m.id);});
+    list.appendChild(item);
+  });
 }
 
 // ── STYLE PANEL ──
@@ -908,6 +1022,13 @@ function downloadPNG(fmt){
     ctx.translate(-RW/2,-RH/2);
     ctx.drawImage(img,sx,sy,sw,sh,0,0,RW,RH);
     ctx.restore();
+    // 이미지 레이어 먼저 그리고(비동기) → 텍스트 → 내보내기
+    const imgs=(tpl.imgs||[]);
+    Promise.all(imgs.map(m=>new Promise(res=>{
+      const im=new Image(); im.onload=()=>{ctx.drawImage(im,m.x,m.y,m.w,m.h);res();}; im.onerror=()=>res(); im.src=m.src;
+    }))).then(()=>{ drawTextsAndExport(); });
+
+    function drawTextsAndExport(){
     tpl.texts.forEach(t=>{
       ctx.save();
       ctx.font=`${t.italic?'italic':'normal'} ${t.fw||400} ${t.fs}px ${t.ff}`;
@@ -963,6 +1084,7 @@ function downloadPNG(fmt){
       a.click();
       setTimeout(()=>URL.revokeObjectURL(a.href),1000);
     }, mime, isJpg?0.95:undefined);
+    } // drawTextsAndExport end
   };
   img.src=tpl.bgData;
 }
@@ -1004,12 +1126,16 @@ function resetBgTransform(){
   // 빈 공간(박스 밖) 클릭 시 조절 모드 종료 (박스/핸들 드래그는 stopPropagation으로 제외됨)
   document.querySelector('.editor-canvas-area').addEventListener('mousedown',e=>{
     if(imgMode){ if(!e.target.closest('#imgXfBox')) toggleImgMode(); return; }
-    // 빈 여백(텍스트 아님) 클릭 시 선택 해제
-    if(!e.target.closest('.text-layer') && selTextId!==null){
-      selTextId=null;
-      document.querySelectorAll('.text-layer').forEach(el=>{el.classList.remove('selected');el.removeAttribute('contenteditable');});
-      refreshTextList(); refreshStylePanel();
-      document.getElementById('measure').style.display='none';
+    // 빈 여백(텍스트/이미지 아님) 클릭 시 선택 해제
+    if(!e.target.closest('.text-layer') && !e.target.closest('.img-layer')){
+      if(selTextId!==null){
+        selTextId=null;
+        document.querySelectorAll('.text-layer').forEach(el=>{el.classList.remove('selected');el.removeAttribute('contenteditable');});
+        refreshStylePanel();
+        document.getElementById('measure').style.display='none';
+      }
+      if(selImgId!==null){ selImgId=null; refreshLayers(); }
+      refreshTextList();
     }
   });
   // 박스 내부 드래그 = 이동
