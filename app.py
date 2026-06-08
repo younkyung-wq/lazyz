@@ -413,7 +413,7 @@ const LOGOS=[
   {key:'eql',label:'EQL',src:REPO_RAW+'logo_eql.png',ar:994/342,w:300},
   {key:'musinsa',label:'무신사',src:REPO_RAW+'logo_musinsa.png',ar:668/126,w:350},
   {key:'ohou',label:'오늘의집',src:REPO_RAW+'logo_ohou.png',ar:662/193,w:320},
-  {key:'kream',label:'크림',src:REPO_RAW+'logo_kream.png',ar:1000/159,w:370},
+  {key:'kream',label:'크림',src:REPO_RAW+'logo_kream.png?v=2',ar:1200/191,w:370},
 ];
 
 let templates=[
