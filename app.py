@@ -473,6 +473,12 @@ function redo(){
 document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo();}
   if((e.metaKey||e.ctrlKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo();}
+  // Cmd/Ctrl + T : 배경 이미지 크기/위치 조절 토글
+  if((e.metaKey||e.ctrlKey)&&(e.key==='t'||e.key==='T')){
+    if(document.getElementById('editorView') && !document.getElementById('editorView').classList.contains('hidden')){
+      e.preventDefault(); toggleImgMode();
+    }
+  }
 });
 // 화살표키 미세조정 (선택된 텍스트/이미지, Shift=10px)
 document.addEventListener('keydown',e=>{
