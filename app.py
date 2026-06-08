@@ -413,9 +413,9 @@ let templates=[
     {id:1,text:'BRAND WEEK\\nUP TO 45%',x:72,y:170,fs:120,color:'#ffffff',fw:600,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.02em',lh:1.083},
     {id:3,text:'레이지지 최대 45% 할인\\n5.04 - 5.08',x:82,y:473,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em',lh:1.333,sw:0.3},
   ]},
-  {id:3,name:'템플릿 3',bgData:REPO_RAW+'t3bg.jpg',bgThumb:REPO_RAW+'thumb3.jpg',texts:[
+  {id:3,name:'템플릿 3',bgData:REPO_RAW+'t3bg.jpg',bgThumb:REPO_RAW+'thumb3.jpg',
+   imgs:[{id:50,src:REPO_RAW+'wweek.png',x:180,y:1162,w:720,h:156}],texts:[
     {id:1,text:'5.31(SUN) -\\n6.15(MON)',x:935,y:145,fs:38,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.02em',lh:1.4},
-    {id:2,text:'더블유위크',x:540,y:1185,fs:108,color:'#ffffff',fw:600,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.02em'},
     {id:3,text:'단 2주간, 최대 50% 할인',x:540,y:1335,fs:44,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.02em'},
   ]},
   {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',texts:[
@@ -1025,7 +1025,7 @@ function downloadPNG(fmt){
     // 이미지 레이어 먼저 그리고(비동기) → 텍스트 → 내보내기
     const imgs=(tpl.imgs||[]);
     Promise.all(imgs.map(m=>new Promise(res=>{
-      const im=new Image(); im.onload=()=>{ctx.drawImage(im,m.x,m.y,m.w,m.h);res();}; im.onerror=()=>res(); im.src=m.src;
+      const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>{ctx.drawImage(im,m.x,m.y,m.w,m.h);res();}; im.onerror=()=>res(); im.src=m.src;
     }))).then(()=>{ drawTextsAndExport(); });
 
     function drawTextsAndExport(){
