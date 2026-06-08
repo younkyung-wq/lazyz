@@ -149,6 +149,11 @@ body {
   font-size: 10px; padding: 3px 8px; border-radius: 4px;
   pointer-events: none; z-index: 100;
 }
+.mz-tag {
+  position: absolute; background: rgba(0,0,0,0.78); color: #00e5ff;
+  font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px;
+  transform: translate(-50%,-50%); white-space: nowrap; pointer-events: none;
+}
 
 /* Text layers */
 .text-layer {
@@ -293,6 +298,16 @@ select:focus { outline: none; border-color: #ff4b4b; }
       <img id="storyBgImg" class="story-bg-img hidden" src="" alt="">
       <div id="guideV" style="display:none;position:absolute;top:0;bottom:0;left:50%;width:0;border-left:1.5px dashed rgba(255,75,75,0.85);pointer-events:none;z-index:50;"></div>
       <div id="guideH" style="display:none;position:absolute;left:0;right:0;top:50%;height:0;border-top:1.5px dashed rgba(255,75,75,0.85);pointer-events:none;z-index:50;"></div>
+      <!-- 측정 모드 오버레이 (Cmd+hover) -->
+      <div id="measure" style="display:none;position:absolute;inset:0;pointer-events:none;z-index:90;">
+        <div id="mzV" style="position:absolute;top:0;bottom:0;width:0;border-left:1px solid #00bcd4;"></div>
+        <div id="mzH" style="position:absolute;left:0;right:0;height:0;border-top:1px solid #00bcd4;"></div>
+        <div id="mzL" class="mz-tag"></div>
+        <div id="mzR" class="mz-tag"></div>
+        <div id="mzT" class="mz-tag"></div>
+        <div id="mzB" class="mz-tag"></div>
+        <div id="mzC" class="mz-tag" style="background:#00bcd4;"></div>
+      </div>
       <div class="size-badge">1080 × 1920</div>
     </div>
   </div>
@@ -849,6 +864,37 @@ function downloadPNG(fmt){
   };
   img.src=tpl.bgData;
 }
+
+// ── 측정 모드 (Cmd 누른 채 마우스 hover) ──
+let measureOn=false;
+function setMeasure(on){
+  measureOn=on;
+  if(!on)document.getElementById('measure').style.display='none';
+}
+document.addEventListener('keydown',e=>{ if(e.key==='Meta'||e.key==='Control')setMeasure(true); });
+document.addEventListener('keyup',e=>{ if(e.key==='Meta'||e.key==='Control')setMeasure(false); });
+window.addEventListener('blur',()=>setMeasure(false));
+(function initMeasure(){
+  const outer=document.getElementById('storyOuter');
+  outer.addEventListener('mousemove',e=>{
+    if(!measureOn||dragInfo){document.getElementById('measure').style.display='none';return;}
+    const rect=outer.getBoundingClientRect();
+    const lx=e.clientX-rect.left, ly=e.clientY-rect.top;
+    if(lx<0||ly<0||lx>rect.width||ly>rect.height){document.getElementById('measure').style.display='none';return;}
+    const m=document.getElementById('measure'); m.style.display='block';
+    const realX=Math.round(lx/rect.width*RW), realY=Math.round(ly/rect.height*RH);
+    const left=realX, right=RW-realX, top=realY, bottom=RH-realY;
+    document.getElementById('mzV').style.left=lx+'px';
+    document.getElementById('mzH').style.top=ly+'px';
+    const set=(id,x,y,txt)=>{const el=document.getElementById(id);el.style.left=x+'px';el.style.top=y+'px';el.textContent=txt;};
+    set('mzL',lx/2,ly,left+'');
+    set('mzR',lx+(rect.width-lx)/2,ly,right+'');
+    set('mzT',lx,ly/2,top+'');
+    set('mzB',lx,ly+(rect.height-ly)/2,bottom+'');
+    set('mzC',lx+44,ly-16,realX+', '+realY);
+  });
+  outer.addEventListener('mouseleave',()=>{document.getElementById('measure').style.display='none';});
+})();
 
 renderGrid();
 </script>
