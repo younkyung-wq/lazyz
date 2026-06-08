@@ -432,23 +432,23 @@ const getTpl=()=>templates.find(t=>t.id===activeTplId);
 const getTexts=()=>getTpl()?.texts??[];
 const getTxt=id=>getTexts().find(t=>t.id===id);
 
+function snapTpl(){const t=getTpl();return JSON.stringify({texts:t?.texts||[],imgs:t?.imgs||[]});}
+function restoreTpl(s){const tpl=getTpl();if(!tpl)return;const d=JSON.parse(s);tpl.texts=d.texts;tpl.imgs=d.imgs;}
 function saveUndo(){
-  undoStack.push(JSON.stringify(getTpl()?.texts));
+  undoStack.push(snapTpl());
   if(undoStack.length>30)undoStack.shift();
   redoStack=[];
 }
 function undo(){
   if(!undoStack.length)return;
-  redoStack.push(JSON.stringify(getTpl()?.texts));
-  const tpl=getTpl(); if(!tpl)return;
-  tpl.texts=JSON.parse(undoStack.pop());
+  redoStack.push(snapTpl());
+  restoreTpl(undoStack.pop());
   refreshLayers(); refreshTextList(); refreshStylePanel();
 }
 function redo(){
   if(!redoStack.length)return;
-  undoStack.push(JSON.stringify(getTpl()?.texts));
-  const tpl=getTpl(); if(!tpl)return;
-  tpl.texts=JSON.parse(redoStack.pop());
+  undoStack.push(snapTpl());
+  restoreTpl(redoStack.pop());
   refreshLayers(); refreshTextList(); refreshStylePanel();
 }
 document.addEventListener('keydown',e=>{
