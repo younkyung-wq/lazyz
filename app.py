@@ -1307,11 +1307,13 @@ with st.sidebar:
 
     st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
 
-    menu = st.radio(
-        "",
-        ["📱  스토리 모듈"],
-        label_visibility="collapsed"
-    )
+    st.markdown("""
+    <div style="padding:10px 16px;border-radius:8px;background:rgba(255,255,255,0.06);
+                color:#fff;font-size:14px;font-weight:600;margin:0 8px;">
+        📱  스토리 모듈
+    </div>
+    """, unsafe_allow_html=True)
+    menu = "스토리 모듈"
 
     st.markdown("<div style='height:52vh'></div>", unsafe_allow_html=True)
     st.markdown("""<div style="padding: 0 16px;">
