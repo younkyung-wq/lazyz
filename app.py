@@ -346,6 +346,8 @@ select:focus { outline: none; border-color: #ff4b4b; }
       <div id="stylePanel" class="no-select-hint">텍스트를 클릭하여 선택하세요</div>
     </div>
 
+    <button id="pickDirBtn" onclick="pickSaveDir()" style="width:100%;padding:9px;border:1.5px solid #eee;border-radius:8px;background:#fafafa;font-size:12px;color:#666;cursor:pointer;margin-bottom:8px;font-weight:600;">📁 저장 폴더 지정 (선택)</button>
+    <div id="dirStatus" style="font-size:11px;color:#aaa;margin-bottom:10px;text-align:center;"></div>
     <div style="display:flex;gap:8px;">
       <button class="dl-btn" style="flex:1;" onclick="downloadPNG('png')">↓ PNG</button>
       <button class="dl-btn" style="flex:1;" onclick="downloadPNG('jpg')">↓ JPG</button>
@@ -866,17 +868,60 @@ function downloadPNG(fmt){
       });
       ctx.restore();
     });
-    try{
-      const isJpg=fmt==='jpg';
-      const mime=isJpg?'image/jpeg':'image/png';
+    const isJpg=fmt==='jpg';
+    const mime=isJpg?'image/jpeg':'image/png';
+    const fname=`lazyz_story_${tpl.id}_${Date.now()}.${isJpg?'jpg':'png'}`;
+    canvas.toBlob(async(blob)=>{
+      if(!blob){alert('이미지 생성 실패');return;}
+      // 폴더가 지정돼 있으면 그 폴더에 바로 저장
+      if(saveDir){
+        try{
+          const fh=await saveDir.getFileHandle(fname,{create:true});
+          const w=await fh.createWritable();
+          await w.write(blob);
+          await w.close();
+          flashStatus('저장됨 → '+fname);
+          return;
+        }catch(err){
+          alert('폴더 저장 실패: '+err.message+'\\n기본 다운로드로 전환합니다.');
+        }
+      }
+      // 기본 다운로드
       const a=document.createElement('a');
-      a.download=`lazyz_story_${tpl.id}_${Date.now()}.${isJpg?'jpg':'png'}`;
-      a.href=canvas.toDataURL(mime,isJpg?0.95:undefined); a.click();
-    }catch(err){
-      alert('다운로드 실패: '+err.message);
-    }
+      a.download=fname;
+      a.href=URL.createObjectURL(blob);
+      a.click();
+      setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+    }, mime, isJpg?0.95:undefined);
   };
   img.src=tpl.bgData;
+}
+
+// ── 저장 폴더 지정 (File System Access API) ──
+let saveDir=null;
+async function pickSaveDir(){
+  if(!window.showDirectoryPicker){
+    alert('이 브라우저는 폴더 지정을 지원하지 않아요.\\nChrome/Edge 최신 버전을 사용하거나, Chrome 설정 > 다운로드 > "다운로드 전에 위치 확인"을 켜주세요.');
+    return;
+  }
+  try{
+    saveDir=await window.showDirectoryPicker({mode:'readwrite'});
+    document.getElementById('dirStatus').textContent='✓ 폴더 지정됨 — 이제 PNG/JPG가 자동 저장돼요';
+    document.getElementById('dirStatus').style.color='#2e9e44';
+    document.getElementById('pickDirBtn').textContent='📁 저장 폴더 변경';
+  }catch(err){
+    if(err.name==='SecurityError'){
+      alert('이 화면(iframe)에서는 폴더 지정이 차단돼요.\\n대신 Chrome 설정 > 다운로드 > "다운로드 전에 각 파일의 저장 위치 확인"을 켜면 매번 폴더를 고를 수 있어요.');
+    } else if(err.name!=='AbortError'){
+      alert('폴더 지정 실패: '+err.message);
+    }
+  }
+}
+function flashStatus(msg){
+  const el=document.getElementById('dirStatus');
+  const prev=el.textContent, prevC=el.style.color;
+  el.textContent=msg; el.style.color='#2e9e44';
+  setTimeout(()=>{el.textContent=prev;el.style.color=prevC;},2500);
 }
 
 // ── 측정 모드: 선택된 텍스트 박스 ↔ 가장자리 간격 표시 ──
