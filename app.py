@@ -451,8 +451,7 @@ function makeEl(t){
   el.dataset.tid=t.id;
   applyStyle(el,t); placeEl(el,t);
   renderChars(el,t);
-  el.addEventListener('mousedown',e=>startDrag(e,t.id));
-  el.addEventListener('click',e=>{e.stopPropagation();startEdit(t.id,e);});
+  el.addEventListener('mousedown',e=>onTextMouseDown(e,t.id));
   return el;
 }
 
@@ -591,47 +590,54 @@ function startEdit(id, clickEvent){
     e.stopPropagation();
   });
 }
-function startDrag(e,id){
-  if(e.target.contentEditable==='true')return;
-  e.preventDefault(); saveUndo(); selectText(id);
+function onTextMouseDown(e,id){
+  const el=document.querySelector(`.text-layer[data-tid="${id}"]`);
+  // 이미 편집모드면 네이티브 커서 위치 지정에 맡김
+  if(el&&el.getAttribute('contenteditable')==='true')return;
+  e.preventDefault();
+  e.stopPropagation();
   const t=getTxt(id);
-  dragInfo={id,sx:e.clientX,sy:e.clientY,tx:t.x,ty:t.y};
+  const startX=e.clientX, startY=e.clientY;
+  const startTx=t.x, startTy=t.y;
+  let moved=false, undoSaved=false;
+  selectText(id);
   const SNAP=8;
-  const onMove=e=>{
-    if(!dragInfo)return;
-    t.x=Math.round(dragInfo.tx+(e.clientX-dragInfo.sx)/SX);
-    t.y=Math.round(dragInfo.ty+(e.clientY-dragInfo.sy)/SY);
-    const el=document.querySelector(`.text-layer[data-tid="${id}"]`);
+  const onMove=ev=>{
+    if(!moved && (Math.abs(ev.clientX-startX)>3||Math.abs(ev.clientY-startY)>3)){
+      moved=true;
+      if(!undoSaved){saveUndo();undoSaved=true;}
+    }
+    if(!moved)return;
+    t.x=Math.round(startTx+(ev.clientX-startX)/SX);
+    t.y=Math.round(startTy+(ev.clientY-startY)/SY);
     if(!el){hideGuides();return;}
 
-    // 수직 중앙 스냅 (텍스트 세로 중심 ↔ 캔버스 세로 중심)
+    // 수직 중앙 스냅
     const elH=el.offsetHeight;
     const elCy=(t.y*SY)+elH/2;
     if(Math.abs(elCy-H/2)<SNAP){
       t.y=Math.round((H/2-elH/2)/SY);
       document.getElementById('guideH').style.display='block';
-    } else {
-      document.getElementById('guideH').style.display='none';
-    }
+    } else { document.getElementById('guideH').style.display='none'; }
 
     // 수평 중앙 스냅
     const elW=el.offsetWidth;
     const elCx=t.ta==='center'?t.x*SX:(t.x*SX)+elW/2;
-    const snapTargetX=t.ta==='center'?W/2:W/2;
-    if(Math.abs(elCx-snapTargetX)<SNAP){
-      t.x=Math.round(W/2/SX); // center = 540 in real coords
+    if(Math.abs(elCx-W/2)<SNAP){
+      t.x=Math.round(W/2/SX);
       document.getElementById('guideV').style.display='block';
-    } else {
-      document.getElementById('guideV').style.display='none';
-    }
+    } else { document.getElementById('guideV').style.display='none'; }
 
     placeEl(el,t);
   };
-  const onUp=()=>{
-    dragInfo=null;
+  const onUp=ev=>{
     hideGuides();
     document.removeEventListener('mousemove',onMove);
     document.removeEventListener('mouseup',onUp);
+    if(!moved){
+      // 클릭 → 편집모드 진입 (클릭 좌표에 커서)
+      startEdit(id, ev);
+    }
   };
   document.addEventListener('mousemove',onMove);
   document.addEventListener('mouseup',onUp);
