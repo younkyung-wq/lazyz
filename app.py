@@ -209,6 +209,14 @@ body {
 .style-row-label { font-size: 11px; color: #aaa; min-width: 44px; }
 
 input[type="range"] { flex:1; accent-color: #ff4b4b; height: 4px; cursor:pointer; }
+input.num-input {
+  flex:1; padding:6px 10px; border:1.5px solid #eee; border-radius:7px;
+  font-size:12px; color:#333; background:white; outline:none;
+  text-align:left; -moz-appearance:textfield;
+}
+input.num-input:focus { border-color:#ff4b4b; }
+input.num-input::-webkit-inner-spin-button,
+input.num-input::-webkit-outer-spin-button { opacity:1; height:22px; }
 input[type="color"] {
   width: 32px; height: 32px; border: none; border-radius: 6px;
   padding: 1px; cursor: pointer; background: none;
@@ -689,9 +697,9 @@ function refreshStylePanel(){
       </div>
       <div class="style-row">
         <span class="style-row-label">크기</span>
-        <input type="range" min="14" max="220" value="${t.fs}"
-          oninput="setS('fs',+this.value);document.getElementById('fsv').textContent=this.value">
-        <span id="fsv" style="font-size:11px;color:#999;min-width:26px;">${t.fs}</span>
+        <input class="num-input" type="number" min="1" max="500" step="1" value="${t.fs}"
+          oninput="setS('fs',+this.value)">
+        <span style="font-size:11px;color:#bbb;">px</span>
       </div>
       <div class="style-row">
         <span class="style-row-label">굵기</span>
@@ -716,15 +724,15 @@ function refreshStylePanel(){
       </div>
       <div class="style-row">
         <span class="style-row-label">자간</span>
-        <input type="range" min="-10" max="20" step="1" value="${Math.round(parseFloat(t.ls||'0')*100)}"
-          oninput="setS('ls',(this.value/100)+'em');document.getElementById('lsv').textContent=this.value">
-        <span id="lsv" style="font-size:11px;color:#999;min-width:26px;">${Math.round(parseFloat(t.ls||'0')*100)}</span>
+        <input class="num-input" type="number" step="1" value="${Math.round(parseFloat(t.ls||'0')*1000)}"
+          oninput="setS('ls',(this.value/1000)+'em')">
+        <span style="font-size:11px;color:#bbb;">‱</span>
       </div>
       <div class="style-row">
         <span class="style-row-label">행간</span>
-        <input type="range" min="50" max="300" step="1" value="${Math.round((parseFloat(t.lh||'1.1'))*t.fs)}"
-          oninput="setLh(this.value/1);document.getElementById('lhv').textContent=this.value">
-        <span id="lhv" style="font-size:11px;color:#999;min-width:26px;">${Math.round((parseFloat(t.lh||'1.1'))*t.fs)}</span>
+        <input class="num-input" type="number" step="1" value="${Math.round((parseFloat(t.lh||'1.1'))*t.fs)}"
+          oninput="setLh(+this.value)">
+        <span style="font-size:11px;color:#bbb;">px</span>
       </div>
     </div>`;
 }
