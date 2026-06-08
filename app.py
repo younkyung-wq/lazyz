@@ -416,8 +416,8 @@ let templates=[
   ]},
   {id:3,name:'템플릿 3',bgData:REPO_RAW+'t3bg.jpg',bgThumb:REPO_RAW+'thumb3.jpg',
    imgs:[{id:50,src:REPO_RAW+'wweek.png',x:180,y:1162,w:720,h:156}],texts:[
-    {id:1,text:'5.31(SUN) -\\n6.15(MON)',x:935,y:145,fs:38,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.02em',lh:1.4},
     {id:3,text:'단 2주간, 최대 50% 할인',x:540,y:1335,fs:44,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.02em'},
+    {id:1,text:'5.31(SUN) -\\n6.15(MON)',x:935,y:145,fs:38,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'center',ls:'-0.02em',lh:1.4},
   ]},
   {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',texts:[
     {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',fw:700,italic:true,ff:'Georgia, serif',shadow:false,ls:'-0.01em'},
@@ -870,6 +870,16 @@ function deleteText(id){
 // ── TEXT LIST ──
 function refreshTextList(){
   const list=document.getElementById('textList'); list.innerHTML='';
+  // 이미지 레이어 = 맨 위, 빨간 "타이틀 이미지 교체" 버튼
+  getImgs().forEach((m)=>{
+    const item=document.createElement('div');
+    item.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:7px;';
+    item.innerHTML=`
+      <button onclick="event.stopPropagation();replaceImg(${m.id})" style="flex:1;padding:10px;border:none;border-radius:8px;background:#ff4b4b;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">타이틀 이미지 교체</button>
+      <span class="text-item-del" onclick="event.stopPropagation();deleteImg(${m.id})">×</span>`;
+    list.appendChild(item);
+  });
+  // 텍스트 레이어
   getTexts().forEach(t=>{
     const item=document.createElement('div');
     item.className='text-item'+(selTextId===t.id?' active':'');
@@ -890,17 +900,6 @@ function refreshTextList(){
       if(el)renderChars(el,t);
     });
     item.addEventListener('click',e=>{if(e.target!==input){selectText(t.id);refreshLayers();}});
-    list.appendChild(item);
-  });
-  // 이미지 레이어 항목
-  getImgs().forEach((m,i)=>{
-    const item=document.createElement('div');
-    item.className='text-item'+(selImgId===m.id?' active':'');
-    item.innerHTML=`
-      <img src="${m.src}" style="height:26px;max-width:120px;object-fit:contain;border-radius:3px;background:#f0f0f0;flex:0 0 auto;">
-      <span class="img-replace" onclick="event.stopPropagation();replaceImg(${m.id})" style="margin-left:auto;font-size:11px;color:#ff4b4b;cursor:pointer;font-weight:600;margin-right:4px;">교체</span>
-      <span class="text-item-del" onclick="event.stopPropagation();deleteImg(${m.id})">×</span>`;
-    item.addEventListener('click',e=>{if(e.target.tagName==='IMG')selectImg(m.id);});
     list.appendChild(item);
   });
 }
