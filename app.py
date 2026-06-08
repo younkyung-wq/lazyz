@@ -405,9 +405,9 @@ const W=405, H=720, RW=1080, RH=1920, SX=405/1080, SY=720/1920;
 const REPO_RAW = 'https://raw.githubusercontent.com/younkyung-wq/lazyz/main/';
 // 유통채널 로고 (가로 폭 유지, 비율로 높이 계산)
 const LOGOS=[
-  {key:'kurly',label:'컬리',src:REPO_RAW+'logo_kurly.png',ar:501/247},
-  {key:'wconcept',label:'W컨셉',src:REPO_RAW+'logo_wconcept.png',ar:478/60},
-  {key:'lotteon',label:'롯데온',src:REPO_RAW+'logo_lotteon.png',ar:336/68},
+  {key:'kurly',label:'컬리',src:REPO_RAW+'logo_kurly.png',ar:501/247,w:340},
+  {key:'wconcept',label:'W컨셉',src:REPO_RAW+'logo_wconcept.png',ar:478/60,w:370},
+  {key:'lotteon',label:'롯데온',src:REPO_RAW+'logo_lotteon.png',ar:336/68,w:370},
 ];
 
 let templates=[
@@ -426,7 +426,7 @@ let templates=[
     {id:1,text:'5.31(SUN) -\\n6.15(MON)',x:1000,y:150,fs:35,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4286},
   ]},
   {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',
-   imgs:[{id:60,src:REPO_RAW+'logo_kurly.png',logo:'kurly',picker:true,anchor:'lc',x:60,cy:905,w:360,h:177}],texts:[
+   imgs:[{id:60,src:REPO_RAW+'logo_kurly.png',logo:'kurly',picker:true,anchor:'lc',x:60,cy:905,w:340,h:168}],texts:[
     {id:2,text:'컬리 반짝특가',x:1030,y:880,fs:50,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4},
     {id:3,text:'정가 109,000원 → 46,300원',x:72,y:1650,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
   ]},
@@ -680,7 +680,8 @@ function setLogo(id,key){
   const L=LOGOS.find(x=>x.key===key); if(!L)return;
   saveUndo();
   m.src=L.src; m.logo=key;
-  m.h=Math.round(m.w/L.ar); // 가로 폭 유지, 비율로 높이
+  m.w=L.w; // 로고별 기본 가로폭
+  m.h=Math.round(L.w/L.ar);
   refreshLayers(); refreshTextList();
 }
 function makeEl(t){
