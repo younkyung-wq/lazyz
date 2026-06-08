@@ -1310,7 +1310,7 @@ with st.sidebar:
 
     menu = st.radio(
         "",
-        ["🔴  피드 기획", "⬜  광고소재 생성기", "📱  스토리 모듈"],
+        ["📱  스토리 모듈"],
         label_visibility="collapsed"
     )
 
