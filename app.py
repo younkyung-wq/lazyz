@@ -402,15 +402,15 @@ let templates=[
     {id:1,text:'BRAND WEEK\\nUP TO 45%',x:72,y:170,fs:120,color:'#ffffff',fw:600,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.02em',lh:1.083},
     {id:3,text:'레이지지 최대 45% 할인\\n5.04 - 5.08',x:82,y:473,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em',lh:1.333,sw:0.3},
   ]},
-  {id:3,name:'템플릿 3',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'3.jpg',texts:[
-    {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',fw:700,italic:true,ff:'Georgia, serif',shadow:false,ls:'-0.01em'},
-    {id:2,text:'컬리 반짝특가',x:750,y:930,fs:48,color:'#ffffff',fw:700,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.01em'},
-    {id:3,text:'정가 109,000원 → 46,300원',x:72,y:1650,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
-  ]},
-  {id:4,name:'템플릿 4',bgData:REPO_RAW+'4b.jpg',bgThumb:REPO_RAW+'4.jpg',texts:[
+  {id:3,name:'템플릿 3',bgData:REPO_RAW+'4b.jpg',bgThumb:REPO_RAW+'4.jpg',texts:[
     {id:1,text:'단독 브랜드 위크',x:72,y:400,fs:60,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
     {id:2,text:'~52% OFF',x:72,y:500,fs:126,color:'#ffffff',fw:800,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em'},
     {id:3,text:'5.18(MON) - 5.24(SUN)',x:72,y:700,fs:46,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
+  ]},
+  {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'3.jpg',texts:[
+    {id:1,text:'Kurly',x:80,y:870,fs:130,color:'#ffffff',fw:700,italic:true,ff:'Georgia, serif',shadow:false,ls:'-0.01em'},
+    {id:2,text:'컬리 반짝특가',x:750,y:930,fs:48,color:'#ffffff',fw:700,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.01em'},
+    {id:3,text:'정가 109,000원 → 46,300원',x:72,y:1650,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
   ]},
 ];
 
