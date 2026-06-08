@@ -426,9 +426,9 @@ let templates=[
   ]},
   {id:4,name:'템플릿 4',bgData:REPO_RAW+'3b.jpg',bgThumb:REPO_RAW+'thumb4.jpg',
    imgs:[{id:60,src:REPO_RAW+'logo_kurly.png',logo:'kurly',picker:true,anchor:'lc',x:60,cy:905,w:340,h:168},
-         {id:61,src:REPO_RAW+'arrow.png',hideList:true,x:450,y:1514,w:90,h:4}],texts:[
+         {id:61,src:REPO_RAW+'arrow.png',hideList:true,onTop:true,x:70,y:1506,w:340,h:16}],texts:[
     {id:2,text:'컬리 반짝특가',x:1030,y:880,fs:50,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4},
-    {id:3,text:'정가 109,000원',x:72,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em',strike:true},
+    {id:3,text:'정가 109,000원',x:72,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
     {id:4,text:'46,300원',x:560,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
   ]},
 ];
@@ -578,6 +578,7 @@ function makeImgEl(im){
   el.dataset.iid=im.id;
   el.style.left=(r.x*SX)+'px'; el.style.top=(r.y*SY)+'px';
   el.style.width=(r.w*SX)+'px'; el.style.height=(r.h*SY)+'px';
+  if(im.onTop)el.style.zIndex=15;
   const img=document.createElement('img'); img.src=im.src; el.appendChild(img);
   if(selImgId===im.id){
     ['nw','ne','sw','se'].forEach(pos=>{
@@ -1108,12 +1109,15 @@ function downloadPNG(fmt){
     ctx.translate(-RW/2,-RH/2);
     ctx.drawImage(img,sx,sy,sw,sh,0,0,RW,RH);
     ctx.restore();
-    // 이미지 레이어 먼저 그리고(비동기) → 텍스트 → 내보내기
+    // 모든 이미지 로드 → 하위이미지 그리기 → 텍스트 → 상위(onTop)이미지 → 내보내기
     const imgs=(tpl.imgs||[]);
     Promise.all(imgs.map(m=>new Promise(res=>{
-      const r=imgRect(m);
-      const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>{ctx.drawImage(im,r.x,r.y,r.w,r.h);res();}; im.onerror=()=>res(); im.src=m.src;
-    }))).then(()=>{ drawTextsAndExport(); });
+      const im=new Image(); im.crossOrigin='anonymous'; im.onload=()=>res({m,im}); im.onerror=()=>res(null); im.src=m.src;
+    }))).then(loaded=>{
+      loaded.filter(Boolean).filter(o=>!o.m.onTop).forEach(o=>{const r=imgRect(o.m);ctx.drawImage(o.im,r.x,r.y,r.w,r.h);});
+      window.__topImgs=loaded.filter(Boolean).filter(o=>o.m.onTop);
+      drawTextsAndExport();
+    });
 
     function drawTextsAndExport(){
     tpl.texts.forEach(t=>{
@@ -1154,6 +1158,8 @@ function downloadPNG(fmt){
       });
       ctx.restore();
     });
+    // 상위(onTop) 이미지 = 텍스트 위에 그리기
+    (window.__topImgs||[]).forEach(o=>{const r=imgRect(o.m);ctx.drawImage(o.im,r.x,r.y,r.w,r.h);});
     const isJpg=fmt==='jpg';
     const mime=isJpg?'image/jpeg':'image/png';
     const fname=`lazyz_story_${tpl.id}_${Date.now()}.${isJpg?'jpg':'png'}`;
