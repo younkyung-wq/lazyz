@@ -366,7 +366,8 @@ select:focus { outline: none; border-color: #ff4b4b; }
         <p>드래그하거나 클릭하여 업로드</p>
         <p style="font-size:10px;">JPG · PNG · WEBP</p>
       </div>
-      <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="onFileInput(event)">
+      <input type="file" id="fileInput" accept="image/*" multiple class="hidden" onchange="onFileInput(event)">
+      <div id="bgThumbs" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
       <div style="display:flex;gap:8px;margin-top:8px;align-items:center;">
         <button id="imgModeBtn" onclick="toggleImgMode()" style="flex:1;padding:8px;border:1.5px solid #eee;border-radius:8px;background:#fafafa;font-size:12px;color:#666;cursor:pointer;font-weight:600;">🖼 이미지 크기/위치 조절</button>
         <button onclick="resetBgTransform()" style="padding:8px 12px;border:1.5px solid #eee;border-radius:8px;background:#fff;font-size:12px;color:#999;cursor:pointer;">초기화</button>
@@ -557,7 +558,7 @@ function openEditor(id){
   document.getElementById('gridView').classList.add('hidden');
   document.getElementById('editorView').classList.remove('hidden');
   document.getElementById('editorTemplName').textContent=tpl.name;
-  refreshBg(); refreshLayers(); refreshTextList(); refreshStylePanel();
+  refreshBg(); refreshLayers(); refreshTextList(); refreshStylePanel(); renderBgList();
 }
 function switchVersion(idx){
   const tpl=getTpl(); if(!tpl||!tpl.versions)return;
@@ -1142,18 +1143,38 @@ function toggleItalic(){
 function loadBg(id,file,cb){
   const reader=new FileReader();
   reader.onload=e=>{
-    templates.find(t=>t.id===id).bgData=e.target.result;
-    if(cb)cb(); if(activeTplId===id)refreshBg();
+    const tpl=templates.find(t=>t.id===id);
+    if(!tpl.bgList)tpl.bgList=[];
+    tpl.bgList.push(e.target.result);
+    tpl.bgData=e.target.result; // 마지막 업로드를 활성
+    if(cb)cb(); if(activeTplId===id){refreshBg();renderBgList();}
   };
   reader.readAsDataURL(file);
 }
+function loadBgs(id,files){
+  [...files].filter(f=>f.type.startsWith('image/')).forEach(f=>loadBg(id,f));
+}
+function renderBgList(){
+  const box=document.getElementById('bgThumbs'); if(!box)return;
+  const tpl=getTpl(); box.innerHTML='';
+  const list=(tpl&&tpl.bgList)||[];
+  list.forEach((src,i)=>{
+    const d=document.createElement('div');
+    d.style.cssText='position:relative;width:54px;height:54px;border-radius:6px;overflow:hidden;cursor:pointer;border:2px solid '+(tpl.bgData===src?'#ff4b4b':'#eee')+';';
+    d.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+      <span style="position:absolute;top:1px;right:2px;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;line-height:1;padding:2px 4px;border-radius:3px;">×</span>`;
+    d.querySelector('img').addEventListener('click',()=>{tpl.bgData=src;refreshBg();renderBgList();});
+    d.querySelector('span').addEventListener('click',e=>{e.stopPropagation();tpl.bgList.splice(i,1);if(tpl.bgData===src)tpl.bgData=tpl.bgList[0]||null;refreshBg();renderBgList();});
+    box.appendChild(d);
+  });
+}
 function onBgDragOver(e){e.preventDefault();const ov=document.getElementById('storyDropOverlay');ov.classList.remove('hidden');ov.classList.add('drag-over');}
 function onBgDragLeave(){const ov=document.getElementById('storyDropOverlay');ov.classList.remove('drag-over');if(getTpl()?.bgData)ov.classList.add('hidden');}
-function onBgDrop(e){e.preventDefault();const ov=document.getElementById('storyDropOverlay');ov.classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))loadBg(activeTplId,f);}
+function onBgDrop(e){e.preventDefault();const ov=document.getElementById('storyDropOverlay');ov.classList.remove('drag-over');loadBgs(activeTplId,e.dataTransfer.files);}
 function onUploadDragOver(e){e.preventDefault();document.getElementById('uploadZone').classList.add('drag-over');}
 function onUploadDragLeave(){document.getElementById('uploadZone').classList.remove('drag-over');}
-function onUploadDrop(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('drag-over');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))loadBg(activeTplId,f);}
-function onFileInput(e){const f=e.target.files[0];if(f)loadBg(activeTplId,f);}
+function onUploadDrop(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('drag-over');loadBgs(activeTplId,e.dataTransfer.files);}
+function onFileInput(e){loadBgs(activeTplId,e.target.files);e.target.value='';}
 
 // ── DOWNLOAD ──
 function downloadPNG(fmt){
