@@ -992,7 +992,7 @@ function refreshTextList(){
         <select onchange="setLogo(${m.id},this.value)" style="width:100%;padding:9px 10px;border:1.5px solid #eee;border-radius:8px;font-size:13px;color:#333;background:white;cursor:pointer;">${opts}</select>`;
     } else {
       item.style.cssText='display:flex;gap:8px;align-items:center;margin-bottom:7px;';
-      item.innerHTML=`<button onclick="event.stopPropagation();replaceImg(${m.id})" style="flex:1;padding:10px;border:none;border-radius:8px;background:#ff4b4b;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">타이틀 이미지 교체</button>`;
+      item.innerHTML=`<button onclick="event.stopPropagation();replaceImg(${m.id})" style="flex:1;padding:10px;border:none;border-radius:8px;background:#111;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">타이틀 이미지 교체</button>`;
     }
     list.appendChild(item);
   });
