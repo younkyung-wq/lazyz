@@ -171,7 +171,7 @@ body {
 /* Text layers */
 .text-layer {
   position: absolute; cursor: move; user-select: none;
-  padding: 2px 4px; border-radius: 2px;
+  padding: 0; border-radius: 2px;
   white-space: nowrap; z-index: 10; transition: outline 0.1s;
 }
 .text-layer.selected { outline: 1.5px solid #54fffd; outline-offset: 3px; }
@@ -429,7 +429,7 @@ let templates=[
          {id:61,src:REPO_RAW+'arrow.png',hideList:true,x:55,y:1514,w:340,h:16}],texts:[
     {id:2,text:'컬리 반짝특가',x:1030,y:880,fs:50,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ta:'right',ls:'-0.03em',lh:1.4},
     {id:3,text:'정가 109,000원',x:72,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
-    {id:4,text:'46,300원',x:425,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
+    {id:4,text:'46,300원',x:415,y:1496,fs:44,color:'#ffffff',fw:400,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'0em'},
   ]},
 ];
 
