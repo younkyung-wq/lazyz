@@ -643,11 +643,11 @@ function onTextMouseDown(e,id){
   document.addEventListener('mouseup',onUp);
 }
 function onCanvasClick(e){
-  if(!e.target.classList.contains('text-layer')){
-    selTextId=null;
-    document.querySelectorAll('.text-layer').forEach(el=>{el.classList.remove('selected');el.removeAttribute('contenteditable');});
-    refreshTextList(); refreshStylePanel();
-  }
+  // 텍스트 레이어(또는 그 안의 span) 클릭이면 무시
+  if(e.target.closest&&e.target.closest('.text-layer'))return;
+  selTextId=null;
+  document.querySelectorAll('.text-layer').forEach(el=>{el.classList.remove('selected');el.removeAttribute('contenteditable');});
+  refreshTextList(); refreshStylePanel();
 }
 function addText(){
   const tpl=getTpl(); if(!tpl)return;
