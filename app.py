@@ -165,7 +165,7 @@ body {
   padding: 2px 4px; border-radius: 2px;
   white-space: normal; z-index: 10; transition: outline 0.1s;
 }
-.text-layer.selected { outline: none; }
+.text-layer.selected { outline: 1.5px solid #2b8cff; outline-offset: 3px; }
 .text-layer[contenteditable="true"] {
   cursor: text; outline: none !important;
   background: rgba(0,0,0,0.15); white-space: pre; min-width: 40px;
@@ -534,6 +534,7 @@ function makeEl(t){
   applyStyle(el,t); placeEl(el,t);
   renderChars(el,t);
   el.addEventListener('mousedown',e=>onTextMouseDown(e,t.id));
+  el.addEventListener('dblclick',e=>{e.stopPropagation();startEdit(t.id,e);});
   return el;
 }
 
@@ -681,7 +682,6 @@ function onTextMouseDown(e,id){
   e.preventDefault();
   e.stopPropagation();
   const t=getTxt(id);
-  const onGlyph=(e.target.tagName==='SPAN'); // 글자 위 클릭 여부
   const startX=e.clientX, startY=e.clientY;
   const startTx=t.x, startTy=t.y;
   let moved=false, undoSaved=false;
@@ -720,10 +720,7 @@ function onTextMouseDown(e,id){
     hideGuides();
     document.removeEventListener('mousemove',onMove);
     document.removeEventListener('mouseup',onUp);
-    if(!moved){
-      // 글자 위 클릭만 편집 진입, 가장자리/여백 클릭은 선택만
-      if(onGlyph) startEdit(id, ev);
-    }
+    // 단일 클릭은 선택만 (이미 selectText됨). 편집은 더블클릭.
   };
   document.addEventListener('mousemove',onMove);
   document.addEventListener('mouseup',onUp);
