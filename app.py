@@ -998,8 +998,8 @@ function onCanvasClick(e){
 }
 function addText(){
   const tpl=getTpl(); if(!tpl)return;
-  const t={id:nextId++,text:'텍스트',x:540,y:960,fs:70,color:'#ffffff',fw:700,italic:false,ff:'Pretendard, sans-serif',shadow:false};
-  tpl.texts.push(t);
+  const t={id:nextId++,text:'텍스트',x:540,y:960,fs:45,color:'#ffffff',fw:500,italic:false,ff:'Pretendard, sans-serif',shadow:false,ls:'-0.03em',lh:1.333};
+  (getTexts()).push(t);
   document.getElementById('storyOuter').appendChild(makeEl(t));
   refreshTextList(); selectText(t.id);
   setTimeout(()=>startEdit(t.id),40);
