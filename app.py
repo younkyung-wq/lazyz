@@ -629,6 +629,8 @@ function clampBg(tpl){
 function applyBgTransform(){
   const tpl=getTpl(); if(!tpl)return;
   clampBg(tpl);
+  // 활성 배경 항목에 변형 저장 (배경별 개별 유지)
+  if(tpl.bgList&&tpl.bgList[tpl.bgIdx]){ const it=tpl.bgList[tpl.bgIdx]; it.sc=tpl.bgScale; it.x=tpl.bgX; it.y=tpl.bgY; }
   const img=document.getElementById('storyBgImg');
   const s=tpl.bgScale||1, ox=tpl.bgX||0, oy=tpl.bgY||0;
   img.style.transformOrigin='center';
@@ -1185,11 +1187,15 @@ function loadBg(id,file,cb){
   reader.onload=e=>{
     const tpl=templates.find(t=>t.id===id);
     if(!tpl.bgList)tpl.bgList=[];
-    tpl.bgList.push(e.target.result);
-    tpl.bgData=e.target.result; // 마지막 업로드를 활성
+    tpl.bgList.push({src:e.target.result,sc:1,x:0,y:0}); // 배경별 변형 저장
+    setActiveBg(tpl,tpl.bgList.length-1);
     if(cb)cb(); if(activeTplId===id){refreshBg();renderBgList();}
   };
   reader.readAsDataURL(file);
+}
+function setActiveBg(tpl,i){
+  const it=tpl.bgList&&tpl.bgList[i]; if(!it)return;
+  tpl.bgData=it.src; tpl.bgScale=it.sc||1; tpl.bgX=it.x||0; tpl.bgY=it.y||0; tpl.bgIdx=i;
 }
 function loadBgs(id,files){
   [...files].filter(f=>f.type.startsWith('image/')).forEach(f=>loadBg(id,f));
@@ -1198,13 +1204,13 @@ function renderBgList(){
   const box=document.getElementById('bgThumbs'); if(!box)return;
   const tpl=getTpl(); box.innerHTML='';
   const list=(tpl&&tpl.bgList)||[];
-  list.forEach((src,i)=>{
+  list.forEach((it,i)=>{
     const d=document.createElement('div');
-    d.style.cssText='position:relative;width:54px;height:54px;border-radius:6px;overflow:hidden;cursor:pointer;border:2px solid '+(tpl.bgData===src?'#ff4b4b':'#eee')+';';
-    d.innerHTML=`<img src="${src}" style="width:100%;height:100%;object-fit:cover;">
+    d.style.cssText='position:relative;width:54px;height:54px;border-radius:6px;overflow:hidden;cursor:pointer;border:2px solid '+(tpl.bgIdx===i?'#ff4b4b':'#eee')+';';
+    d.innerHTML=`<img src="${it.src}" style="width:100%;height:100%;object-fit:cover;">
       <span style="position:absolute;top:1px;right:2px;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;line-height:1;padding:2px 4px;border-radius:3px;">×</span>`;
-    d.querySelector('img').addEventListener('click',()=>{tpl.bgData=src;refreshBg();renderBgList();});
-    d.querySelector('span').addEventListener('click',e=>{e.stopPropagation();tpl.bgList.splice(i,1);if(tpl.bgData===src)tpl.bgData=tpl.bgList[0]||null;refreshBg();renderBgList();});
+    d.querySelector('img').addEventListener('click',()=>{setActiveBg(tpl,i);refreshBg();renderBgList();});
+    d.querySelector('span').addEventListener('click',e=>{e.stopPropagation();tpl.bgList.splice(i,1);if(tpl.bgList.length){setActiveBg(tpl,Math.min(i,tpl.bgList.length-1));}else{tpl.bgData=null;tpl.bgIdx=-1;}refreshBg();renderBgList();});
     box.appendChild(d);
   });
 }
