@@ -479,6 +479,31 @@ document.addEventListener('keydown',e=>{
   if((e.metaKey||e.ctrlKey)&&e.key==='z'&&!e.shiftKey){e.preventDefault();undo();}
   if((e.metaKey||e.ctrlKey)&&(e.key==='y'||(e.key==='z'&&e.shiftKey))){e.preventDefault();redo();}
 });
+// 복사/붙여넣기/복제 (Cmd+C / Cmd+V / Cmd+D)
+let clip=null;
+document.addEventListener('keydown',e=>{
+  if(!(e.metaKey||e.ctrlKey))return;
+  const ae=document.activeElement;
+  if(ae&&(ae.isContentEditable||ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'||ae.tagName==='SELECT'))return; // 편집 중엔 일반 복붙
+  const k=e.key.toLowerCase();
+  if(k==='c'){
+    if(selTextId){clip={kind:'text',data:JSON.parse(JSON.stringify(getTxt(selTextId)))};e.preventDefault();}
+    else if(selImgId){clip={kind:'img',data:JSON.parse(JSON.stringify(getImg(selImgId)))};e.preventDefault();}
+  } else if(k==='v'&&clip){
+    e.preventDefault(); saveUndo();
+    if(clip.kind==='text'){
+      const t={...JSON.parse(JSON.stringify(clip.data)),id:nextId++,x:(clip.data.x||0)+30,y:(clip.data.y||0)+30};
+      getTexts().push(t); refreshLayers(); selectText(t.id);
+    } else {
+      const m={...JSON.parse(JSON.stringify(clip.data)),id:nextId++};
+      if(m.anchor==='bc')m.by=(m.by||0)+30; else if(m.anchor==='lc'){m.x=(m.x||0)+30;m.cy=(m.cy||0)+30;} else {m.x=(m.x||0)+30;m.y=(m.y||0)+30;}
+      getImgs().push(m); refreshLayers(); selectImg(m.id);
+    }
+  } else if(k==='d'){ // 즉시 복제
+    if(selTextId){e.preventDefault();saveUndo();const o=getTxt(selTextId);const t={...JSON.parse(JSON.stringify(o)),id:nextId++,x:(o.x||0)+30,y:(o.y||0)+30};getTexts().push(t);refreshLayers();selectText(t.id);}
+    else if(selImgId){e.preventDefault();saveUndo();const o=getImg(selImgId);const m={...JSON.parse(JSON.stringify(o)),id:nextId++};if(m.anchor==='bc')m.by=(m.by||0)+30;else if(m.anchor==='lc'){m.x=(m.x||0)+30;m.cy=(m.cy||0)+30;}else{m.x=(m.x||0)+30;m.y=(m.y||0)+30;}getImgs().push(m);refreshLayers();selectImg(m.id);}
+  }
+});
 // 화살표키 미세조정 (선택된 텍스트/이미지, Shift=10px)
 document.addEventListener('keydown',e=>{
   if(e.metaKey||e.ctrlKey||e.altKey)return;
