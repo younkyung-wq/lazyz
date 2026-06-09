@@ -833,6 +833,7 @@ function startEdit(id, clickEvent){
   const t=getTxt(id); if(!t)return;
 
   el.setAttribute('contenteditable','true');
+  el.style.letterSpacing=(t.ls||'0em'); // 편집 중 기본 자간 유지
   el.focus({preventScroll:true});
   showMeasure();
 
@@ -850,6 +851,7 @@ function startEdit(id, clickEvent){
 
   el.addEventListener('blur',()=>{
     el.removeAttribute('contenteditable');
+    el.style.letterSpacing='0em'; // per-char로 복원
     // innerText로 줄바꿈 보존
     t.text=el.innerText.replace(/\\r\\n/g,'\\n').replace(/\\r/g,'\\n').replace(/\\n$/,'');
     renderChars(el,t);
