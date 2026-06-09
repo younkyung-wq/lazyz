@@ -833,6 +833,7 @@ function startEdit(id, clickEvent){
   const t=getTxt(id); if(!t)return;
 
   el.setAttribute('contenteditable','true');
+  el.textContent=t.text; // 편집 중엔 일반 텍스트(공백 보존)
   el.style.letterSpacing=(t.ls||'0em'); // 편집 중 기본 자간 유지
   el.focus({preventScroll:true});
   showMeasure();
