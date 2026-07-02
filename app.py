@@ -26,10 +26,13 @@ header {visibility: hidden;}
     max-width: 240px !important;
 }
 [data-testid="stSidebar"] .stRadio > label { display: none; }
-[data-testid="stSidebar"] .stRadio div[role="radiogroup"] { gap: 0px; }
+[data-testid="stSidebar"] .stRadio div[role="radiogroup"] { gap: 4px; }
 [data-testid="stSidebar"] .stRadio label[data-baseweb="radio"] {
-    padding: 10px 16px; border-radius: 8px; cursor: pointer;
+    padding: 10px 16px; border-radius: 8px; cursor: pointer; margin: 0 8px;
 }
+/* 라디오 동그라미 숨김 */
+[data-testid="stSidebar"] .stRadio label[data-baseweb="radio"] > div:first-child { display: none !important; }
+[data-testid="stSidebar"] [aria-checked="true"] { background: rgba(255,255,255,0.06); }
 [data-testid="stSidebar"] .stRadio label[data-baseweb="radio"]:hover {
     background: rgba(255,255,255,0.05);
 }
@@ -1506,13 +1509,11 @@ with st.sidebar:
 
     st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
 
-    st.markdown("""
-    <div style="padding:10px 16px;border-radius:8px;background:rgba(255,255,255,0.06);
-                color:#fff;font-size:14px;font-weight:600;margin:0 8px;">
-        📱  스토리 모듈
-    </div>
-    """, unsafe_allow_html=True)
-    menu = "스토리 모듈"
+    menu = st.radio(
+        "",
+        ["📱  스토리 모듈", "🖼  썸네일 모듈"],
+        label_visibility="collapsed"
+    )
 
     st.markdown("<div style='height:52vh'></div>", unsafe_allow_html=True)
     st.markdown("""<div style="padding: 0 16px;">
@@ -1524,6 +1525,15 @@ with st.sidebar:
 # ── Main content ─────────────────────────────────────────────
 if "스토리 모듈" in menu:
     components.html(STORY_EDITOR_HTML, height=820, scrolling=False)
+
+elif "썸네일 모듈" in menu:
+    st.markdown("""
+    <div style="display:flex;align-items:center;justify-content:center;height:60vh;flex-direction:column;gap:12px;color:#bbb;">
+        <div style="font-size:44px;">🖼️</div>
+        <div style="font-size:18px;font-weight:800;color:#333;">썸네일 모듈</div>
+        <div style="font-size:13px;">준비 중이에요</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 elif "피드 기획" in menu:
     st.markdown("""
