@@ -1544,7 +1544,6 @@ elif "썸네일 모듈" in menu:
         "조조타운": (600, 600, "#FFFFFF"),
     }
 
-    st.info("파일 선택창에서 **NAS 폴더로 이동** → 이미지 여러 개 선택하면 돼요. (경로가 아니라 파일 업로드 방식)")
     ups = st.file_uploader("이미지 선택 (여러 개 가능)", type=["jpg","jpeg","png","webp"], accept_multiple_files=True)
     chans = st.multiselect("제작할 채널", list(SPECS.keys()), default=list(SPECS.keys()))
     fmt = st.radio("포맷", ["JPG", "PNG"], horizontal=True)
