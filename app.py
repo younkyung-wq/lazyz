@@ -1550,12 +1550,13 @@ elif "썸네일 모듈" in menu:
     fmt = st.radio("포맷", ["JPG", "PNG"], horizontal=True)
 
     if st.button("썸네일 제작", type="primary"):
+        src = (src or "").strip().strip("'\"").strip()  # 따옴표/공백 제거
         if not src or not os.path.isdir(src):
-            st.error("원본 폴더 경로가 올바르지 않아요.")
+            st.error("원본 폴더 경로가 올바르지 않아요. (로컬 실행 + NAS 마운트 상태에서만 접근 가능)")
         elif not chans:
             st.warning("채널을 하나 이상 선택해주세요.")
         else:
-            outdir = out.strip() or os.path.join(src, "thumbnails")
+            outdir = (out or "").strip().strip("'\"").strip() or os.path.join(src, "thumbnails")
             exts = (".jpg", ".jpeg", ".png", ".webp")
             files = [f for f in sorted(os.listdir(src)) if f.lower().endswith(exts)]
             if not files:
