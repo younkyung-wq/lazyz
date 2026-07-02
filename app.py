@@ -1530,7 +1530,7 @@ if "스토리 모듈" in menu:
 
 elif "썸네일 모듈" in menu:
     st.markdown("<div style='font-size:18px;font-weight:800;color:#111;margin-bottom:4px;'>🖼 썸네일 모듈</div>", unsafe_allow_html=True)
-    st.caption("NAS 이미지 폴더 경로 → 채널별 규격 썸네일 자동 제작 · 로컬 실행 전용")
+    st.caption("이미지 선택 → 채널별 규격 썸네일 자동 제작 → ZIP 다운로드")
 
     # 채널 규격 (가로, 세로, 배경색)
     SPECS = {
@@ -1544,53 +1544,46 @@ elif "썸네일 모듈" in menu:
         "조조타운": (600, 600, "#FFFFFF"),
     }
 
-    src = st.text_input("원본 이미지 폴더 경로 (NAS)", placeholder="/Volumes/Lazyz/.../원본")
-    out = st.text_input("저장 폴더 경로", placeholder="/Volumes/Lazyz/.../썸네일 (비우면 원본폴더 안 thumbnails)")
+    st.info("파일 선택창에서 **NAS 폴더로 이동** → 이미지 여러 개 선택하면 돼요. (경로가 아니라 파일 업로드 방식)")
+    ups = st.file_uploader("이미지 선택 (여러 개 가능)", type=["jpg","jpeg","png","webp"], accept_multiple_files=True)
     chans = st.multiselect("제작할 채널", list(SPECS.keys()), default=list(SPECS.keys()))
     fmt = st.radio("포맷", ["JPG", "PNG"], horizontal=True)
 
     if st.button("썸네일 제작", type="primary"):
-        src = (src or "").strip().strip("'\"").strip()  # 따옴표/공백 제거
-        if not src or not os.path.isdir(src):
-            st.error("원본 폴더 경로가 올바르지 않아요. (로컬 실행 + NAS 마운트 상태에서만 접근 가능)")
+        if not ups:
+            st.error("이미지를 먼저 선택해주세요.")
         elif not chans:
             st.warning("채널을 하나 이상 선택해주세요.")
         else:
-            outdir = (out or "").strip().strip("'\"").strip() or os.path.join(src, "thumbnails")
-            exts = (".jpg", ".jpeg", ".png", ".webp")
-            files = [f for f in sorted(os.listdir(src)) if f.lower().endswith(exts)]
-            if not files:
-                st.warning("폴더에 이미지가 없어요.")
-            else:
-                total, made = len(files) * len(chans), 0
-                prog = st.progress(0.0)
-                log = []
-                for chan in chans:
-                    w, h, bg = SPECS[chan]
-                    cdir = os.path.join(outdir, chan)
-                    os.makedirs(cdir, exist_ok=True)
-                    for fn in files:
-                        try:
-                            im = Image.open(os.path.join(src, fn))
-                            if bg:  # 배경색 합성 (투명 이미지용)
-                                im = im.convert("RGBA")
-                                canvas = Image.new("RGBA", im.size, bg)
-                                canvas.paste(im, (0, 0), im)
-                                im = canvas.convert("RGB")
-                            else:
-                                im = im.convert("RGB")
-                            im2 = ImageOps.fit(im, (w, h), Image.LANCZOS)  # 중앙 크롭+리사이즈
-                            base = os.path.splitext(fn)[0]
-                            ext = "png" if fmt == "PNG" else "jpg"
-                            im2.save(os.path.join(cdir, f"{base}_{chan}.{ext}"),
-                                     quality=92) if ext == "jpg" else im2.save(os.path.join(cdir, f"{base}_{chan}.{ext}"))
-                            made += 1
-                        except Exception as e:
-                            log.append(f"{chan}/{fn}: {e}")
-                        prog.progress(made / total)
-                st.success(f"완료! {made}/{total}개 제작 → {outdir}")
-                if log:
-                    st.warning("일부 실패:\n" + "\n".join(log[:20]))
+            total, made = len(ups) * len(chans), 0
+            prog = st.progress(0.0)
+            buf = io.BytesIO()
+            ext = "png" if fmt == "PNG" else "jpg"
+            with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+                for uf in ups:
+                    try:
+                        src_im = Image.open(uf)
+                    except Exception:
+                        continue
+                    base = os.path.splitext(uf.name)[0]
+                    for chan in chans:
+                        w, h, bg = SPECS[chan]
+                        im = src_im
+                        if bg:
+                            im = im.convert("RGBA")
+                            cv = Image.new("RGBA", im.size, bg); cv.paste(im,(0,0),im); im = cv.convert("RGB")
+                        else:
+                            im = im.convert("RGB")
+                        im2 = ImageOps.fit(im, (w, h), Image.LANCZOS)
+                        out_bytes = io.BytesIO()
+                        if ext == "jpg": im2.save(out_bytes, "JPEG", quality=92)
+                        else: im2.save(out_bytes, "PNG")
+                        zf.writestr(f"{chan}/{base}_{chan}.{ext}", out_bytes.getvalue())
+                        made += 1
+                        prog.progress(made/total)
+            st.success(f"완료! {made}개 제작됨")
+            st.download_button("📦 ZIP 다운로드", buf.getvalue(),
+                               file_name="썸네일.zip", mime="application/zip", type="primary")
 
     with st.expander("채널별 규격 보기"):
         st.table({"채널": list(SPECS.keys()),
