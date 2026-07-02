@@ -1,5 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import os, io, zipfile
+from PIL import Image, ImageOps
 
 st.set_page_config(
     page_title="LAZYZ Dashboard",
@@ -1527,13 +1529,72 @@ if "스토리 모듈" in menu:
     components.html(STORY_EDITOR_HTML, height=820, scrolling=False)
 
 elif "썸네일 모듈" in menu:
-    st.markdown("""
-    <div style="display:flex;align-items:center;justify-content:center;height:60vh;flex-direction:column;gap:12px;color:#bbb;">
-        <div style="font-size:44px;">🖼️</div>
-        <div style="font-size:18px;font-weight:800;color:#333;">썸네일 모듈</div>
-        <div style="font-size:13px;">준비 중이에요</div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("<div style='font-size:18px;font-weight:800;color:#111;margin-bottom:4px;'>🖼 썸네일 모듈</div>", unsafe_allow_html=True)
+    st.caption("NAS 이미지 폴더 경로 → 채널별 규격 썸네일 자동 제작 · 로컬 실행 전용")
+
+    # 채널 규격 (가로, 세로, 배경색)
+    SPECS = {
+        "EQL":    (1500, 2000, None),
+        "무신사":  (1500, 1800, None),
+        "W컨셉":   (960, 1280, None),
+        "29CM":   (1000, 1000, "#EBEBEB"),
+        "크림":    (1120, 1120, None),
+        "공홈":    (1000, 1400, None),
+        "컬리":    (550, 708, "#F9F9F9"),
+        "조조타운": (600, 600, "#FFFFFF"),
+    }
+
+    src = st.text_input("원본 이미지 폴더 경로 (NAS)", placeholder="/Volumes/Lazyz/.../원본")
+    out = st.text_input("저장 폴더 경로", placeholder="/Volumes/Lazyz/.../썸네일 (비우면 원본폴더 안 thumbnails)")
+    chans = st.multiselect("제작할 채널", list(SPECS.keys()), default=list(SPECS.keys()))
+    fmt = st.radio("포맷", ["JPG", "PNG"], horizontal=True)
+
+    if st.button("썸네일 제작", type="primary"):
+        if not src or not os.path.isdir(src):
+            st.error("원본 폴더 경로가 올바르지 않아요.")
+        elif not chans:
+            st.warning("채널을 하나 이상 선택해주세요.")
+        else:
+            outdir = out.strip() or os.path.join(src, "thumbnails")
+            exts = (".jpg", ".jpeg", ".png", ".webp")
+            files = [f for f in sorted(os.listdir(src)) if f.lower().endswith(exts)]
+            if not files:
+                st.warning("폴더에 이미지가 없어요.")
+            else:
+                total, made = len(files) * len(chans), 0
+                prog = st.progress(0.0)
+                log = []
+                for chan in chans:
+                    w, h, bg = SPECS[chan]
+                    cdir = os.path.join(outdir, chan)
+                    os.makedirs(cdir, exist_ok=True)
+                    for fn in files:
+                        try:
+                            im = Image.open(os.path.join(src, fn))
+                            if bg:  # 배경색 합성 (투명 이미지용)
+                                im = im.convert("RGBA")
+                                canvas = Image.new("RGBA", im.size, bg)
+                                canvas.paste(im, (0, 0), im)
+                                im = canvas.convert("RGB")
+                            else:
+                                im = im.convert("RGB")
+                            im2 = ImageOps.fit(im, (w, h), Image.LANCZOS)  # 중앙 크롭+리사이즈
+                            base = os.path.splitext(fn)[0]
+                            ext = "png" if fmt == "PNG" else "jpg"
+                            im2.save(os.path.join(cdir, f"{base}_{chan}.{ext}"),
+                                     quality=92) if ext == "jpg" else im2.save(os.path.join(cdir, f"{base}_{chan}.{ext}"))
+                            made += 1
+                        except Exception as e:
+                            log.append(f"{chan}/{fn}: {e}")
+                        prog.progress(made / total)
+                st.success(f"완료! {made}/{total}개 제작 → {outdir}")
+                if log:
+                    st.warning("일부 실패:\n" + "\n".join(log[:20]))
+
+    with st.expander("채널별 규격 보기"):
+        st.table({"채널": list(SPECS.keys()),
+                  "규격": [f"{w}×{h}" for w, h, _ in SPECS.values()],
+                  "배경색": [bg or "-" for _, _, bg in SPECS.values()]})
 
 elif "피드 기획" in menu:
     st.markdown("""
