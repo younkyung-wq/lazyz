@@ -1558,8 +1558,11 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
 </style></head><body>
 <div class="wrap">
   <div class="top">
-    <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 이미지 선택</button>
+    <button class="btn btn-dark" onclick="document.getElementById('fd').click()">📂 폴더 선택</button>
+    <input id="fd" type="file" accept="image/*" webkitdirectory multiple style="display:none">
+    <button class="btn btn-line" onclick="document.getElementById('fi').click()">📁 파일 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
+    <input id="pname" placeholder="상품명 (폴더명)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:170px;">
     <select id="fmt"><option value="jpg">JPG (최상화질)</option><option value="png">PNG</option></select>
     <button class="btn btn-red" onclick="saveAll()">📦 전체 저장 (ZIP)</button>
     <span id="prog"></span>
@@ -1634,17 +1637,25 @@ function renderStrip(){
   const s=document.getElementById('strip'); s.innerHTML='';
   imgs.forEach((o,i)=>{const d=document.createElement('div');d.className='thumb'+(i===ai?' on':'');d.innerHTML='<img src="'+o.url+'">';d.onclick=()=>{ai=i;renderStrip();draw();};s.appendChild(d);});
 }
-document.getElementById('fi').addEventListener('change',e=>{
-  const files=[...e.target.files].filter(f=>f.type.startsWith('image/'));
-  let loaded=0;
+function loadFiles(fileList,fromFolder){
+  const files=[...fileList].filter(f=>f.type.startsWith('image/'));
+  if(!files.length)return;
+  if(fromFolder){
+    const rel=files[0].webkitRelativePath||'';
+    const folder=rel.split('/')[0];
+    if(folder)document.getElementById('pname').value=folder;
+  }
+  imgs=[]; let loaded=0;
+  files.sort((a,b)=>a.name.localeCompare(b.name));
   files.forEach(f=>{
     const url=URL.createObjectURL(f);
     const im=new Image();
     im.onload=()=>{ imgs.push({name:f.name,img:im,url:url,tf:newTf()}); loaded++; if(loaded===files.length){ai=0;renderStrip();renderTabs();draw();} };
     im.src=url;
   });
-  e.target.value='';
-});
+}
+document.getElementById('fi').addEventListener('change',e=>{loadFiles(e.target.files,false);e.target.value='';});
+document.getElementById('fd').addEventListener('change',e=>{loadFiles(e.target.files,true);e.target.value='';});
 // 드래그 이동
 let drag=null;
 cvs.addEventListener('mousedown',e=>{drag={x:e.clientX,y:e.clientY};});
@@ -1674,10 +1685,12 @@ async function saveAll(){
   const fmt=document.getElementById('fmt').value;
   const mime=fmt==='png'?'image/png':'image/jpeg';
   const zip=new JSZip();
+  const pname=(document.getElementById('pname').value||'').trim();
+  const root=pname?zip.folder(pname):zip; // 상품명 폴더가 최상위
   const pr=document.getElementById('prog');
   let done=0, total=imgs.length*CH.length;
   for(const c of CH){
-    const folder=zip.folder(c.k);
+    const folder=root.folder(c.k);
     for(const o of imgs){
       const img=o.img, t=o.tf[c.k];
       const oc=document.createElement('canvas'); oc.width=c.w; oc.height=c.h;
@@ -1697,7 +1710,7 @@ async function saveAll(){
   pr.textContent='압축 중…';
   const out=await zip.generateAsync({type:'blob'});
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(out); a.download='썸네일.zip'; a.click();
+  a.href=URL.createObjectURL(out); a.download=(pname||'썸네일')+'.zip'; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),2000);
   pr.textContent='완료! ('+total+'개)';
 }
