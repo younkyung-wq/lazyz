@@ -1588,7 +1588,7 @@ const CH=[
  {k:'무신사',w:1500,h:1800,bg:'#ffffff',grp:'g_eqlmusinsa'},
  {k:'W컨셉',w:960,h:1280,bg:'#ffffff',grp:'g_wconcept'},
  {k:'29CM',w:1000,h:1000,bg:'#EBEBEB',grp:'g_29cm'},
- {k:'크림',w:1120,h:1120,bg:'#ffffff',grp:'g_kream'},
+ {k:'크림',w:1120,h:1120,bg:'#ffffff',grp:'g_kream',png:true},
  {k:'공홈',w:1000,h:1400,bg:'#ffffff',grp:'g_home'},
  {k:'컬리',w:550,h:708,bg:'#F9F9F9',grp:'g_kurly'},
  {k:'조조타운',w:600,h:600,bg:'#ffffff',grp:'g_zozo'},
@@ -1712,9 +1712,11 @@ async function makeZip(chanList){
       const iw=img.width*ds, ih=img.height*ds;
       const dx=c.w/2 - t.cx*iw, dy=c.h/2 - t.cy*ih;
       g.drawImage(img,dx,dy,iw,ih);
-      const blob=await new Promise(res=>oc.toBlob(res,mime,fmt==='png'?undefined:1.0));
+      const cf=c.png?'png':fmt;  // 크림은 항상 PNG
+      const cm=cf==='png'?'image/png':'image/jpeg';
+      const blob=await new Promise(res=>oc.toBlob(res,cm,cf==='png'?undefined:1.0));
       const base=o.name.replace(/\.[^.]+$/,'');
-      folder.file(base+'_'+c.k+'.'+fmt,blob);
+      folder.file(base+'_'+c.k+'.'+cf,blob);
       done++; pr.textContent='제작 중… '+done+'/'+total;
     }
   }
