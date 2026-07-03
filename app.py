@@ -1584,19 +1584,19 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
 </div>
 <script>
 const CH=[
- {k:'EQL',w:1500,h:2000,bg:'#ffffff'},
- {k:'무신사',w:1500,h:1800,bg:'#ffffff'},
- {k:'W컨셉',w:960,h:1280,bg:'#ffffff'},
- {k:'29CM',w:1000,h:1000,bg:'#EBEBEB'},
- {k:'크림',w:1120,h:1120,bg:'#ffffff'},
- {k:'공홈',w:1000,h:1400,bg:'#ffffff'},
- {k:'컬리',w:550,h:708,bg:'#F9F9F9'},
- {k:'조조타운',w:600,h:600,bg:'#ffffff'},
+ {k:'EQL',w:1500,h:2000,bg:'#ffffff',grp:'g_eqlmusinsa'},
+ {k:'무신사',w:1500,h:1800,bg:'#ffffff',grp:'g_eqlmusinsa'},
+ {k:'W컨셉',w:960,h:1280,bg:'#ffffff',grp:'g_wconcept'},
+ {k:'29CM',w:1000,h:1000,bg:'#EBEBEB',grp:'g_29cm'},
+ {k:'크림',w:1120,h:1120,bg:'#ffffff',grp:'g_kream'},
+ {k:'공홈',w:1000,h:1400,bg:'#ffffff',grp:'g_home'},
+ {k:'컬리',w:550,h:708,bg:'#F9F9F9',grp:'g_kurly'},
+ {k:'조조타운',w:600,h:600,bg:'#ffffff',grp:'g_zozo'},
 ];
 let imgs=[]; let ai=0; let ac=0;
 // 이미지마다 채널별 크롭 저장: imgs[i].tf[channelKey] = {z, cx, cy}
-function newTf(){const o={};CH.forEach(c=>o[c.k]={z:1,cx:0.5,cy:0.5});return o;}
-function curT(){return imgs[ai].tf[CH[ac].k];}
+function newTf(){const o={};CH.forEach(c=>{if(!o[c.grp])o[c.grp]={z:1,cx:0.5,cy:0.5};});return o;}
+function curT(){return imgs[ai].tf[CH[ac].grp];}
 const cvs=document.createElement('canvas');
 
 function fitDisplay(cw,chh){
@@ -1703,7 +1703,7 @@ async function makeZip(chanList){
   for(const c of chanList){
     const folder=root.folder(c.k);
     for(const o of imgs){
-      const img=o.img, t=o.tf[c.k];
+      const img=o.img, t=o.tf[c.grp];
       const oc=document.createElement('canvas'); oc.width=c.w; oc.height=c.h;
       const g=oc.getContext('2d');
       g.imageSmoothingQuality='high';
