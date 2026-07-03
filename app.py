@@ -1638,26 +1638,48 @@ function renderTabs(){
   const t=document.getElementById('tabs'); t.innerHTML='';
   CH.forEach((c,i)=>{const b=document.createElement('button');b.className='tab'+(i===ac?' on':'');b.textContent=c.k+(c.one?' · 1장':'');b.onclick=()=>{ac=i;renderTabs();draw();};t.appendChild(b);});
 }
-let dragIdx=null;
-function reorder(from,to){
-  if(from==null||from===to||to==null)return;
-  const act=imgs[ai];
-  const it=imgs.splice(from,1)[0]; imgs.splice(to,0,it);
-  ai=imgs.indexOf(act); if(ai<0)ai=0;
-  renderStrip(); draw();
+let dragObj=null;
+function delImg(o){
+  const idx=imgs.indexOf(o); if(idx<0)return;
+  imgs.splice(idx,1);
+  if(ai>=imgs.length)ai=Math.max(0,imgs.length-1);
+  if(!imgs.length){document.getElementById('stage').innerHTML='<div class="empty"><div style=\'font-size:40px\'>🖼️</div><div>이미지를 선택하세요</div></div>';document.getElementById('info').textContent='';}
+  renderStrip(); if(imgs.length)draw();
+}
+function makeThumb(o){
+  const d=document.createElement('div'); d.className='thumb'; d.draggable=true;
+  d.innerHTML='<span class="thnum"></span><img draggable="false"><span class="thdel">×</span>';
+  d.querySelector('img').src=o.url;
+  d.querySelector('img').onclick=()=>{ai=imgs.indexOf(o);renderStrip();draw();};
+  d.querySelector('.thdel').onclick=(e)=>{e.stopPropagation();delImg(o);};
+  d.addEventListener('dragstart',()=>{dragObj=o;setTimeout(()=>d.style.opacity='0.35',0);});
+  d.addEventListener('dragend',()=>{dragObj=null;d.style.opacity='1';});
+  d.addEventListener('dragover',e=>{e.preventDefault();liveReorder(o);});
+  o.el=d; return d;
 }
 function renderStrip(){
-  const s=document.getElementById('strip'); s.innerHTML='';
+  const s=document.getElementById('strip');
   imgs.forEach((o,i)=>{
-    const d=document.createElement('div');d.className='thumb'+(i===ai?' on':'');d.draggable=true;
-    d.innerHTML='<span class="thnum">'+(i+1)+'</span><img src="'+o.url+'" draggable="false"><span class="thdel">×</span>';
-    d.querySelector('img').onclick=()=>{ai=i;renderStrip();draw();};
-    d.querySelector('.thdel').onclick=(e)=>{e.stopPropagation();imgs.splice(i,1);if(ai>=imgs.length)ai=Math.max(0,imgs.length-1);renderStrip();if(imgs.length){draw();}else{document.getElementById('stage').innerHTML='<div class="empty"><div style=\'font-size:40px\'>🖼️</div><div>이미지를 선택하세요</div></div>';document.getElementById('info').textContent='';}};
-    d.addEventListener('dragstart',()=>{dragIdx=i;d.style.opacity='0.4';});
-    d.addEventListener('dragend',()=>{d.style.opacity='1';});
-    d.addEventListener('dragover',e=>e.preventDefault());
-    d.addEventListener('drop',e=>{e.preventDefault();reorder(dragIdx,i);dragIdx=null;});
-    s.appendChild(d);
+    if(!o.el)makeThumb(o);
+    o.el.querySelector('.thnum').textContent=(i+1);
+    o.el.classList.toggle('on',i===ai);
+    s.appendChild(o.el); // 기존 노드를 순서대로 재배치(이동)
+  });
+  [...s.children].forEach(ch=>{ if(!imgs.some(o=>o.el===ch)) s.removeChild(ch); });
+}
+function liveReorder(target){
+  if(!dragObj||dragObj===target)return;
+  const from=imgs.indexOf(dragObj), to=imgs.indexOf(target);
+  if(from<0||to<0)return;
+  const act=imgs[ai];
+  const first=new Map(); imgs.forEach(o=>{ if(o.el)first.set(o.el,o.el.getBoundingClientRect()); });
+  imgs.splice(from,1); imgs.splice(to,0,dragObj);
+  ai=imgs.indexOf(act);
+  renderStrip();
+  imgs.forEach(o=>{ const f=first.get(o.el); if(!f||!o.el)return;
+    const l=o.el.getBoundingClientRect(); const dy=f.top-l.top;
+    if(dy){ o.el.style.transition='none'; o.el.style.transform='translateY('+dy+'px)';
+      requestAnimationFrame(()=>{ o.el.style.transition='transform .22s cubic-bezier(.2,.8,.3,1)'; o.el.style.transform=''; }); }
   });
 }
 function loadFiles(fileList,fromFolder){
