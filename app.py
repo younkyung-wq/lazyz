@@ -1543,33 +1543,46 @@ elif "썸네일 모듈" in menu:
         "컬리":    (550, 708, "#F9F9F9"),
         "조조타운": (600, 600, "#FFFFFF"),
     }
+    # 채널별 설정: [가로, 세로, 크롭X(0~100), 크롭Y(0~100)]
     if "thumb_specs" not in st.session_state:
-        st.session_state.thumb_specs = {k: [v[0], v[1]] for k, v in DEFAULTS.items()}
+        st.session_state.thumb_specs = {k: [v[0], v[1], 50, 50] for k, v in DEFAULTS.items()}
 
     ups = st.file_uploader("이미지 선택 (여러 개 가능)", type=["jpg","jpeg","png","webp"], accept_multiple_files=True)
     chans = st.multiselect("제작할 채널", list(DEFAULTS.keys()), default=list(DEFAULTS.keys()))
-
-    with st.expander("📐 규격 조절 (채널별 가로×세로 직접 수정)"):
-        for ch in chans:
-            c1, c2, c3 = st.columns([2, 1.3, 1.3])
-            c1.markdown(f"<div style='padding-top:6px;font-size:13px;'>{ch}</div>", unsafe_allow_html=True)
-            w = c2.number_input("가로", key=f"tw_{ch}", value=st.session_state.thumb_specs[ch][0], min_value=50, step=10)
-            h = c3.number_input("세로", key=f"th_{ch}", value=st.session_state.thumb_specs[ch][1], min_value=50, step=10)
-            st.session_state.thumb_specs[ch] = [w, h]
-
     fmt = st.radio("포맷", ["JPG", "PNG"], horizontal=True)
 
-    if st.button("썸네일 제작", type="primary"):
-        if not ups:
-            st.error("이미지를 먼저 선택해주세요.")
-        elif not chans:
-            st.warning("채널을 하나 이상 선택해주세요.")
-        else:
+    if not ups:
+        st.info("이미지를 선택하면 채널별 미리보기 & 크롭 조절이 나와요.")
+    elif chans:
+        # 미리보기 대상 이미지 선택
+        names = [u.name for u in ups]
+        sel = st.selectbox("미리보기 이미지", names, index=0)
+        src_sel = Image.open(ups[names.index(sel)]).convert("RGB")
+        prev_src = src_sel.copy(); prev_src.thumbnail((1000, 1000), Image.LANCZOS)  # 미리보기 경량화
+
+        st.markdown("**채널별 크롭 조절** — 슬라이더로 크롭 위치를 맞춰요 (모든 이미지에 동일 적용)")
+        for ch in chans:
+            sp = st.session_state.thumb_specs[ch]
+            w, h, fx, fy = sp
+            with st.container(border=True):
+                pcol, ccol = st.columns([1, 2])
+                with ccol:
+                    st.markdown(f"**{ch}**")
+                    cc1, cc2 = st.columns(2)
+                    w = cc1.number_input("가로", key=f"tw_{ch}", value=w, min_value=50, step=10)
+                    h = cc2.number_input("세로", key=f"th_{ch}", value=h, min_value=50, step=10)
+                    fx = st.slider("가로 위치", 0, 100, fx, key=f"fx_{ch}")
+                    fy = st.slider("세로 위치", 0, 100, fy, key=f"fy_{ch}")
+                    st.session_state.thumb_specs[ch] = [w, h, fx, fy]
+                with pcol:
+                    pv = ImageOps.fit(prev_src, (w, h), Image.LANCZOS, centering=(fx/100, fy/100))
+                    st.image(pv, use_container_width=True)
+
+        if st.button("썸네일 제작", type="primary"):
             total, made = len(ups) * len(chans), 0
             prog = st.progress(0.0)
             buf = io.BytesIO()
             ext = "png" if fmt == "PNG" else "jpg"
-            preview = {}  # 채널별 첫 이미지 미리보기
             with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
                 for uf in ups:
                     try:
@@ -1578,7 +1591,7 @@ elif "썸네일 모듈" in menu:
                         continue
                     base = os.path.splitext(uf.name)[0]
                     for chan in chans:
-                        w, h = st.session_state.thumb_specs[chan]
+                        w, h, fx, fy = st.session_state.thumb_specs[chan]
                         bg = DEFAULTS[chan][2]
                         im = src_im
                         if bg:
@@ -1586,31 +1599,20 @@ elif "썸네일 모듈" in menu:
                             cv = Image.new("RGBA", im.size, bg); cv.paste(im,(0,0),im); im = cv.convert("RGB")
                         else:
                             im = im.convert("RGB")
-                        im2 = ImageOps.fit(im, (w, h), Image.LANCZOS)
+                        im2 = ImageOps.fit(im, (w, h), Image.LANCZOS, centering=(fx/100, fy/100))
                         ob = io.BytesIO()
-                        if ext == "jpg": im2.save(ob, "JPEG", quality=92)
-                        else: im2.save(ob, "PNG")
-                        data = ob.getvalue()
-                        zf.writestr(f"{chan}/{base}_{chan}.{ext}", data)
-                        if chan not in preview: preview[chan] = (f"{base} · {w}×{h}", data)
+                        if ext == "jpg": im2.save(ob, "JPEG", quality=100, subsampling=0)
+                        else: im2.save(ob, "PNG", optimize=False)
+                        zf.writestr(f"{chan}/{base}_{chan}.{ext}", ob.getvalue())
                         made += 1
                         prog.progress(made/total)
             st.session_state.thumb_zip = buf.getvalue()
-            st.session_state.thumb_preview = preview
             st.success(f"완료! {made}개 제작됨")
 
-    # 미리보기 + 다운로드
     if st.session_state.get("thumb_zip"):
         st.download_button("📦 ZIP 다운로드", st.session_state.thumb_zip,
                            file_name="썸네일.zip", mime="application/zip", type="primary")
         st.caption("※ 저장 위치는 브라우저 설정 > 다운로드 > '다운로드 전 위치 확인'을 켜면 매번 폴더를 고를 수 있어요.")
-        prev = st.session_state.get("thumb_preview", {})
-        if prev:
-            st.markdown("**미리보기 (채널별 1장)**")
-            cols = st.columns(4)
-            for i, (chan, (cap, data)) in enumerate(prev.items()):
-                with cols[i % 4]:
-                    st.image(data, caption=f"{chan} · {cap.split('·')[-1].strip()}", use_container_width=True)
 
 elif "피드 기획" in menu:
     st.markdown("""
