@@ -1588,7 +1588,7 @@ const CH=[
  {k:'무신사',w:1500,h:1800,bg:'#ffffff',grp:'g_eqlmusinsa'},
  {k:'W컨셉',w:960,h:1280,bg:'#ffffff',grp:'g_wconcept'},
  {k:'29CM',w:1000,h:1000,bg:'#EBEBEB',grp:'g_29cm'},
- {k:'크림',w:1120,h:1120,bg:'#ffffff',grp:'g_kream',png:true,one:true},
+ {k:'크림',w:1120,h:1120,bg:'#ffffff',grp:'g_kream',png:true},
  {k:'공홈',w:1000,h:1400,bg:'#ffffff',grp:'g_home',one:true},
  {k:'컬리',w:550,h:708,bg:'#F9F9F9',grp:'g_kurly',one:true},
  {k:'조조타운',w:600,h:600,bg:'#ffffff',grp:'g_kream'},
