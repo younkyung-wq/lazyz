@@ -1564,6 +1564,7 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <input id="pname" placeholder="상품명 (폴더명)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:170px;">
     <select id="fmt"><option value="jpg">JPG (최상화질)</option><option value="png">PNG</option></select>
+    <button class="btn btn-line" onclick="saveOne()">↓ 이 채널만 저장</button>
     <button class="btn btn-red" onclick="saveAll()">📦 전체 저장 (ZIP)</button>
     <span id="prog"></span>
     <span class="hint">이미지 드래그=이동 · 마우스 휠=확대/축소 · 채널마다 따로 조절</span>
@@ -1679,7 +1680,9 @@ cvs.addEventListener('wheel',e=>{
   draw();
 },{passive:false});
 
-async function saveAll(){
+function saveAll(){ makeZip(CH); }
+function saveOne(){ makeZip([CH[ac]]); }
+async function makeZip(chanList){
   if(!imgs.length){alert('이미지를 먼저 선택하세요.');return;}
   if(!window.JSZip){alert('압축 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');return;}
   const fmt=document.getElementById('fmt').value;
@@ -1688,8 +1691,8 @@ async function saveAll(){
   const pname=(document.getElementById('pname').value||'').trim();
   const root=pname?zip.folder(pname):zip; // 상품명 폴더가 최상위
   const pr=document.getElementById('prog');
-  let done=0, total=imgs.length*CH.length;
-  for(const c of CH){
+  let done=0, total=imgs.length*chanList.length;
+  for(const c of chanList){
     const folder=root.folder(c.k);
     for(const o of imgs){
       const img=o.img, t=o.tf[c.k];
@@ -1710,7 +1713,8 @@ async function saveAll(){
   pr.textContent='압축 중…';
   const out=await zip.generateAsync({type:'blob'});
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(out); a.download=(pname||'썸네일')+'.zip'; a.click();
+  const suffix=(chanList.length===1)?('_'+chanList[0].k):'';
+  a.href=URL.createObjectURL(out); a.download=(pname||'썸네일')+suffix+'.zip'; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),2000);
   pr.textContent='완료! ('+total+'개)';
 }
