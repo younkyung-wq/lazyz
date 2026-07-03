@@ -1543,9 +1543,19 @@ elif "썸네일 모듈" in menu:
         "컬리":    (550, 708, "#F9F9F9"),
         "조조타운": (600, 600, "#FFFFFF"),
     }
-    # 채널별 설정: [가로, 세로, 크롭X(0~100), 크롭Y(0~100)]
+    # 채널별 설정: [가로, 세로, 크롭X(0~100), 크롭Y(0~100), 줌(%)]
     if "thumb_specs" not in st.session_state:
-        st.session_state.thumb_specs = {k: [v[0], v[1], 50, 50] for k, v in DEFAULTS.items()}
+        st.session_state.thumb_specs = {k: [v[0], v[1], 50, 50, 100] for k, v in DEFAULTS.items()}
+
+    # 이동+확대 크롭 (스토리모듈 방식): 커버 스케일 × 줌 후 위치로 크롭
+    def crop_fit(im, w, h, fx, fy, zoom):
+        sw, sh = im.size
+        scale = max(w / sw, h / sh) * (zoom / 100.0)
+        nw, nh = max(w, round(sw * scale)), max(h, round(sh * scale))
+        im2 = im.resize((nw, nh), Image.LANCZOS)
+        x = round((nw - w) * fx / 100.0)
+        y = round((nh - h) * fy / 100.0)
+        return im2.crop((x, y, x + w, y + h))
 
     ups = st.file_uploader("이미지 선택 (여러 개 가능)", type=["jpg","jpeg","png","webp"], accept_multiple_files=True)
     chans = st.multiselect("제작할 채널", list(DEFAULTS.keys()), default=list(DEFAULTS.keys()))
@@ -1560,10 +1570,10 @@ elif "썸네일 모듈" in menu:
         src_sel = Image.open(ups[names.index(sel)]).convert("RGB")
         prev_src = src_sel.copy(); prev_src.thumbnail((1000, 1000), Image.LANCZOS)  # 미리보기 경량화
 
-        st.markdown("**채널별 크롭 조절** — 슬라이더로 크롭 위치를 맞춰요 (모든 이미지에 동일 적용)")
+        st.markdown("**채널별 크롭 조절** — 위치(가로·세로) + 확대로 맞춰요 (모든 이미지에 동일 적용)")
         for ch in chans:
             sp = st.session_state.thumb_specs[ch]
-            w, h, fx, fy = sp
+            w, h, fx, fy, zoom = (sp + [100])[:5]
             with st.container(border=True):
                 pcol, ccol = st.columns([1, 2])
                 with ccol:
@@ -1573,9 +1583,10 @@ elif "썸네일 모듈" in menu:
                     h = cc2.number_input("세로", key=f"th_{ch}", value=h, min_value=50, step=10)
                     fx = st.slider("가로 위치", 0, 100, fx, key=f"fx_{ch}")
                     fy = st.slider("세로 위치", 0, 100, fy, key=f"fy_{ch}")
-                    st.session_state.thumb_specs[ch] = [w, h, fx, fy]
+                    zoom = st.slider("확대 (%)", 100, 300, zoom, key=f"zoom_{ch}")
+                    st.session_state.thumb_specs[ch] = [w, h, fx, fy, zoom]
                 with pcol:
-                    pv = ImageOps.fit(prev_src, (w, h), Image.LANCZOS, centering=(fx/100, fy/100))
+                    pv = crop_fit(prev_src, w, h, fx, fy, zoom)
                     st.image(pv, use_container_width=True)
 
         if st.button("썸네일 제작", type="primary"):
@@ -1591,7 +1602,7 @@ elif "썸네일 모듈" in menu:
                         continue
                     base = os.path.splitext(uf.name)[0]
                     for chan in chans:
-                        w, h, fx, fy = st.session_state.thumb_specs[chan]
+                        w, h, fx, fy, zoom = (st.session_state.thumb_specs[chan] + [100])[:5]
                         bg = DEFAULTS[chan][2]
                         im = src_im
                         if bg:
@@ -1599,7 +1610,7 @@ elif "썸네일 모듈" in menu:
                             cv = Image.new("RGBA", im.size, bg); cv.paste(im,(0,0),im); im = cv.convert("RGB")
                         else:
                             im = im.convert("RGB")
-                        im2 = ImageOps.fit(im, (w, h), Image.LANCZOS, centering=(fx/100, fy/100))
+                        im2 = crop_fit(im, w, h, fx, fy, zoom)
                         ob = io.BytesIO()
                         if ext == "jpg": im2.save(ob, "JPEG", quality=100, subsampling=0)
                         else: im2.save(ob, "PNG", optimize=False)
