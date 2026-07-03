@@ -1544,8 +1544,10 @@ body{background:#f8f8f8;height:870px;overflow:hidden;color:#222;}
 .thumb{border:2px solid #eee;border-radius:7px;overflow:hidden;cursor:pointer;position:relative;flex-shrink:0;}
 .thumb.on{border-color:#ff4b4b;}
 .thumb img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;}
-.thdel{position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);color:#fff;width:19px;height:19px;border-radius:50%;font-size:13px;line-height:19px;text-align:center;cursor:pointer;}
+.thdel{position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);color:#fff;width:19px;height:19px;border-radius:50%;font-size:13px;line-height:19px;text-align:center;cursor:pointer;z-index:2;}
 .thdel:hover{background:#ff4b4b;}
+.thnum{position:absolute;top:3px;left:3px;background:#111;color:#fff;min-width:19px;height:19px;padding:0 5px;border-radius:10px;font-size:11px;font-weight:700;line-height:19px;text-align:center;z-index:2;}
+.thumb{cursor:grab;}
 .center{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0;align-items:center;}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
 .tab{padding:7px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:#eee;color:#888;border:none;}
@@ -1636,13 +1638,25 @@ function renderTabs(){
   const t=document.getElementById('tabs'); t.innerHTML='';
   CH.forEach((c,i)=>{const b=document.createElement('button');b.className='tab'+(i===ac?' on':'');b.textContent=c.k+(c.one?' · 1장':'');b.onclick=()=>{ac=i;renderTabs();draw();};t.appendChild(b);});
 }
+let dragIdx=null;
+function reorder(from,to){
+  if(from==null||from===to||to==null)return;
+  const act=imgs[ai];
+  const it=imgs.splice(from,1)[0]; imgs.splice(to,0,it);
+  ai=imgs.indexOf(act); if(ai<0)ai=0;
+  renderStrip(); draw();
+}
 function renderStrip(){
   const s=document.getElementById('strip'); s.innerHTML='';
   imgs.forEach((o,i)=>{
-    const d=document.createElement('div');d.className='thumb'+(i===ai?' on':'');
-    d.innerHTML='<img src="'+o.url+'"><span class="thdel">×</span>';
+    const d=document.createElement('div');d.className='thumb'+(i===ai?' on':'');d.draggable=true;
+    d.innerHTML='<span class="thnum">'+(i+1)+'</span><img src="'+o.url+'" draggable="false"><span class="thdel">×</span>';
     d.querySelector('img').onclick=()=>{ai=i;renderStrip();draw();};
     d.querySelector('.thdel').onclick=(e)=>{e.stopPropagation();imgs.splice(i,1);if(ai>=imgs.length)ai=Math.max(0,imgs.length-1);renderStrip();if(imgs.length){draw();}else{document.getElementById('stage').innerHTML='<div class="empty"><div style=\'font-size:40px\'>🖼️</div><div>이미지를 선택하세요</div></div>';document.getElementById('info').textContent='';}};
+    d.addEventListener('dragstart',()=>{dragIdx=i;d.style.opacity='0.4';});
+    d.addEventListener('dragend',()=>{d.style.opacity='1';});
+    d.addEventListener('dragover',e=>e.preventDefault());
+    d.addEventListener('drop',e=>{e.preventDefault();reorder(dragIdx,i);dragIdx=null;});
     s.appendChild(d);
   });
 }
@@ -1719,8 +1733,9 @@ async function makeZip(chanList){
       const cf=c.png?'png':fmt;  // 크림은 항상 PNG
       const cm=cf==='png'?'image/png':'image/jpeg';
       const blob=await new Promise(res=>oc.toBlob(res,cm,cf==='png'?undefined:1.0));
-      const base=o.name.replace(/\.[^.]+$/,'');
-      folder.file(base+'_'+c.k+'.'+cf,blob);
+      const num=imgs.indexOf(o)+1;  // 스트립 순서
+      const fname=(pname||'thumb')+'_'+num+'.'+cf;
+      folder.file(fname,blob);
       done++; pr.textContent='제작 중… '+done+'/'+total;
     }
   }
