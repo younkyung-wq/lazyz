@@ -1544,6 +1544,8 @@ body{background:#f8f8f8;height:870px;overflow:hidden;color:#222;}
 .thumb{border:2px solid #eee;border-radius:7px;overflow:hidden;cursor:pointer;position:relative;flex-shrink:0;}
 .thumb.on{border-color:#ff4b4b;}
 .thumb img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;}
+.thdel{position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);color:#fff;width:19px;height:19px;border-radius:50%;font-size:13px;line-height:19px;text-align:center;cursor:pointer;}
+.thdel:hover{background:#ff4b4b;}
 .center{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0;align-items:center;}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
 .tab{padding:7px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:#eee;color:#888;border:none;}
@@ -1636,7 +1638,13 @@ function renderTabs(){
 }
 function renderStrip(){
   const s=document.getElementById('strip'); s.innerHTML='';
-  imgs.forEach((o,i)=>{const d=document.createElement('div');d.className='thumb'+(i===ai?' on':'');d.innerHTML='<img src="'+o.url+'">';d.onclick=()=>{ai=i;renderStrip();draw();};s.appendChild(d);});
+  imgs.forEach((o,i)=>{
+    const d=document.createElement('div');d.className='thumb'+(i===ai?' on':'');
+    d.innerHTML='<img src="'+o.url+'"><span class="thdel">×</span>';
+    d.querySelector('img').onclick=()=>{ai=i;renderStrip();draw();};
+    d.querySelector('.thdel').onclick=(e)=>{e.stopPropagation();imgs.splice(i,1);if(ai>=imgs.length)ai=Math.max(0,imgs.length-1);renderStrip();if(imgs.length){draw();}else{document.getElementById('stage').innerHTML='<div class="empty"><div style=\'font-size:40px\'>🖼️</div><div>이미지를 선택하세요</div></div>';document.getElementById('info').textContent='';}};
+    s.appendChild(d);
+  });
 }
 function loadFiles(fileList,fromFolder){
   const files=[...fileList].filter(f=>f.type.startsWith('image/'));
