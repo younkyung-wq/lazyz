@@ -1588,8 +1588,9 @@ const CH=[
  {k:'조조타운',w:600,h:600,bg:'#ffffff'},
 ];
 let imgs=[]; let ai=0; let ac=0;
-let tf={}; // tf[channelKey] = {z, cx, cy}
-CH.forEach(c=>tf[c.k]={z:1,cx:0.5,cy:0.5});
+// 이미지마다 채널별 크롭 저장: imgs[i].tf[channelKey] = {z, cx, cy}
+function newTf(){const o={};CH.forEach(c=>o[c.k]={z:1,cx:0.5,cy:0.5});return o;}
+function curT(){return imgs[ai].tf[CH[ac].k];}
 const cvs=document.createElement('canvas');
 
 function fitDisplay(cw,chh){
@@ -1612,7 +1613,7 @@ function clampTf(img,cw,chh,t){
 function draw(){
   const st=document.getElementById('stage');
   if(!imgs.length){return;}
-  const c=CH[ac], img=imgs[ai].img, t=tf[c.k];
+  const c=CH[ac], img=imgs[ai].img, t=curT();
   const {dw,dh}=fitDisplay(c.w,c.h);
   cvs.width=dw; cvs.height=dh;
   if(cvs.parentElement!==st){st.innerHTML='';st.appendChild(cvs);}
@@ -1639,7 +1640,7 @@ document.getElementById('fi').addEventListener('change',e=>{
   files.forEach(f=>{
     const url=URL.createObjectURL(f);
     const im=new Image();
-    im.onload=()=>{ imgs.push({name:f.name,img:im,url:url}); loaded++; if(loaded===files.length){ai=0;renderStrip();renderTabs();draw();} };
+    im.onload=()=>{ imgs.push({name:f.name,img:im,url:url,tf:newTf()}); loaded++; if(loaded===files.length){ai=0;renderStrip();renderTabs();draw();} };
     im.src=url;
   });
   e.target.value='';
@@ -1649,7 +1650,7 @@ let drag=null;
 cvs.addEventListener('mousedown',e=>{drag={x:e.clientX,y:e.clientY};});
 window.addEventListener('mousemove',e=>{
   if(!drag||!imgs.length)return;
-  const c=CH[ac],img=imgs[ai].img,t=tf[c.k];
+  const c=CH[ac],img=imgs[ai].img,t=curT();
   const {dw,dh}=fitDisplay(c.w,c.h);
   const cover=Math.max(dw/img.width,dh/img.height),ds=cover*t.z;
   const iw=img.width*ds, ih=img.height*ds;
@@ -1661,7 +1662,7 @@ window.addEventListener('mouseup',()=>drag=null);
 // 휠 확대
 cvs.addEventListener('wheel',e=>{
   if(!imgs.length)return; e.preventDefault();
-  const c=CH[ac],t=tf[c.k];
+  const t=curT();
   t.z*=(e.deltaY<0?1.06:0.94);
   t.z=Math.max(1,Math.min(5,t.z));
   draw();
@@ -1678,7 +1679,7 @@ async function saveAll(){
   for(const c of CH){
     const folder=zip.folder(c.k);
     for(const o of imgs){
-      const img=o.img, t=tf[c.k];
+      const img=o.img, t=o.tf[c.k];
       const oc=document.createElement('canvas'); oc.width=c.w; oc.height=c.h;
       const g=oc.getContext('2d');
       g.imageSmoothingQuality='high';
