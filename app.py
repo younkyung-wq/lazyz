@@ -1591,7 +1591,7 @@ const CH=[
  {k:'크림',w:1120,h:1120,bg:'#ffffff',grp:'g_kream',png:true},
  {k:'공홈',w:1000,h:1400,bg:'#ffffff',grp:'g_home'},
  {k:'컬리',w:550,h:708,bg:'#F9F9F9',grp:'g_kurly'},
- {k:'조조타운',w:600,h:600,bg:'#ffffff',grp:'g_zozo'},
+ {k:'조조타운',w:600,h:600,bg:'#ffffff',grp:'g_kream'},
 ];
 let imgs=[]; let ai=0; let ac=0;
 // 이미지마다 채널별 크롭 저장: imgs[i].tf[channelKey] = {z, cx, cy}
