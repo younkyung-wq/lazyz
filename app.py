@@ -1588,10 +1588,10 @@ const CH=[
  {k:'무신사',w:1500,h:1800,bg:'#ffffff',grp:'g_eqlmusinsa'},
  {k:'W컨셉',w:960,h:1280,bg:'#ffffff',grp:'g_wconcept'},
  {k:'29CM',w:1000,h:1000,bg:'#EBEBEB',grp:'g_29cm'},
- {k:'크림',w:1120,h:1120,bg:'#ffffff',grp:'g_kream',png:true},
+ {k:'크림',w:1120,h:1120,bg:'#ffffff',grp:'g_kream',png:true,pngonly:true},
  {k:'공홈',w:1000,h:1400,bg:'#ffffff',grp:'g_home',one:true},
  {k:'컬리',w:550,h:708,bg:'#F9F9F9',grp:'g_kurly',one:true},
- {k:'조조타운',w:600,h:600,bg:'#ffffff',grp:'g_kream'},
+ {k:'조조타운',w:600,h:600,bg:'#ffffff',grp:'g_kream',pngonly:true},
 ];
 let imgs=[]; let ai=0; let ac=0;
 // 이미지마다 채널별 크롭 저장: imgs[i].tf[channelKey] = {z, cx, cy}
@@ -1634,7 +1634,7 @@ function draw(){
 }
 function renderTabs(){
   const t=document.getElementById('tabs'); t.innerHTML='';
-  CH.forEach((c,i)=>{const b=document.createElement('button');b.className='tab'+(i===ac?' on':'');b.textContent=c.k+(c.one?' · 1장':'');b.onclick=()=>{ac=i;renderTabs();draw();};t.appendChild(b);});
+  CH.forEach((c,i)=>{const b=document.createElement('button');b.className='tab'+(i===ac?' on':'');b.textContent=c.k+(c.one?' · 1장':'')+(c.pngonly?' · 누끼':'');b.onclick=()=>{ac=i;renderTabs();draw();};t.appendChild(b);});
 }
 function renderStrip(){
   const s=document.getElementById('strip'); s.innerHTML='';
@@ -1699,11 +1699,13 @@ async function makeZip(chanList){
   const pname=(document.getElementById('pname').value||'').trim();
   const root=pname?zip.folder(pname):zip; // 상품명 폴더가 최상위
   const pr=document.getElementById('prog');
-  let total=0; chanList.forEach(c=>total+=(c.one?Math.min(1,imgs.length):imgs.length));
+  const listFor=c=>{ let l=imgs; if(c.pngonly)l=l.filter(o=>/\.png$/i.test(o.name)); if(c.one)l=l.slice(0,1); return l; };
+  let total=0; chanList.forEach(c=>total+=listFor(c).length);
   let done=0;
   for(const c of chanList){
+    const list=listFor(c);  // pngonly=누끼만, one=첫 1장
+    if(!list.length)continue;
     const folder=root.folder(c.k);
-    const list=c.one?imgs.slice(0,1):imgs;  // 1장 채널은 첫 이미지만
     for(const o of list){
       const img=o.img, t=o.tf[c.grp];
       const oc=document.createElement('canvas'); oc.width=c.w; oc.height=c.h;
