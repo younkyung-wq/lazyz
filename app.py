@@ -1524,106 +1524,192 @@ with st.sidebar:
     st.text_input("", type="password", placeholder="••••••••••••••••••••••••••",
                   label_visibility="collapsed", key="api_key")
 
+# ── 썸네일 크로퍼 (HTML/JS 캔버스) ────────────────────────────
+THUMB_HTML = r"""
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Pretendard',-apple-system,sans-serif;}
+body{background:#f8f8f8;height:870px;overflow:hidden;color:#222;}
+.wrap{display:flex;flex-direction:column;height:870px;padding:16px 20px;gap:12px;}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.btn{padding:9px 16px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-dark{background:#111;color:#fff;}
+.btn-line{background:#fff;border:1.5px solid #ddd;color:#555;}
+.btn-red{background:#ff4b4b;color:#fff;}
+.hint{font-size:12px;color:#999;}
+.mid{display:flex;gap:14px;flex:1;min-height:0;}
+.left{width:150px;overflow-y:auto;display:flex;flex-direction:column;gap:7px;flex-shrink:0;}
+.thumb{border:2px solid #eee;border-radius:7px;overflow:hidden;cursor:pointer;position:relative;}
+.thumb.on{border-color:#ff4b4b;}
+.thumb img{width:100%;height:70px;object-fit:cover;display:block;}
+.center{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0;align-items:center;}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+.tab{padding:7px 13px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;background:#eee;color:#888;border:none;}
+.tab.on{background:#111;color:#fff;}
+.stage{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;background:#fff;border-radius:12px;width:100%;}
+canvas{border-radius:6px;box-shadow:0 2px 14px rgba(0,0,0,0.12);cursor:grab;}
+canvas:active{cursor:grabbing;}
+.info{font-size:12px;color:#888;text-align:center;}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#bbb;height:100%;}
+select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;}
+#prog{font-size:12px;color:#2e9e44;font-weight:700;}
+</style></head><body>
+<div class="wrap">
+  <div class="top">
+    <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 이미지 선택</button>
+    <input id="fi" type="file" accept="image/*" multiple style="display:none">
+    <select id="fmt"><option value="jpg">JPG (최상화질)</option><option value="png">PNG</option></select>
+    <button class="btn btn-red" onclick="saveAll()">📦 전체 저장 (ZIP)</button>
+    <span id="prog"></span>
+    <span class="hint">이미지 드래그=이동 · 마우스 휠=확대/축소 · 채널마다 따로 조절</span>
+  </div>
+  <div class="mid">
+    <div class="left" id="strip"></div>
+    <div class="center">
+      <div class="tabs" id="tabs"></div>
+      <div class="stage" id="stage">
+        <div class="empty"><div style="font-size:40px">🖼️</div><div>이미지를 선택하세요</div></div>
+      </div>
+      <div class="info" id="info"></div>
+    </div>
+  </div>
+</div>
+<script>
+const CH=[
+ {k:'EQL',w:1500,h:2000,bg:'#ffffff'},
+ {k:'무신사',w:1500,h:1800,bg:'#ffffff'},
+ {k:'W컨셉',w:960,h:1280,bg:'#ffffff'},
+ {k:'29CM',w:1000,h:1000,bg:'#EBEBEB'},
+ {k:'크림',w:1120,h:1120,bg:'#ffffff'},
+ {k:'공홈',w:1000,h:1400,bg:'#ffffff'},
+ {k:'컬리',w:550,h:708,bg:'#F9F9F9'},
+ {k:'조조타운',w:600,h:600,bg:'#ffffff'},
+];
+let imgs=[]; let ai=0; let ac=0;
+let tf={}; // tf[channelKey] = {z, cx, cy}
+CH.forEach(c=>tf[c.k]={z:1,cx:0.5,cy:0.5});
+const cvs=document.createElement('canvas');
+
+function fitDisplay(cw,chh){
+  const maxW=560,maxH=430;
+  let dh=maxH, dw=dh*cw/chh;
+  if(dw>maxW){dw=maxW; dh=dw*chh/cw;}
+  return {dw:Math.round(dw),dh:Math.round(dh)};
+}
+function clampTf(img,cw,chh,t){
+  // 이미지가 프레임을 항상 덮도록 cx,cy 제한
+  const cover=Math.max(cw/img.width,chh/img.height);
+  const ds=cover*t.z;
+  const iw=img.width*ds, ih=img.height*ds;
+  // 이미지가 프레임을 덮도록 cx,cy 범위 제한
+  const half=cw/(2*iw);
+  t.cx=Math.min(1-half,Math.max(half,t.cx));
+  const halfY=chh/(2*ih);
+  t.cy=Math.min(1-halfY,Math.max(halfY,t.cy));
+}
+function draw(){
+  const st=document.getElementById('stage');
+  if(!imgs.length){return;}
+  const c=CH[ac], img=imgs[ai].img, t=tf[c.k];
+  const {dw,dh}=fitDisplay(c.w,c.h);
+  cvs.width=dw; cvs.height=dh;
+  if(cvs.parentElement!==st){st.innerHTML='';st.appendChild(cvs);}
+  clampTf(img,dw,dh,t);
+  const g=cvs.getContext('2d');
+  g.fillStyle=c.bg; g.fillRect(0,0,dw,dh);
+  const cover=Math.max(dw/img.width,dh/img.height), ds=cover*t.z;
+  const iw=img.width*ds, ih=img.height*ds;
+  const dx=dw/2 - t.cx*iw, dy=dh/2 - t.cy*ih;
+  g.drawImage(img,dx,dy,iw,ih);
+  document.getElementById('info').textContent=c.k+'  '+c.w+'×'+c.h+' px  ·  확대 '+Math.round(t.z*100)+'%';
+}
+function renderTabs(){
+  const t=document.getElementById('tabs'); t.innerHTML='';
+  CH.forEach((c,i)=>{const b=document.createElement('button');b.className='tab'+(i===ac?' on':'');b.textContent=c.k;b.onclick=()=>{ac=i;renderTabs();draw();};t.appendChild(b);});
+}
+function renderStrip(){
+  const s=document.getElementById('strip'); s.innerHTML='';
+  imgs.forEach((o,i)=>{const d=document.createElement('div');d.className='thumb'+(i===ai?' on':'');d.innerHTML='<img src="'+o.url+'">';d.onclick=()=>{ai=i;renderStrip();draw();};s.appendChild(d);});
+}
+document.getElementById('fi').addEventListener('change',e=>{
+  const files=[...e.target.files].filter(f=>f.type.startsWith('image/'));
+  let loaded=0;
+  files.forEach(f=>{
+    const url=URL.createObjectURL(f);
+    const im=new Image();
+    im.onload=()=>{ imgs.push({name:f.name,img:im,url:url}); loaded++; if(loaded===files.length){ai=0;renderStrip();renderTabs();draw();} };
+    im.src=url;
+  });
+  e.target.value='';
+});
+// 드래그 이동
+let drag=null;
+cvs.addEventListener('mousedown',e=>{drag={x:e.clientX,y:e.clientY};});
+window.addEventListener('mousemove',e=>{
+  if(!drag||!imgs.length)return;
+  const c=CH[ac],img=imgs[ai].img,t=tf[c.k];
+  const {dw,dh}=fitDisplay(c.w,c.h);
+  const cover=Math.max(dw/img.width,dh/img.height),ds=cover*t.z;
+  const iw=img.width*ds, ih=img.height*ds;
+  t.cx-=(e.clientX-drag.x)/iw; t.cy-=(e.clientY-drag.y)/ih;
+  drag={x:e.clientX,y:e.clientY};
+  draw();
+});
+window.addEventListener('mouseup',()=>drag=null);
+// 휠 확대
+cvs.addEventListener('wheel',e=>{
+  if(!imgs.length)return; e.preventDefault();
+  const c=CH[ac],t=tf[c.k];
+  t.z*=(e.deltaY<0?1.06:0.94);
+  t.z=Math.max(1,Math.min(5,t.z));
+  draw();
+},{passive:false});
+
+async function saveAll(){
+  if(!imgs.length){alert('이미지를 먼저 선택하세요.');return;}
+  if(!window.JSZip){alert('압축 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');return;}
+  const fmt=document.getElementById('fmt').value;
+  const mime=fmt==='png'?'image/png':'image/jpeg';
+  const zip=new JSZip();
+  const pr=document.getElementById('prog');
+  let done=0, total=imgs.length*CH.length;
+  for(const c of CH){
+    const folder=zip.folder(c.k);
+    for(const o of imgs){
+      const img=o.img, t=tf[c.k];
+      const oc=document.createElement('canvas'); oc.width=c.w; oc.height=c.h;
+      const g=oc.getContext('2d');
+      g.imageSmoothingQuality='high';
+      g.fillStyle=c.bg; g.fillRect(0,0,c.w,c.h);
+      const cover=Math.max(c.w/img.width,c.h/img.height), ds=cover*t.z;
+      const iw=img.width*ds, ih=img.height*ds;
+      const dx=c.w/2 - t.cx*iw, dy=c.h/2 - t.cy*ih;
+      g.drawImage(img,dx,dy,iw,ih);
+      const blob=await new Promise(res=>oc.toBlob(res,mime,fmt==='png'?undefined:1.0));
+      const base=o.name.replace(/\.[^.]+$/,'');
+      folder.file(base+'_'+c.k+'.'+fmt,blob);
+      done++; pr.textContent='제작 중… '+done+'/'+total;
+    }
+  }
+  pr.textContent='압축 중…';
+  const out=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(out); a.download='썸네일.zip'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  pr.textContent='완료! ('+total+'개)';
+}
+renderTabs();
+</script></body></html>
+"""
+
 # ── Main content ─────────────────────────────────────────────
 if "스토리 모듈" in menu:
     components.html(STORY_EDITOR_HTML, height=820, scrolling=False)
 
 elif "썸네일 모듈" in menu:
-    st.markdown("<div style='font-size:18px;font-weight:800;color:#111;margin-bottom:4px;'>🖼 썸네일 모듈</div>", unsafe_allow_html=True)
-    st.caption("이미지 선택 → 채널별 규격 썸네일 자동 제작 → ZIP 다운로드")
-
-    # 기본 채널 규격 (가로, 세로, 배경색)
-    DEFAULTS = {
-        "EQL":    (1500, 2000, None),
-        "무신사":  (1500, 1800, None),
-        "W컨셉":   (960, 1280, None),
-        "29CM":   (1000, 1000, "#EBEBEB"),
-        "크림":    (1120, 1120, None),
-        "공홈":    (1000, 1400, None),
-        "컬리":    (550, 708, "#F9F9F9"),
-        "조조타운": (600, 600, "#FFFFFF"),
-    }
-    # 채널별 설정: [가로, 세로, 크롭X(0~100), 크롭Y(0~100), 줌(%)]
-    if "thumb_specs" not in st.session_state:
-        st.session_state.thumb_specs = {k: [v[0], v[1], 50, 50, 100] for k, v in DEFAULTS.items()}
-
-    # 이동+확대 크롭 (스토리모듈 방식): 커버 스케일 × 줌 후 위치로 크롭
-    def crop_fit(im, w, h, fx, fy, zoom):
-        sw, sh = im.size
-        scale = max(w / sw, h / sh) * (zoom / 100.0)
-        nw, nh = max(w, round(sw * scale)), max(h, round(sh * scale))
-        im2 = im.resize((nw, nh), Image.LANCZOS)
-        x = round((nw - w) * fx / 100.0)
-        y = round((nh - h) * fy / 100.0)
-        return im2.crop((x, y, x + w, y + h))
-
-    ups = st.file_uploader("이미지 선택 (여러 개 가능)", type=["jpg","jpeg","png","webp"], accept_multiple_files=True)
-    chans = st.multiselect("제작할 채널", list(DEFAULTS.keys()), default=list(DEFAULTS.keys()))
-    fmt = st.radio("포맷", ["JPG", "PNG"], horizontal=True)
-
-    if not ups:
-        st.info("이미지를 선택하면 채널별 미리보기 & 크롭 조절이 나와요.")
-    elif chans:
-        # 미리보기 대상 이미지 선택
-        names = [u.name for u in ups]
-        sel = st.selectbox("미리보기 이미지", names, index=0)
-        src_sel = Image.open(ups[names.index(sel)]).convert("RGB")
-        prev_src = src_sel.copy(); prev_src.thumbnail((1000, 1000), Image.LANCZOS)  # 미리보기 경량화
-
-        st.markdown("**채널별 크롭 조절** — 위치(가로·세로) + 확대로 맞춰요 (모든 이미지에 동일 적용)")
-        for ch in chans:
-            sp = st.session_state.thumb_specs[ch]
-            w, h, fx, fy, zoom = (sp + [100])[:5]
-            with st.container(border=True):
-                pcol, ccol = st.columns([1, 2])
-                with ccol:
-                    st.markdown(f"**{ch}**")
-                    cc1, cc2 = st.columns(2)
-                    w = cc1.number_input("가로", key=f"tw_{ch}", value=w, min_value=50, step=10)
-                    h = cc2.number_input("세로", key=f"th_{ch}", value=h, min_value=50, step=10)
-                    fx = st.slider("가로 위치", 0, 100, fx, key=f"fx_{ch}")
-                    fy = st.slider("세로 위치", 0, 100, fy, key=f"fy_{ch}")
-                    zoom = st.slider("확대 (%)", 100, 300, zoom, key=f"zoom_{ch}")
-                    st.session_state.thumb_specs[ch] = [w, h, fx, fy, zoom]
-                with pcol:
-                    pv = crop_fit(prev_src, w, h, fx, fy, zoom)
-                    st.image(pv, use_container_width=True)
-
-        if st.button("썸네일 제작", type="primary"):
-            total, made = len(ups) * len(chans), 0
-            prog = st.progress(0.0)
-            buf = io.BytesIO()
-            ext = "png" if fmt == "PNG" else "jpg"
-            with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
-                for uf in ups:
-                    try:
-                        src_im = Image.open(uf)
-                    except Exception:
-                        continue
-                    base = os.path.splitext(uf.name)[0]
-                    for chan in chans:
-                        w, h, fx, fy, zoom = (st.session_state.thumb_specs[chan] + [100])[:5]
-                        bg = DEFAULTS[chan][2]
-                        im = src_im
-                        if bg:
-                            im = im.convert("RGBA")
-                            cv = Image.new("RGBA", im.size, bg); cv.paste(im,(0,0),im); im = cv.convert("RGB")
-                        else:
-                            im = im.convert("RGB")
-                        im2 = crop_fit(im, w, h, fx, fy, zoom)
-                        ob = io.BytesIO()
-                        if ext == "jpg": im2.save(ob, "JPEG", quality=100, subsampling=0)
-                        else: im2.save(ob, "PNG", optimize=False)
-                        zf.writestr(f"{chan}/{base}_{chan}.{ext}", ob.getvalue())
-                        made += 1
-                        prog.progress(made/total)
-            st.session_state.thumb_zip = buf.getvalue()
-            st.success(f"완료! {made}개 제작됨")
-
-    if st.session_state.get("thumb_zip"):
-        st.download_button("📦 ZIP 다운로드", st.session_state.thumb_zip,
-                           file_name="썸네일.zip", mime="application/zip", type="primary")
-        st.caption("※ 저장 위치는 브라우저 설정 > 다운로드 > '다운로드 전 위치 확인'을 켜면 매번 폴더를 고를 수 있어요.")
+    components.html(THUMB_HTML, height=880, scrolling=False)
 
 elif "피드 기획" in menu:
     st.markdown("""
