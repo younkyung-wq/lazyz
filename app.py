@@ -1623,10 +1623,14 @@ function draw(){
   if(!imgs.length){return;}
   const c=CH[ac], img=imgs[ai].img, t=curT();
   const {dw,dh}=fitDisplay(c.w,c.h);
-  cvs.width=dw; cvs.height=dh;
+  const ratio=Math.max(2,window.devicePixelRatio||1); // 고해상도 렌더
+  cvs.width=Math.round(dw*ratio); cvs.height=Math.round(dh*ratio);
+  cvs.style.width=dw+'px'; cvs.style.height=dh+'px';
   if(cvs.parentElement!==st){st.innerHTML='';st.appendChild(cvs);}
   clampTf(img,dw,dh,t);
   const g=cvs.getContext('2d');
+  g.setTransform(ratio,0,0,ratio,0,0);
+  g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
   g.fillStyle=c.bg; g.fillRect(0,0,dw,dh);
   const cover=Math.max(dw/img.width,dh/img.height), ds=cover*t.z;
   const iw=img.width*ds, ih=img.height*ds;
