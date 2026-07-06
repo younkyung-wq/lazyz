@@ -1567,13 +1567,11 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
 </style></head><body>
 <div class="wrap">
   <div class="top">
-    <button class="btn btn-dark" onclick="document.getElementById('fd').click()">📂 폴더 선택 (자동명)</button>
     <input id="fd" type="file" accept="image/*" webkitdirectory multiple style="display:none">
-    <button class="btn btn-line" onclick="document.getElementById('fi').click()">📁 파일 선택</button>
+    <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 파일 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <button class="btn btn-line" onclick="clearAll()">🗑 비우기</button>
     <input id="pname" placeholder="상품명 (폴더명)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:170px;">
-    <select id="fmt"><option value="jpg">JPG (최상화질)</option><option value="png">PNG</option></select>
     <button class="btn btn-line" onclick="saveOne()">↓ 이 채널만</button>
     <button class="btn btn-red" onclick="saveAll()">📥 전체 저장</button>
     <span id="dirlabel" style="font-size:12px;color:#888;cursor:pointer;" onclick="pickDir()"></span>
@@ -1865,7 +1863,7 @@ function saveOne(){ makeZip(TABS[ac].chans); }
 async function makeZip(chanList){
   if(!anyImgs()){alert('이미지를 먼저 선택하세요.');return;}
   if(!window.JSZip){alert('압축 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');return;}
-  const fmt=document.getElementById('fmt').value;
+  const fmt='jpg';  // 기본 JPG (크림만 PNG 강제)
   const pname=(document.getElementById('pname').value||'').trim();
   const pr=document.getElementById('prog');
   const listFor=c=>{ let l=(gImgs[c.grp]||[]); if(c.one)l=l.slice(0,1); return l; };
