@@ -1545,6 +1545,10 @@ body{background:#f8f8f8;height:870px;overflow:hidden;color:#222;}
 .thumb.on{border-color:#ff4b4b;}
 .thumb img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;}
 .thumb canvas{width:100%;height:auto;display:block;}
+.addtile{display:flex;align-items:center;justify-content:center;height:72px;border:2px dashed #ccc;border-radius:7px;background:#fafafa;cursor:pointer;flex-shrink:0;}
+.addtile div{font-size:26px;color:#bbb;line-height:1;}
+.addtile:hover{border-color:#ff4b4b;background:#fff8f8;}
+.addtile:hover div{color:#ff4b4b;}
 .thdel{position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);color:#fff;width:19px;height:19px;border-radius:50%;font-size:13px;line-height:19px;text-align:center;cursor:pointer;z-index:2;}
 .thdel:hover{background:#ff4b4b;}
 .thnum{position:absolute;top:3px;left:3px;background:#111;color:#fff;min-width:19px;height:19px;padding:0 5px;border-radius:10px;font-size:11px;font-weight:700;line-height:19px;text-align:center;z-index:2;}
@@ -1727,6 +1731,13 @@ function makeThumb(o){
   d.addEventListener('dragend',()=>{dragObj=null;d.style.opacity='1';});
   o.el=d; return d;
 }
+let addTile=null;
+function getAddTile(){
+  if(addTile)return addTile;
+  const d=document.createElement('div'); d.className='addtile'; d.innerHTML='<div>＋</div>';
+  d.onclick=()=>document.getElementById('fi').click();
+  addTile=d; return d;
+}
 function renderStrip(){
   const s=document.getElementById('strip'); const list=curList(); const a=curAi();
   list.forEach((o,i)=>{
@@ -1736,7 +1747,8 @@ function renderStrip(){
     drawThumb(o);  // 현재 채널 크롭 반영
     s.appendChild(o.el);
   });
-  [...s.children].forEach(ch=>{ if(!list.some(o=>o.el===ch)) s.removeChild(ch); });
+  s.appendChild(getAddTile()); // 맨 아래 + 추가 칸
+  [...s.children].forEach(ch=>{ if(ch!==addTile && !list.some(o=>o.el===ch)) s.removeChild(ch); });
 }
 function getAfterEl(y){
   const els=[...document.getElementById('strip').children].filter(el=>el!==dragObj.el);
