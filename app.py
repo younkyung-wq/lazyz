@@ -2015,7 +2015,7 @@ input#w{width:80px;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-si
     <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 이미지 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <button class="btn btn-line" onclick="clearAll()">🗑 비우기</button>
-    <span class="hint">폭</span><input id="w" type="number" value="860" min="200" step="20"><span class="hint">px</span>
+    <span class="hint">폭</span><input id="w" type="number" value="1000" min="200" step="20"><span class="hint">px</span>
     <button class="btn btn-red" onclick="save('jpg')">📥 상세페이지 합치기</button>
     <span id="prog"></span>
     <span class="hint">드래그=순서변경 · 세로로 이어붙여 하나로 저장</span>
@@ -2052,12 +2052,14 @@ document.getElementById('fi').addEventListener('change',e=>{
 function clearAll(){ imgs=[]; render(); document.getElementById('prog').textContent=''; }
 async function save(fmt){
   if(!imgs.length){alert('이미지를 먼저 선택하세요.');return;}
-  const W=Math.max(200,parseInt(document.getElementById('w').value)||860);
+  const W=Math.max(200,parseInt(document.getElementById('w').value)||1000);
+  const GAP=10; // 이미지 사이 간격
   let totalH=0; const rows=imgs.map(o=>{ const h=Math.round(W*o.img.height/o.img.width); totalH+=h; return {o,h}; });
+  totalH+=GAP*(rows.length-1);
   const cv=document.createElement('canvas'); cv.width=W; cv.height=totalH;
   const g=cv.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
   g.fillStyle='#fff'; g.fillRect(0,0,W,totalH);
-  let y=0; for(const r of rows){ g.drawImage(r.o.img,0,y,W,r.h); y+=r.h; }
+  let y=0; rows.forEach((r,i)=>{ g.drawImage(r.o.img,0,y,W,r.h); y+=r.h+(i<rows.length-1?GAP:0); });
   const pr=document.getElementById('prog'); pr.textContent='저장 중…';
   const mime=fmt==='png'?'image/png':'image/jpeg';
   const blob=await new Promise(res=>cv.toBlob(res,mime,fmt==='png'?undefined:0.95));
