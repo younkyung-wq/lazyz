@@ -1567,8 +1567,9 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
 </style></head><body>
 <div class="wrap">
   <div class="top">
+    <button class="btn btn-dark" onclick="document.getElementById('fd').click()">📂 폴더 선택 (자동명)</button>
     <input id="fd" type="file" accept="image/*" webkitdirectory multiple style="display:none">
-    <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 파일 선택</button>
+    <button class="btn btn-line" onclick="document.getElementById('fi').click()">📁 파일 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <button class="btn btn-line" onclick="clearAll()">🗑 비우기</button>
     <input id="pname" placeholder="상품명 (폴더명)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:170px;">
