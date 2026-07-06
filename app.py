@@ -1573,11 +1573,12 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
     <button class="btn btn-line" onclick="clearAll()">🗑 비우기</button>
     <input id="pname" placeholder="상품명 (폴더명)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:170px;">
     <select id="fmt"><option value="jpg">JPG (최상화질)</option><option value="png">PNG</option></select>
-    <button class="btn btn-line" onclick="saveOne()">↓ 이 채널만 저장</button>
-    <button class="btn btn-red" onclick="saveAll()">📦 전체 저장 (ZIP)</button>
+    <button class="btn btn-line" onclick="saveOne()">↓ 이 채널만</button>
+    <button class="btn btn-red" onclick="saveAll()">📥 전체 저장</button>
+    <span id="dirlabel" style="font-size:12px;color:#888;cursor:pointer;" onclick="pickDir()"></span>
     <span id="prog"></span>
-    <span class="hint">이미지 드래그=이동 · 마우스 휠=확대/축소 · 채널마다 따로 조절</span>
   </div>
+  <div style="font-size:11px;color:#aaa;margin-top:-4px;">이미지 드래그=이동 · 휠=확대/축소 · 화살표=미세조정 · Delete=삭제</div>
   <div class="mid">
     <div class="left" id="strip"></div>
     <div class="center">
@@ -1841,6 +1842,23 @@ cvs.addEventListener('wheel',e=>{
   draw();
 },{passive:false});
 
+// 저장 폴더 기억 (한 번 지정하면 이후 바로 저장)
+let savedDir=null;
+function updateDirLabel(){
+  const el=document.getElementById('dirlabel');
+  el.textContent=savedDir?('📁 '+savedDir.name+' (변경)'):'📁 저장폴더 지정';
+}
+async function ensureDir(){
+  if(savedDir){
+    try{ let p=await savedDir.queryPermission({mode:'readwrite'});
+      if(p!=='granted') p=await savedDir.requestPermission({mode:'readwrite'});
+      if(p==='granted') return savedDir; }catch(e){}
+    savedDir=null;
+  }
+  const dir=await window.showDirectoryPicker({mode:'readwrite'});
+  savedDir=dir; updateDirLabel(); return dir;
+}
+async function pickDir(){ try{ savedDir=null; await ensureDir(); }catch(e){} }
 function saveAll(){ makeZip(CH); }
 function saveOne(){ makeZip(TABS[ac].chans); }
 async function makeZip(chanList){
@@ -1891,7 +1909,8 @@ async function makeZip(chanList){
   // 2) 폴더 선택해서 직접 저장 (지원 시)
   if(window.showDirectoryPicker){
     try{
-      const dir=await window.showDirectoryPicker({mode:'readwrite'});
+      let dir=await ensureDir();  // 기억된 폴더 재사용, 없으면 선택
+      if(!dir){pr.textContent='취소됨';return;}
       const root=await dir.getDirectoryHandle(pname||'썸네일',{create:true}); // 항상 상위폴더 생성
       let i=0;
       for(const e of entries){
@@ -1964,6 +1983,7 @@ document.addEventListener('keydown',e=>{
   nudgeImg(dx,dy);
 });
 renderTabs();
+updateDirLabel();
 </script></body></html>
 """
 
