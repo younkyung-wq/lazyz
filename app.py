@@ -1826,7 +1826,7 @@ async function makeZip(chanList){
   if(window.showDirectoryPicker){
     try{
       const dir=await window.showDirectoryPicker({mode:'readwrite'});
-      const root=pname?await dir.getDirectoryHandle(pname,{create:true}):dir;
+      const root=await dir.getDirectoryHandle(pname||'썸네일',{create:true}); // 항상 상위폴더 생성
       let i=0;
       for(const e of entries){
         const cd=await root.getDirectoryHandle(e.chan,{create:true});
@@ -1845,7 +1845,7 @@ async function makeZip(chanList){
   }
   // 3) 폴백: ZIP 다운로드
   pr.textContent='압축 중…';
-  const zip=new JSZip(); const rootF=pname?zip.folder(pname):zip;
+  const zip=new JSZip(); const rootF=zip.folder(pname||'썸네일');
   entries.forEach(e=>rootF.folder(e.chan).file(e.name,e.blob));
   const out=await zip.generateAsync({type:'blob'});
   const suffix=(chanList.length===1)?('_'+chanList[0].k):'';
