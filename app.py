@@ -1586,9 +1586,9 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
 </div>
 <script>
 const CH=[
- {k:'EQL',w:1500,h:2000,bg:'#ffffff',grp:'g_eql'},
+ {k:'EQL',w:1500,h:2000,bg:'#ffffff',grp:'g_eqlw'},
  {k:'무신사',w:1500,h:1800,bg:'#ffffff',grp:'g_musinsa'},
- {k:'W컨셉',w:960,h:1280,bg:'#ffffff',grp:'g_wconcept'},
+ {k:'W컨셉',w:960,h:1280,bg:'#ffffff',grp:'g_eqlw'},
  {k:'29CM',w:1000,h:1000,bg:'#EBEBEB',grp:'g_29cm'},
  {k:'공홈',w:1000,h:1400,bg:'#ffffff',grp:'g_home',one:true},
  {k:'컬리',w:550,h:708,bg:'#F9F9F9',grp:'g_kurly',one:true},
