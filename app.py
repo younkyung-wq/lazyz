@@ -1641,6 +1641,23 @@ function hqDraw(g,img,sx,sy,sw,sh,dw,dh){
   }
   g.drawImage(tmp,0,0,cw,ch,0,0,dw,dh);
 }
+// 전체 이미지를 dw×dh로 고품질 축소한 캔버스 반환 (누끼 자유배치용)
+function hqScaleImg(img,dw,dh){
+  dw=Math.max(1,Math.round(dw)); dh=Math.max(1,Math.round(dh));
+  let cw=img.width, ch=img.height;
+  let tmp=document.createElement('canvas'); tmp.width=cw; tmp.height=ch;
+  tmp.getContext('2d').drawImage(img,0,0);
+  while(cw>dw*2 && ch>dh*2){
+    const ncw=Math.max(dw,Math.round(cw/2)), nch=Math.max(dh,Math.round(ch/2));
+    const t2=document.createElement('canvas'); t2.width=ncw; t2.height=nch;
+    const g2=t2.getContext('2d'); g2.imageSmoothingEnabled=true; g2.imageSmoothingQuality='high';
+    g2.drawImage(tmp,0,0,cw,ch,0,0,ncw,nch); tmp=t2; cw=ncw; ch=nch;
+  }
+  const out=document.createElement('canvas'); out.width=dw; out.height=dh;
+  const g=out.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
+  g.drawImage(tmp,0,0,cw,ch,0,0,dw,dh);
+  return out;
+}
 function drawChecker(g,w,h){
   const s=9;
   for(let y=0;y<h;y+=s){ for(let x=0;x<w;x+=s){
@@ -1662,7 +1679,7 @@ function draw(){
   cvs.width=Math.round(dw*ratio); cvs.height=Math.round(dh*ratio);
   cvs.style.width=dw+'px'; cvs.style.height=dh+'px';
   if(cvs.parentElement!==st){st.innerHTML='';st.appendChild(cvs);}
-  clampTf(img,dw,dh,t);
+  if(!c.pngonly) clampTf(img,dw,dh,t);  // 누끼채널은 자유 축소 허용
   const g=cvs.getContext('2d');
   g.setTransform(ratio,0,0,ratio,0,0);
   g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
@@ -1796,9 +1813,10 @@ window.addEventListener('mouseup',()=>drag=null);
 // 휠 확대
 cvs.addEventListener('wheel',e=>{
   if(!curList().length)return; e.preventDefault();
-  const t=curList()[curAi()].tf;
+  const c=TABS[ac].rep, t=curList()[curAi()].tf;
   t.z*=(e.deltaY<0?1.06:0.94);
-  t.z=Math.max(1,Math.min(5,t.z));
+  const minZ=c.pngonly?0.15:1;  // 누끼채널은 더 작게 축소 가능
+  t.z=Math.max(minZ,Math.min(5,t.z));
   draw();
 },{passive:false});
 
@@ -1827,11 +1845,19 @@ async function makeZip(chanList){
       g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
       if(!c.png){ g.fillStyle=c.bg; g.fillRect(0,0,c.w,c.h); }
       const cover=Math.max(c.w/img.width,c.h/img.height), ds=cover*t.z;
-      const srcW=c.w/ds, srcH=c.h/ds;
-      let srcX=t.cx*img.width - srcW/2, srcY=t.cy*img.height - srcH/2;
-      srcX=Math.max(0,Math.min(img.width-srcW,srcX));
-      srcY=Math.max(0,Math.min(img.height-srcH,srcY));
-      hqDraw(g,img,srcX,srcY,srcW,srcH,c.w,c.h);
+      if(c.pngonly){
+        // 누끼: 자유 배치(축소 시 여백 허용) — 전체 이미지를 배치
+        const iw=img.width*ds, ih=img.height*ds;
+        const scaled=hqScaleImg(img,iw,ih);
+        g.drawImage(scaled, c.w/2 - t.cx*iw, c.h/2 - t.cy*ih);
+      } else {
+        // 일반: 크롭 영역을 고품질 축소
+        const srcW=c.w/ds, srcH=c.h/ds;
+        let srcX=t.cx*img.width - srcW/2, srcY=t.cy*img.height - srcH/2;
+        srcX=Math.max(0,Math.min(img.width-srcW,srcX));
+        srcY=Math.max(0,Math.min(img.height-srcH,srcY));
+        hqDraw(g,img,srcX,srcY,srcW,srcH,c.w,c.h);
+      }
       const cf=c.png?'png':fmt;
       const cm=cf==='png'?'image/png':'image/jpeg';
       const blob=await new Promise(res=>oc.toBlob(res,cm,cf==='png'?undefined:1.0));
