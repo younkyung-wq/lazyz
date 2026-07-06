@@ -1622,6 +1622,21 @@ function clampTf(img,cw,chh,t){
   const halfY=chh/(2*ih);
   t.cy=Math.min(1-halfY,Math.max(halfY,t.cy));
 }
+// 고품질 축소: 소스 크롭영역을 단계적으로 절반씩 줄여 계단현상 방지
+function hqDraw(g,img,sx,sy,sw,sh,dw,dh){
+  let cw=Math.max(1,Math.round(sw)), ch=Math.max(1,Math.round(sh));
+  let tmp=document.createElement('canvas'); tmp.width=cw; tmp.height=ch;
+  let tg=tmp.getContext('2d'); tg.imageSmoothingEnabled=true; tg.imageSmoothingQuality='high';
+  tg.drawImage(img,sx,sy,sw,sh,0,0,cw,ch);
+  while(cw>dw*2 && ch>dh*2){
+    const ncw=Math.max(Math.round(dw),Math.round(cw/2)), nch=Math.max(Math.round(dh),Math.round(ch/2));
+    const t2=document.createElement('canvas'); t2.width=ncw; t2.height=nch;
+    const g2=t2.getContext('2d'); g2.imageSmoothingEnabled=true; g2.imageSmoothingQuality='high';
+    g2.drawImage(tmp,0,0,cw,ch,0,0,ncw,nch);
+    tmp=t2; cw=ncw; ch=nch;
+  }
+  g.drawImage(tmp,0,0,cw,ch,0,0,dw,dh);
+}
 function drawChecker(g,w,h){
   const s=9;
   for(let y=0;y<h;y+=s){ for(let x=0;x<w;x+=s){
@@ -1795,9 +1810,11 @@ async function makeZip(chanList){
       g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
       if(!c.png){ g.fillStyle=c.bg; g.fillRect(0,0,c.w,c.h); } // 크림(PNG)은 투명 유지
       const cover=Math.max(c.w/img.width,c.h/img.height), ds=cover*t.z;
-      const iw=img.width*ds, ih=img.height*ds;
-      const dx=c.w/2 - t.cx*iw, dy=c.h/2 - t.cy*ih;
-      g.drawImage(img,dx,dy,iw,ih);
+      const srcW=c.w/ds, srcH=c.h/ds;
+      let srcX=t.cx*img.width - srcW/2, srcY=t.cy*img.height - srcH/2;
+      srcX=Math.max(0,Math.min(img.width-srcW,srcX));
+      srcY=Math.max(0,Math.min(img.height-srcH,srcY));
+      hqDraw(g,img,srcX,srcY,srcW,srcH,c.w,c.h);
       const cf=c.png?'png':fmt;  // 크림은 항상 PNG
       const cm=cf==='png'?'image/png':'image/jpeg';
       const blob=await new Promise(res=>oc.toBlob(res,cm,cf==='png'?undefined:1.0));
