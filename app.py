@@ -1531,8 +1531,8 @@ THUMB_HTML = r"""
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Pretendard',-apple-system,sans-serif;}
-body{background:#f8f8f8;height:870px;overflow:hidden;color:#222;}
-.wrap{display:flex;flex-direction:column;height:870px;padding:16px 20px;gap:12px;}
+body{background:#f8f8f8;height:812px;overflow:hidden;color:#222;}
+.wrap{display:flex;flex-direction:column;height:812px;padding:16px 20px;gap:12px;}
 .top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .btn{padding:9px 16px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
 .btn-dark{background:#111;color:#fff;}
@@ -1973,7 +1973,7 @@ if "스토리 모듈" in menu:
     components.html(STORY_EDITOR_HTML, height=820, scrolling=False)
 
 elif "썸네일 모듈" in menu:
-    components.html(THUMB_HTML, height=880, scrolling=False)
+    components.html(THUMB_HTML, height=820, scrolling=False)
 
 elif "피드 기획" in menu:
     st.markdown("""
