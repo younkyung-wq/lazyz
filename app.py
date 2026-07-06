@@ -1544,6 +1544,7 @@ body{background:#f8f8f8;height:870px;overflow:hidden;color:#222;}
 .thumb{border:2px solid #eee;border-radius:7px;overflow:hidden;cursor:pointer;position:relative;flex-shrink:0;}
 .thumb.on{border-color:#ff4b4b;}
 .thumb img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block;}
+.thumb canvas{width:100%;aspect-ratio:1/1;display:block;}
 .thdel{position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);color:#fff;width:19px;height:19px;border-radius:50%;font-size:13px;line-height:19px;text-align:center;cursor:pointer;z-index:2;}
 .thdel:hover{background:#ff4b4b;}
 .thnum{position:absolute;top:3px;left:3px;background:#111;color:#fff;min-width:19px;height:19px;padding:0 5px;border-radius:10px;font-size:11px;font-weight:700;line-height:19px;text-align:center;z-index:2;}
@@ -1671,6 +1672,7 @@ function draw(){
   const dx=dw/2 - t.cx*iw, dy=dh/2 - t.cy*ih;
   g.drawImage(img,dx,dy,iw,ih);
   document.getElementById('info').textContent=c.k+'  '+c.w+'×'+c.h+' px  ·  확대 '+Math.round(t.z*100)+'%';
+  drawThumb(list[idx]); // 조절 중 썸네일도 실시간 반영
 }
 function renderTabs(){
   const t=document.getElementById('tabs'); t.innerHTML='';
@@ -1683,11 +1685,28 @@ function delImg(o){
   let a=curAi(); if(a>=list.length)a=Math.max(0,list.length-1); setAi(a);
   renderStrip(); draw();
 }
+function drawThumb(o){
+  const cv=o.canvas; if(!cv)return;
+  const c=TABS[ac].rep, t=o.tf, img=o.img;
+  const S=130, ratio=2; cv.width=S*ratio; cv.height=S*ratio;
+  const g=cv.getContext('2d'); g.setTransform(ratio,0,0,ratio,0,0);
+  g.clearRect(0,0,S,S);
+  // 채널 비율(rep)을 정사각 안에 contain
+  let fw,fh; if(c.w>=c.h){fw=S;fh=S*c.h/c.w;}else{fh=S;fw=S*c.w/c.h;}
+  const ox=(S-fw)/2, oy=(S-fh)/2;
+  if(c.png){ drawChecker(g,S,S); } else { g.fillStyle='#f2f2f2'; g.fillRect(0,0,S,S); g.fillStyle=c.bg||'#fff'; g.fillRect(ox,oy,fw,fh); }
+  g.save(); g.beginPath(); g.rect(ox,oy,fw,fh); g.clip();
+  g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
+  const cover=Math.max(fw/img.width,fh/img.height), ds=cover*t.z;
+  const iw=img.width*ds, ih=img.height*ds;
+  g.drawImage(img, ox+fw/2 - t.cx*iw, oy+fh/2 - t.cy*ih, iw, ih);
+  g.restore();
+}
 function makeThumb(o){
   const d=document.createElement('div'); d.className='thumb'; d.draggable=true;
-  d.innerHTML='<span class="thnum"></span><img draggable="false"><span class="thdel">×</span>';
-  d.querySelector('img').src=o.url;
-  d.querySelector('img').onclick=()=>{setAi(curList().indexOf(o));renderStrip();draw();};
+  d.innerHTML='<span class="thnum"></span><canvas></canvas><span class="thdel">×</span>';
+  o.canvas=d.querySelector('canvas');
+  d.querySelector('canvas').onclick=()=>{setAi(curList().indexOf(o));renderStrip();draw();};
   d.querySelector('.thdel').onclick=(e)=>{e.stopPropagation();delImg(o);};
   d.addEventListener('dragstart',()=>{dragObj=o;setTimeout(()=>d.style.opacity='0.35',0);});
   d.addEventListener('dragend',()=>{dragObj=null;d.style.opacity='1';});
@@ -1699,6 +1718,7 @@ function renderStrip(){
     if(!o.el)makeThumb(o);
     o.el.querySelector('.thnum').textContent=(i+1);
     o.el.classList.toggle('on',i===a);
+    drawThumb(o);  // 현재 채널 크롭 반영
     s.appendChild(o.el);
   });
   [...s.children].forEach(ch=>{ if(!list.some(o=>o.el===ch)) s.removeChild(ch); });
