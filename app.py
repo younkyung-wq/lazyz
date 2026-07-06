@@ -1677,6 +1677,13 @@ function getAfterEl(y){
     if(off<0 && off>closest.offset){ closest={offset:off,element:el}; } }
   return closest.element;
 }
+function flipAnimate(first){
+  imgs.forEach(o=>{ const f=first.get(o.el); if(!f||!o.el)return;
+    const l=o.el.getBoundingClientRect(); const dy=f.top-l.top;
+    if(dy){ o.el.style.transition='none'; o.el.style.transform='translateY('+dy+'px)';
+      requestAnimationFrame(()=>{ o.el.style.transition='transform .18s cubic-bezier(.2,.8,.3,1)'; o.el.style.transform=''; }); }
+  });
+}
 function flipMoveBefore(beforeObj){
   const arr=imgs.filter(o=>o!==dragObj);
   let idx=beforeObj?arr.indexOf(beforeObj):arr.length; if(idx<0)idx=arr.length;
@@ -1685,12 +1692,16 @@ function flipMoveBefore(beforeObj){
   const act=imgs[ai];
   const first=new Map(); imgs.forEach(o=>{ if(o.el)first.set(o.el,o.el.getBoundingClientRect()); });
   imgs=arr; ai=imgs.indexOf(act);
-  renderStrip();
-  imgs.forEach(o=>{ const f=first.get(o.el); if(!f||!o.el)return;
-    const l=o.el.getBoundingClientRect(); const dy=f.top-l.top;
-    if(dy){ o.el.style.transition='none'; o.el.style.transform='translateY('+dy+'px)';
-      requestAnimationFrame(()=>{ o.el.style.transition='transform .18s cubic-bezier(.2,.8,.3,1)'; o.el.style.transform=''; }); }
-  });
+  renderStrip(); flipAnimate(first);
+}
+function moveSel(delta){
+  const to=ai+delta;
+  if(to<0||to>=imgs.length)return;
+  const act=imgs[ai];
+  const first=new Map(); imgs.forEach(o=>{ if(o.el)first.set(o.el,o.el.getBoundingClientRect()); });
+  imgs.splice(ai,1); imgs.splice(to,0,act);
+  ai=to;
+  renderStrip(); flipAnimate(first);
 }
 function loadFiles(fileList,fromFolder){
   const files=[...fileList].filter(f=>f.type.startsWith('image/'));
@@ -1794,6 +1805,14 @@ async function makeZip(chanList){
   });
   strip.addEventListener('drop',e=>e.preventDefault());
 })();
+// 방향키로 선택 이미지 순서 이동
+document.addEventListener('keydown',e=>{
+  if(!imgs.length)return;
+  const ae=document.activeElement;
+  if(ae&&(ae.tagName==='INPUT'||ae.tagName==='SELECT'||ae.tagName==='TEXTAREA'))return;
+  if(e.key==='ArrowUp'){e.preventDefault();moveSel(-1);}
+  else if(e.key==='ArrowDown'){e.preventDefault();moveSel(1);}
+});
 renderTabs();
 </script></body></html>
 """
