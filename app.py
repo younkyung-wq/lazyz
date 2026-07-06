@@ -1597,8 +1597,11 @@ const CH=[
 ];
 // 그룹(채널)별 독립 이미지 목록 — 삭제/순서/크롭 모두 그룹별로 따로
 const GROUPS={}; CH.forEach(c=>{ if(!GROUPS[c.grp])GROUPS[c.grp]={png:false}; if(c.pngonly)GROUPS[c.grp].png=true; });
+// 탭 = 그룹 단위 (같은 그룹 채널은 탭 하나로 합침, 저장은 각각)
+const TABS=[]; CH.forEach(c=>{ let t=TABS.find(x=>x.grp===c.grp); if(!t){t={grp:c.grp,chans:[]};TABS.push(t);} t.chans.push(c); });
+TABS.forEach(t=>{ t.label=t.chans.map(c=>c.k).join('/')+(t.chans.some(c=>c.one)?' · 1장':''); t.rep=t.chans[0]; });
 let gImgs={}; let gAi={}; let ac=0;
-function curGrp(){return CH[ac].grp;}
+function curGrp(){return TABS[ac].grp;}
 function curList(){return gImgs[curGrp()]||[];}
 function curAi(){return gAi[curGrp()]||0;}
 function setAi(v){gAi[curGrp()]=v;}
@@ -1652,7 +1655,7 @@ function draw(){
   const list=curList();
   if(!list.length){ emptyStage(GROUPS[curGrp()].png?'이 채널은 PNG(누끼) 이미지만 사용해요':'이미지를 선택하세요'); return; }
   let idx=curAi(); if(idx>=list.length){idx=list.length-1;setAi(idx);}
-  const c=CH[ac], img=list[idx].img, t=list[idx].tf;
+  const c=TABS[ac].rep, img=list[idx].img, t=list[idx].tf;
   const {dw,dh}=fitDisplay(c.w,c.h);
   const ratio=Math.max(2,window.devicePixelRatio||1); // 고해상도 렌더
   cvs.width=Math.round(dw*ratio); cvs.height=Math.round(dh*ratio);
@@ -1671,7 +1674,7 @@ function draw(){
 }
 function renderTabs(){
   const t=document.getElementById('tabs'); t.innerHTML='';
-  CH.forEach((c,i)=>{const b=document.createElement('button');b.className='tab'+(i===ac?' on':'');b.textContent=c.k+(c.one?' · 1장':'');b.onclick=()=>{ac=i;renderTabs();renderStrip();draw();};t.appendChild(b);});
+  TABS.forEach((tb,i)=>{const b=document.createElement('button');b.className='tab'+(i===ac?' on':'');b.textContent=tb.label;b.onclick=()=>{ac=i;renderTabs();renderStrip();draw();};t.appendChild(b);});
 }
 let dragObj=null;
 function delImg(o){
@@ -1766,7 +1769,7 @@ let drag=null;
 cvs.addEventListener('mousedown',e=>{drag={x:e.clientX,y:e.clientY};});
 window.addEventListener('mousemove',e=>{
   if(!drag||!curList().length)return;
-  const c=CH[ac],slot=curList()[curAi()],img=slot.img,t=slot.tf;
+  const c=TABS[ac].rep,slot=curList()[curAi()],img=slot.img,t=slot.tf;
   const {dw,dh}=fitDisplay(c.w,c.h);
   const cover=Math.max(dw/img.width,dh/img.height),ds=cover*t.z;
   const iw=img.width*ds, ih=img.height*ds;
@@ -1785,7 +1788,7 @@ cvs.addEventListener('wheel',e=>{
 },{passive:false});
 
 function saveAll(){ makeZip(CH); }
-function saveOne(){ makeZip([CH[ac]]); }
+function saveOne(){ makeZip(TABS[ac].chans); }
 async function makeZip(chanList){
   if(!anyImgs()){alert('이미지를 먼저 선택하세요.');return;}
   if(!window.JSZip){alert('압축 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');return;}
