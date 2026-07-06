@@ -1790,17 +1790,16 @@ async function makeZip(chanList){
   if(!anyImgs()){alert('이미지를 먼저 선택하세요.');return;}
   if(!window.JSZip){alert('압축 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');return;}
   const fmt=document.getElementById('fmt').value;
-  const zip=new JSZip();
   const pname=(document.getElementById('pname').value||'').trim();
-  const root=pname?zip.folder(pname):zip; // 상품명 폴더가 최상위
   const pr=document.getElementById('prog');
   const listFor=c=>{ let l=(gImgs[c.grp]||[]); if(c.one)l=l.slice(0,1); return l; };
   let total=0; chanList.forEach(c=>total+=listFor(c).length);
   let done=0;
+  // 1) 렌더 → 결과 모으기
+  const entries=[]; // {chan, name, blob}
   for(const c of chanList){
     const list=listFor(c);
     if(!list.length)continue;
-    const folder=root.folder(c.k);
     let n=0;
     for(const o of list){
       n++;
@@ -1808,41 +1807,52 @@ async function makeZip(chanList){
       const oc=document.createElement('canvas'); oc.width=c.w; oc.height=c.h;
       const g=oc.getContext('2d');
       g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
-      if(!c.png){ g.fillStyle=c.bg; g.fillRect(0,0,c.w,c.h); } // 크림(PNG)은 투명 유지
+      if(!c.png){ g.fillStyle=c.bg; g.fillRect(0,0,c.w,c.h); }
       const cover=Math.max(c.w/img.width,c.h/img.height), ds=cover*t.z;
       const srcW=c.w/ds, srcH=c.h/ds;
       let srcX=t.cx*img.width - srcW/2, srcY=t.cy*img.height - srcH/2;
       srcX=Math.max(0,Math.min(img.width-srcW,srcX));
       srcY=Math.max(0,Math.min(img.height-srcH,srcY));
       hqDraw(g,img,srcX,srcY,srcW,srcH,c.w,c.h);
-      const cf=c.png?'png':fmt;  // 크림은 항상 PNG
+      const cf=c.png?'png':fmt;
       const cm=cf==='png'?'image/png':'image/jpeg';
       const blob=await new Promise(res=>oc.toBlob(res,cm,cf==='png'?undefined:1.0));
-      const fname=(pname||'thumb')+'_'+n+'.'+cf;
-      folder.file(fname,blob);
+      entries.push({chan:c.k, name:(pname||'thumb')+'_'+n+'.'+cf, blob});
       done++; pr.textContent='제작 중… '+done+'/'+total;
     }
   }
-  pr.textContent='압축 중…';
-  const out=await zip.generateAsync({type:'blob'});
-  const suffix=(chanList.length===1)?('_'+chanList[0].k):'';
-  const fn=(pname||'썸네일')+suffix+'.zip';
-  // 저장 위치 선택 대화상자 (지원 시)
-  if(window.showSaveFilePicker){
+  if(!entries.length){alert('생성된 이미지가 없어요.');return;}
+  // 2) 폴더 선택해서 직접 저장 (지원 시)
+  if(window.showDirectoryPicker){
     try{
-      const handle=await window.showSaveFilePicker({suggestedName:fn,types:[{description:'ZIP',accept:{'application/zip':['.zip']}}]});
-      const buf=await out.arrayBuffer();
-      const w=await handle.createWritable(); await w.write(buf); await w.close();
-      pr.textContent='저장 완료! ('+total+'개)'; return;
+      const dir=await window.showDirectoryPicker({mode:'readwrite'});
+      const root=pname?await dir.getDirectoryHandle(pname,{create:true}):dir;
+      let i=0;
+      for(const e of entries){
+        const cd=await root.getDirectoryHandle(e.chan,{create:true});
+        const fh=await cd.getFileHandle(e.name,{create:true});
+        const w=await fh.createWritable();
+        await w.write(await e.blob.arrayBuffer());
+        await w.close();
+        i++; pr.textContent='저장 중… '+i+'/'+entries.length;
+      }
+      pr.textContent='저장 완료! ('+entries.length+'개) → '+(pname||dir.name);
+      return;
     }catch(err){
       if(err.name==='AbortError'){pr.textContent='취소됨'; return;}
-      // 그 외(iframe 차단 등)는 아래 기본 다운로드로
+      // 그 외는 아래 ZIP 다운로드로
     }
   }
+  // 3) 폴백: ZIP 다운로드
+  pr.textContent='압축 중…';
+  const zip=new JSZip(); const rootF=pname?zip.folder(pname):zip;
+  entries.forEach(e=>rootF.folder(e.chan).file(e.name,e.blob));
+  const out=await zip.generateAsync({type:'blob'});
+  const suffix=(chanList.length===1)?('_'+chanList[0].k):'';
   const a=document.createElement('a');
-  a.href=URL.createObjectURL(out); a.download=fn; a.click();
+  a.href=URL.createObjectURL(out); a.download=(pname||'썸네일')+suffix+'.zip'; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-  pr.textContent='완료! ('+total+'개)';
+  pr.textContent='완료! ('+entries.length+'개)';
 }
 (function(){
   const strip=document.getElementById('strip');
