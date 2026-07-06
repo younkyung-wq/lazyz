@@ -1622,6 +1622,12 @@ function clampTf(img,cw,chh,t){
   const halfY=chh/(2*ih);
   t.cy=Math.min(1-halfY,Math.max(halfY,t.cy));
 }
+function drawChecker(g,w,h){
+  const s=9;
+  for(let y=0;y<h;y+=s){ for(let x=0;x<w;x+=s){
+    g.fillStyle=(((x/s|0)+(y/s|0))%2)?'#e6e6e6':'#fafafa'; g.fillRect(x,y,s,s);
+  }}
+}
 function emptyStage(msg){
   document.getElementById('stage').innerHTML='<div class="empty"><div style="font-size:40px">🖼️</div><div>'+(msg||'이미지를 선택하세요')+'</div></div>';
   document.getElementById('info').textContent='';
@@ -1641,7 +1647,7 @@ function draw(){
   const g=cvs.getContext('2d');
   g.setTransform(ratio,0,0,ratio,0,0);
   g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
-  g.fillStyle=c.bg; g.fillRect(0,0,dw,dh);
+  if(c.png){ drawChecker(g,dw,dh); } else { g.fillStyle=c.bg; g.fillRect(0,0,dw,dh); }
   const cover=Math.max(dw/img.width,dh/img.height), ds=cover*t.z;
   const iw=img.width*ds, ih=img.height*ds;
   const dx=dw/2 - t.cx*iw, dy=dh/2 - t.cy*ih;
@@ -1787,7 +1793,7 @@ async function makeZip(chanList){
       const oc=document.createElement('canvas'); oc.width=c.w; oc.height=c.h;
       const g=oc.getContext('2d');
       g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
-      g.fillStyle=c.bg; g.fillRect(0,0,c.w,c.h);
+      if(!c.png){ g.fillStyle=c.bg; g.fillRect(0,0,c.w,c.h); } // 크림(PNG)은 투명 유지
       const cover=Math.max(c.w/img.width,c.h/img.height), ds=cover*t.z;
       const iw=img.width*ds, ih=img.height*ds;
       const dx=c.w/2 - t.cx*iw, dy=c.h/2 - t.cy*ih;
