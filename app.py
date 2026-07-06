@@ -1817,7 +1817,8 @@ async function makeZip(chanList){
       const cf=c.png?'png':fmt;
       const cm=cf==='png'?'image/png':'image/jpeg';
       const blob=await new Promise(res=>oc.toBlob(res,cm,cf==='png'?undefined:1.0));
-      entries.push({chan:c.k, name:(pname||'thumb')+'_'+n+'.'+cf, blob});
+      const base=o.name.replace(/\.[^.]+$/,'');  // 원본 파일명(확장자 제외)
+      entries.push({chan:c.k, name:base+'_'+n+'.'+cf, blob});
       done++; pr.textContent='제작 중… '+done+'/'+total;
     }
   }
