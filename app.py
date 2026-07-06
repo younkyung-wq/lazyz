@@ -1513,7 +1513,7 @@ with st.sidebar:
 
     menu = st.radio(
         "",
-        ["📱  스토리 모듈", "🖼  썸네일 모듈"],
+        ["📱  스토리 모듈", "🖼  썸네일 모듈", "📄  상세페이지 모듈"],
         label_visibility="collapsed"
     )
 
@@ -1987,12 +1987,96 @@ updateDirLabel();
 </script></body></html>
 """
 
+# ── 상세페이지 조합기 (HTML/JS) ───────────────────────────────
+DETAIL_HTML = r"""
+<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Pretendard',-apple-system,sans-serif;}
+body{background:#f8f8f8;height:812px;overflow:hidden;color:#222;}
+.wrap{display:flex;flex-direction:column;height:812px;padding:16px 20px;gap:12px;}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.btn{padding:9px 16px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-dark{background:#111;color:#fff;} .btn-line{background:#fff;border:1.5px solid #ddd;color:#555;} .btn-red{background:#ff4b4b;color:#fff;}
+.hint{font-size:12px;color:#999;}
+#prog{font-size:12px;color:#2e9e44;font-weight:700;}
+.stage{flex:1;overflow-y:auto;background:#fff;border-radius:12px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:0;}
+.row{position:relative;width:100%;max-width:520px;cursor:grab;}
+.row img{width:100%;display:block;}
+.row.on{outline:2px solid #ff4b4b;outline-offset:-2px;}
+.row .del{position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.6);color:#fff;width:22px;height:22px;border-radius:50%;font-size:14px;line-height:22px;text-align:center;cursor:pointer;z-index:2;}
+.row .del:hover{background:#ff4b4b;}
+.row .num{position:absolute;top:6px;left:6px;background:#111;color:#fff;padding:1px 7px;border-radius:10px;font-size:11px;font-weight:700;z-index:2;}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#bbb;height:100%;}
+input#w{width:80px;padding:8px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;text-align:center;}
+</style></head><body>
+<div class="wrap">
+  <div class="top">
+    <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 이미지 선택</button>
+    <input id="fi" type="file" accept="image/*" multiple style="display:none">
+    <button class="btn btn-line" onclick="clearAll()">🗑 비우기</button>
+    <span class="hint">폭</span><input id="w" type="number" value="860" min="200" step="20"><span class="hint">px</span>
+    <button class="btn btn-red" onclick="save('jpg')">📥 상세페이지 합치기</button>
+    <span id="prog"></span>
+    <span class="hint">드래그=순서변경 · 세로로 이어붙여 하나로 저장</span>
+  </div>
+  <div class="stage" id="stage"><div class="empty"><div style="font-size:40px">📄</div><div>상세 이미지들을 선택하세요 (위→아래 순서로 합쳐져요)</div></div></div>
+</div>
+<script>
+let imgs=[]; let dragObj=null;
+function render(){
+  const st=document.getElementById('stage');
+  if(!imgs.length){st.innerHTML='<div class="empty"><div style="font-size:40px">📄</div><div>상세 이미지들을 선택하세요</div></div>';return;}
+  st.innerHTML='';
+  imgs.forEach((o,i)=>{
+    const d=document.createElement('div'); d.className='row'; d.draggable=true;
+    d.innerHTML='<span class="num">'+(i+1)+'</span><img src="'+o.url+'" draggable="false"><span class="del">×</span>';
+    d.querySelector('.del').onclick=(e)=>{e.stopPropagation();imgs.splice(i,1);render();};
+    d.addEventListener('dragstart',()=>{dragObj=o;setTimeout(()=>d.style.opacity='0.4',0);});
+    d.addEventListener('dragend',()=>{dragObj=null;d.style.opacity='1';});
+    d.addEventListener('dragover',e=>{e.preventDefault();
+      const from=imgs.indexOf(dragObj), to=i;
+      if(from<0||from===to)return;
+      imgs.splice(from,1); imgs.splice(to,0,dragObj); render();
+    });
+    o.el=d; st.appendChild(d);
+  });
+}
+document.getElementById('fi').addEventListener('change',e=>{
+  const files=[...e.target.files].filter(f=>f.type.startsWith('image/')).sort((a,b)=>a.name.localeCompare(b.name));
+  let n=files.length;
+  files.forEach(f=>{ const url=URL.createObjectURL(f); const im=new Image();
+    im.onload=()=>{ imgs.push({name:f.name,img:im,url}); if(--n===0)render(); }; im.src=url; });
+  e.target.value='';
+});
+function clearAll(){ imgs=[]; render(); document.getElementById('prog').textContent=''; }
+async function save(fmt){
+  if(!imgs.length){alert('이미지를 먼저 선택하세요.');return;}
+  const W=Math.max(200,parseInt(document.getElementById('w').value)||860);
+  let totalH=0; const rows=imgs.map(o=>{ const h=Math.round(W*o.img.height/o.img.width); totalH+=h; return {o,h}; });
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=totalH;
+  const g=cv.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
+  g.fillStyle='#fff'; g.fillRect(0,0,W,totalH);
+  let y=0; for(const r of rows){ g.drawImage(r.o.img,0,y,W,r.h); y+=r.h; }
+  const pr=document.getElementById('prog'); pr.textContent='저장 중…';
+  const mime=fmt==='png'?'image/png':'image/jpeg';
+  const blob=await new Promise(res=>cv.toBlob(res,mime,fmt==='png'?undefined:0.95));
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='상세페이지.'+fmt; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+  pr.textContent='완료! ('+imgs.length+'장 · '+W+'×'+totalH+')';
+}
+</script></body></html>
+"""
+
 # ── Main content ─────────────────────────────────────────────
 if "스토리 모듈" in menu:
     components.html(STORY_EDITOR_HTML, height=820, scrolling=False)
 
 elif "썸네일 모듈" in menu:
     components.html(THUMB_HTML, height=820, scrolling=False)
+
+elif "상세페이지 모듈" in menu:
+    components.html(DETAIL_HTML, height=820, scrolling=False)
 
 elif "피드 기획" in menu:
     st.markdown("""
