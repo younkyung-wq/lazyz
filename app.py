@@ -1658,7 +1658,6 @@ function makeThumb(o){
   d.querySelector('.thdel').onclick=(e)=>{e.stopPropagation();delImg(o);};
   d.addEventListener('dragstart',()=>{dragObj=o;setTimeout(()=>d.style.opacity='0.35',0);});
   d.addEventListener('dragend',()=>{dragObj=null;d.style.opacity='1';});
-  d.addEventListener('dragover',e=>{e.preventDefault();liveReorder(o);});
   o.el=d; return d;
 }
 function renderStrip(){
@@ -1671,19 +1670,26 @@ function renderStrip(){
   });
   [...s.children].forEach(ch=>{ if(!imgs.some(o=>o.el===ch)) s.removeChild(ch); });
 }
-function liveReorder(target){
-  if(!dragObj||dragObj===target)return;
-  const from=imgs.indexOf(dragObj), to=imgs.indexOf(target);
-  if(from<0||to<0)return;
+function getAfterEl(y){
+  const els=[...document.getElementById('strip').children].filter(el=>el!==dragObj.el);
+  let closest={offset:-Infinity,element:null};
+  for(const el of els){ const b=el.getBoundingClientRect(); const off=y-(b.top+b.height/2);
+    if(off<0 && off>closest.offset){ closest={offset:off,element:el}; } }
+  return closest.element;
+}
+function flipMoveBefore(beforeObj){
+  const arr=imgs.filter(o=>o!==dragObj);
+  let idx=beforeObj?arr.indexOf(beforeObj):arr.length; if(idx<0)idx=arr.length;
+  arr.splice(idx,0,dragObj);
+  if(arr.every((o,i)=>o===imgs[i]))return; // 변화 없으면 스킵(튐 방지)
   const act=imgs[ai];
   const first=new Map(); imgs.forEach(o=>{ if(o.el)first.set(o.el,o.el.getBoundingClientRect()); });
-  imgs.splice(from,1); imgs.splice(to,0,dragObj);
-  ai=imgs.indexOf(act);
+  imgs=arr; ai=imgs.indexOf(act);
   renderStrip();
   imgs.forEach(o=>{ const f=first.get(o.el); if(!f||!o.el)return;
     const l=o.el.getBoundingClientRect(); const dy=f.top-l.top;
     if(dy){ o.el.style.transition='none'; o.el.style.transform='translateY('+dy+'px)';
-      requestAnimationFrame(()=>{ o.el.style.transition='transform .22s cubic-bezier(.2,.8,.3,1)'; o.el.style.transform=''; }); }
+      requestAnimationFrame(()=>{ o.el.style.transition='transform .18s cubic-bezier(.2,.8,.3,1)'; o.el.style.transform=''; }); }
   });
 }
 function loadFiles(fileList,fromFolder){
@@ -1773,6 +1779,21 @@ async function makeZip(chanList){
   setTimeout(()=>URL.revokeObjectURL(a.href),2000);
   pr.textContent='완료! ('+total+'개)';
 }
+(function(){
+  const strip=document.getElementById('strip');
+  let raf=null;
+  strip.addEventListener('dragover',e=>{
+    e.preventDefault(); if(!dragObj)return;
+    if(raf)return; // 프레임당 1회만 처리
+    const y=e.clientY;
+    raf=requestAnimationFrame(()=>{ raf=null;
+      const after=getAfterEl(y);
+      const beforeObj=after?imgs.find(o=>o.el===after):null;
+      flipMoveBefore(beforeObj);
+    });
+  });
+  strip.addEventListener('drop',e=>e.preventDefault());
+})();
 renderTabs();
 </script></body></html>
 """
