@@ -1689,6 +1689,8 @@ function draw(){
   const iw=img.width*ds, ih=img.height*ds;
   const dx=dw/2 - t.cx*iw, dy=dh/2 - t.cy*ih;
   g.drawImage(img,dx,dy,iw,ih);
+  if(guideV){ g.strokeStyle='rgba(255,75,75,0.85)'; g.lineWidth=1; g.setLineDash([5,4]); g.beginPath(); g.moveTo(dw/2,0); g.lineTo(dw/2,dh); g.stroke(); g.setLineDash([]); }
+  if(guideH){ g.strokeStyle='rgba(255,75,75,0.85)'; g.lineWidth=1; g.setLineDash([5,4]); g.beginPath(); g.moveTo(0,dh/2); g.lineTo(dw,dh/2); g.stroke(); g.setLineDash([]); }
   document.getElementById('info').textContent=c.k+'  '+c.w+'×'+c.h+' px  ·  확대 '+Math.round(t.z*100)+'%';
   drawThumb(list[idx]); // 조절 중 썸네일도 실시간 반영
 }
@@ -1805,7 +1807,7 @@ function clearAll(){
 document.getElementById('fi').addEventListener('change',e=>{loadFiles(e.target.files,false);e.target.value='';});
 document.getElementById('fd').addEventListener('change',e=>{loadFiles(e.target.files,true);e.target.value='';});
 // 드래그 이동
-let drag=null;
+let drag=null; let guideV=false, guideH=false;
 cvs.addEventListener('mousedown',e=>{drag={x:e.clientX,y:e.clientY};});
 window.addEventListener('mousemove',e=>{
   if(!drag||!curList().length)return;
@@ -1814,10 +1816,13 @@ window.addEventListener('mousemove',e=>{
   const cover=Math.max(dw/img.width,dh/img.height),ds=cover*t.z;
   const iw=img.width*ds, ih=img.height*ds;
   t.cx-=(e.clientX-drag.x)/iw; t.cy-=(e.clientY-drag.y)/ih;
+  const snap=6; // 중심 근처면 스냅 + 가이드
+  if(Math.abs((t.cx-0.5)*iw)<snap){t.cx=0.5;guideV=true;}else guideV=false;
+  if(Math.abs((t.cy-0.5)*ih)<snap){t.cy=0.5;guideH=true;}else guideH=false;
   drag={x:e.clientX,y:e.clientY};
   draw();
 });
-window.addEventListener('mouseup',()=>drag=null);
+window.addEventListener('mouseup',()=>{drag=null;if(guideV||guideH){guideV=false;guideH=false;draw();}});
 // 휠 확대
 cvs.addEventListener('wheel',e=>{
   if(!curList().length)return; e.preventDefault();
@@ -1928,6 +1933,7 @@ document.addEventListener('keydown',e=>{
   if(ae&&(ae.tagName==='INPUT'||ae.tagName==='SELECT'||ae.tagName==='TEXTAREA'))return;
   if(e.key==='ArrowUp'){e.preventDefault();moveSel(-1);}
   else if(e.key==='ArrowDown'){e.preventDefault();moveSel(1);}
+  else if(e.key==='Delete'||e.key==='Backspace'){e.preventDefault();const l=curList();if(l.length)delImg(l[curAi()]);}
 });
 renderTabs();
 </script></body></html>
