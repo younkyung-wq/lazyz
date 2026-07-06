@@ -1732,7 +1732,7 @@ function loadFiles(fileList,fromFolder){
 function distribute(pool){
   gImgs={}; gAi={};
   Object.keys(GROUPS).forEach(grp=>{
-    const src=GROUPS[grp].png ? pool.filter(p=>/\.png$/i.test(p.name)) : pool.filter(p=>!/\.png$/i.test(p.name));
+    const src=GROUPS[grp].png ? pool.filter(p=>/\.png$/i.test(p.name)) : pool.slice();  // 누끼채널=PNG만, 나머지=전부
     gImgs[grp]=src.map(p=>({name:p.name,img:p.img,url:p.url,tf:{z:1,cx:0.5,cy:0.5},el:null}));
     gAi[grp]=0;
   });
