@@ -1595,10 +1595,14 @@ const CH=[
  {k:'크림',w:1120,h:1120,bg:'#ffffff',grp:'g_kream',png:true,pngonly:true},
  {k:'조조타운',w:600,h:600,bg:'#ffffff',grp:'g_kream',pngonly:true},
 ];
-let imgs=[]; let ai=0; let ac=0;
-// 이미지마다 채널별 크롭 저장: imgs[i].tf[channelKey] = {z, cx, cy}
-function newTf(){const o={};CH.forEach(c=>{if(!o[c.grp])o[c.grp]={z:1,cx:0.5,cy:0.5};});return o;}
-function curT(){return imgs[ai].tf[CH[ac].grp];}
+// 그룹(채널)별 독립 이미지 목록 — 삭제/순서/크롭 모두 그룹별로 따로
+const GROUPS={}; CH.forEach(c=>{ if(!GROUPS[c.grp])GROUPS[c.grp]={png:false}; if(c.pngonly)GROUPS[c.grp].png=true; });
+let gImgs={}; let gAi={}; let ac=0;
+function curGrp(){return CH[ac].grp;}
+function curList(){return gImgs[curGrp()]||[];}
+function curAi(){return gAi[curGrp()]||0;}
+function setAi(v){gAi[curGrp()]=v;}
+function anyImgs(){return Object.values(gImgs).some(l=>l&&l.length);}
 const cvs=document.createElement('canvas');
 
 function fitDisplay(cw,chh){
@@ -1618,10 +1622,16 @@ function clampTf(img,cw,chh,t){
   const halfY=chh/(2*ih);
   t.cy=Math.min(1-halfY,Math.max(halfY,t.cy));
 }
+function emptyStage(msg){
+  document.getElementById('stage').innerHTML='<div class="empty"><div style="font-size:40px">🖼️</div><div>'+(msg||'이미지를 선택하세요')+'</div></div>';
+  document.getElementById('info').textContent='';
+}
 function draw(){
   const st=document.getElementById('stage');
-  if(!imgs.length){return;}
-  const c=CH[ac], img=imgs[ai].img, t=curT();
+  const list=curList();
+  if(!list.length){ emptyStage(GROUPS[curGrp()].png?'이 채널은 PNG(누끼) 이미지만 사용해요':'이미지를 선택하세요'); return; }
+  let idx=curAi(); if(idx>=list.length){idx=list.length-1;setAi(idx);}
+  const c=CH[ac], img=list[idx].img, t=list[idx].tf;
   const {dw,dh}=fitDisplay(c.w,c.h);
   const ratio=Math.max(2,window.devicePixelRatio||1); // 고해상도 렌더
   cvs.width=Math.round(dw*ratio); cvs.height=Math.round(dh*ratio);
@@ -1640,35 +1650,34 @@ function draw(){
 }
 function renderTabs(){
   const t=document.getElementById('tabs'); t.innerHTML='';
-  CH.forEach((c,i)=>{const b=document.createElement('button');b.className='tab'+(i===ac?' on':'');b.textContent=c.k+(c.one?' · 1장':'');b.onclick=()=>{ac=i;renderTabs();draw();};t.appendChild(b);});
+  CH.forEach((c,i)=>{const b=document.createElement('button');b.className='tab'+(i===ac?' on':'');b.textContent=c.k+(c.one?' · 1장':'');b.onclick=()=>{ac=i;renderTabs();renderStrip();draw();};t.appendChild(b);});
 }
 let dragObj=null;
 function delImg(o){
-  const idx=imgs.indexOf(o); if(idx<0)return;
-  imgs.splice(idx,1);
-  if(ai>=imgs.length)ai=Math.max(0,imgs.length-1);
-  if(!imgs.length){document.getElementById('stage').innerHTML='<div class="empty"><div style=\'font-size:40px\'>🖼️</div><div>이미지를 선택하세요</div></div>';document.getElementById('info').textContent='';}
-  renderStrip(); if(imgs.length)draw();
+  const list=curList(); const idx=list.indexOf(o); if(idx<0)return;
+  list.splice(idx,1);
+  let a=curAi(); if(a>=list.length)a=Math.max(0,list.length-1); setAi(a);
+  renderStrip(); draw();
 }
 function makeThumb(o){
   const d=document.createElement('div'); d.className='thumb'; d.draggable=true;
   d.innerHTML='<span class="thnum"></span><img draggable="false"><span class="thdel">×</span>';
   d.querySelector('img').src=o.url;
-  d.querySelector('img').onclick=()=>{ai=imgs.indexOf(o);renderStrip();draw();};
+  d.querySelector('img').onclick=()=>{setAi(curList().indexOf(o));renderStrip();draw();};
   d.querySelector('.thdel').onclick=(e)=>{e.stopPropagation();delImg(o);};
   d.addEventListener('dragstart',()=>{dragObj=o;setTimeout(()=>d.style.opacity='0.35',0);});
   d.addEventListener('dragend',()=>{dragObj=null;d.style.opacity='1';});
   o.el=d; return d;
 }
 function renderStrip(){
-  const s=document.getElementById('strip');
-  imgs.forEach((o,i)=>{
+  const s=document.getElementById('strip'); const list=curList(); const a=curAi();
+  list.forEach((o,i)=>{
     if(!o.el)makeThumb(o);
     o.el.querySelector('.thnum').textContent=(i+1);
-    o.el.classList.toggle('on',i===ai);
-    s.appendChild(o.el); // 기존 노드를 순서대로 재배치(이동)
+    o.el.classList.toggle('on',i===a);
+    s.appendChild(o.el);
   });
-  [...s.children].forEach(ch=>{ if(!imgs.some(o=>o.el===ch)) s.removeChild(ch); });
+  [...s.children].forEach(ch=>{ if(!list.some(o=>o.el===ch)) s.removeChild(ch); });
 }
 function getAfterEl(y){
   const els=[...document.getElementById('strip').children].filter(el=>el!==dragObj.el);
@@ -1678,29 +1687,29 @@ function getAfterEl(y){
   return closest.element;
 }
 function flipAnimate(first){
-  imgs.forEach(o=>{ const f=first.get(o.el); if(!f||!o.el)return;
+  curList().forEach(o=>{ const f=first.get(o.el); if(!f||!o.el)return;
     const l=o.el.getBoundingClientRect(); const dy=f.top-l.top;
     if(dy){ o.el.style.transition='none'; o.el.style.transform='translateY('+dy+'px)';
       requestAnimationFrame(()=>{ o.el.style.transition='transform .18s cubic-bezier(.2,.8,.3,1)'; o.el.style.transform=''; }); }
   });
 }
 function flipMoveBefore(beforeObj){
-  const arr=imgs.filter(o=>o!==dragObj);
+  const list=curList();
+  const arr=list.filter(o=>o!==dragObj);
   let idx=beforeObj?arr.indexOf(beforeObj):arr.length; if(idx<0)idx=arr.length;
   arr.splice(idx,0,dragObj);
-  if(arr.every((o,i)=>o===imgs[i]))return; // 변화 없으면 스킵(튐 방지)
-  const act=imgs[ai];
-  const first=new Map(); imgs.forEach(o=>{ if(o.el)first.set(o.el,o.el.getBoundingClientRect()); });
-  imgs=arr; ai=imgs.indexOf(act);
+  if(arr.every((o,i)=>o===list[i]))return;
+  const act=list[curAi()];
+  const first=new Map(); list.forEach(o=>{ if(o.el)first.set(o.el,o.el.getBoundingClientRect()); });
+  gImgs[curGrp()]=arr; setAi(arr.indexOf(act));
   renderStrip(); flipAnimate(first);
 }
 function moveSel(delta){
-  const to=ai+delta;
-  if(to<0||to>=imgs.length)return;
-  const act=imgs[ai];
-  const first=new Map(); imgs.forEach(o=>{ if(o.el)first.set(o.el,o.el.getBoundingClientRect()); });
-  imgs.splice(ai,1); imgs.splice(to,0,act);
-  ai=to;
+  const list=curList(); const a=curAi(); const to=a+delta;
+  if(to<0||to>=list.length)return;
+  const act=list[a];
+  const first=new Map(); list.forEach(o=>{ if(o.el)first.set(o.el,o.el.getBoundingClientRect()); });
+  list.splice(a,1); list.splice(to,0,act); setAi(to);
   renderStrip(); flipAnimate(first);
 }
 function loadFiles(fileList,fromFolder){
@@ -1711,14 +1720,23 @@ function loadFiles(fileList,fromFolder){
     const folder=rel.split('/')[0];
     if(folder)document.getElementById('pname').value=folder;
   }
-  imgs=[]; let loaded=0;
   files.sort((a,b)=>a.name.localeCompare(b.name));
-  files.forEach(f=>{
+  const pool=new Array(files.length); let loaded=0;
+  files.forEach((f,idx)=>{
     const url=URL.createObjectURL(f);
     const im=new Image();
-    im.onload=()=>{ imgs.push({name:f.name,img:im,url:url,tf:newTf()}); loaded++; if(loaded===files.length){ai=0;renderStrip();renderTabs();draw();} };
+    im.onload=()=>{ pool[idx]={name:f.name,img:im,url:url}; loaded++; if(loaded===files.length)distribute(pool.filter(Boolean)); };
     im.src=url;
   });
+}
+function distribute(pool){
+  gImgs={}; gAi={};
+  Object.keys(GROUPS).forEach(grp=>{
+    const src=GROUPS[grp].png ? pool.filter(p=>/\.png$/i.test(p.name)) : pool.filter(p=>!/\.png$/i.test(p.name));
+    gImgs[grp]=src.map(p=>({name:p.name,img:p.img,url:p.url,tf:{z:1,cx:0.5,cy:0.5},el:null}));
+    gAi[grp]=0;
+  });
+  ac=0; renderTabs(); renderStrip(); draw();
 }
 document.getElementById('fi').addEventListener('change',e=>{loadFiles(e.target.files,false);e.target.value='';});
 document.getElementById('fd').addEventListener('change',e=>{loadFiles(e.target.files,true);e.target.value='';});
@@ -1726,8 +1744,8 @@ document.getElementById('fd').addEventListener('change',e=>{loadFiles(e.target.f
 let drag=null;
 cvs.addEventListener('mousedown',e=>{drag={x:e.clientX,y:e.clientY};});
 window.addEventListener('mousemove',e=>{
-  if(!drag||!imgs.length)return;
-  const c=CH[ac],img=imgs[ai].img,t=curT();
+  if(!drag||!curList().length)return;
+  const c=CH[ac],slot=curList()[curAi()],img=slot.img,t=slot.tf;
   const {dw,dh}=fitDisplay(c.w,c.h);
   const cover=Math.max(dw/img.width,dh/img.height),ds=cover*t.z;
   const iw=img.width*ds, ih=img.height*ds;
@@ -1738,8 +1756,8 @@ window.addEventListener('mousemove',e=>{
 window.addEventListener('mouseup',()=>drag=null);
 // 휠 확대
 cvs.addEventListener('wheel',e=>{
-  if(!imgs.length)return; e.preventDefault();
-  const t=curT();
+  if(!curList().length)return; e.preventDefault();
+  const t=curList()[curAi()].tf;
   t.z*=(e.deltaY<0?1.06:0.94);
   t.z=Math.max(1,Math.min(5,t.z));
   draw();
@@ -1748,26 +1766,27 @@ cvs.addEventListener('wheel',e=>{
 function saveAll(){ makeZip(CH); }
 function saveOne(){ makeZip([CH[ac]]); }
 async function makeZip(chanList){
-  if(!imgs.length){alert('이미지를 먼저 선택하세요.');return;}
+  if(!anyImgs()){alert('이미지를 먼저 선택하세요.');return;}
   if(!window.JSZip){alert('압축 라이브러리 로딩 중입니다. 잠시 후 다시 시도하세요.');return;}
   const fmt=document.getElementById('fmt').value;
-  const mime=fmt==='png'?'image/png':'image/jpeg';
   const zip=new JSZip();
   const pname=(document.getElementById('pname').value||'').trim();
   const root=pname?zip.folder(pname):zip; // 상품명 폴더가 최상위
   const pr=document.getElementById('prog');
-  const listFor=c=>{ let l=imgs; if(c.pngonly)l=l.filter(o=>/\.png$/i.test(o.name)); if(c.one)l=l.slice(0,1); return l; };
+  const listFor=c=>{ let l=(gImgs[c.grp]||[]); if(c.one)l=l.slice(0,1); return l; };
   let total=0; chanList.forEach(c=>total+=listFor(c).length);
   let done=0;
   for(const c of chanList){
-    const list=listFor(c);  // pngonly=누끼만, one=첫 1장
+    const list=listFor(c);
     if(!list.length)continue;
     const folder=root.folder(c.k);
+    let n=0;
     for(const o of list){
-      const img=o.img, t=o.tf[c.grp];
+      n++;
+      const img=o.img, t=o.tf;
       const oc=document.createElement('canvas'); oc.width=c.w; oc.height=c.h;
       const g=oc.getContext('2d');
-      g.imageSmoothingQuality='high';
+      g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high';
       g.fillStyle=c.bg; g.fillRect(0,0,c.w,c.h);
       const cover=Math.max(c.w/img.width,c.h/img.height), ds=cover*t.z;
       const iw=img.width*ds, ih=img.height*ds;
@@ -1776,8 +1795,7 @@ async function makeZip(chanList){
       const cf=c.png?'png':fmt;  // 크림은 항상 PNG
       const cm=cf==='png'?'image/png':'image/jpeg';
       const blob=await new Promise(res=>oc.toBlob(res,cm,cf==='png'?undefined:1.0));
-      const num=imgs.indexOf(o)+1;  // 스트립 순서
-      const fname=(pname||'thumb')+'_'+num+'.'+cf;
+      const fname=(pname||'thumb')+'_'+n+'.'+cf;
       folder.file(fname,blob);
       done++; pr.textContent='제작 중… '+done+'/'+total;
     }
@@ -1799,7 +1817,7 @@ async function makeZip(chanList){
     const y=e.clientY;
     raf=requestAnimationFrame(()=>{ raf=null;
       const after=getAfterEl(y);
-      const beforeObj=after?imgs.find(o=>o.el===after):null;
+      const beforeObj=after?curList().find(o=>o.el===after):null;
       flipMoveBefore(beforeObj);
     });
   });
@@ -1807,7 +1825,7 @@ async function makeZip(chanList){
 })();
 // 방향키로 선택 이미지 순서 이동
 document.addEventListener('keydown',e=>{
-  if(!imgs.length)return;
+  if(!curList().length)return;
   const ae=document.activeElement;
   if(ae&&(ae.tagName==='INPUT'||ae.tagName==='SELECT'||ae.tagName==='TEXTAREA'))return;
   if(e.key==='ArrowUp'){e.preventDefault();moveSel(-1);}
