@@ -1831,7 +1831,8 @@ async function makeZip(chanList){
   if(window.showSaveFilePicker){
     try{
       const handle=await window.showSaveFilePicker({suggestedName:fn,types:[{description:'ZIP',accept:{'application/zip':['.zip']}}]});
-      const w=await handle.createWritable(); await w.write(out); await w.close();
+      const buf=await out.arrayBuffer();
+      const w=await handle.createWritable(); await w.write(buf); await w.close();
       pr.textContent='저장 완료! ('+total+'개)'; return;
     }catch(err){
       if(err.name==='AbortError'){pr.textContent='취소됨'; return;}
