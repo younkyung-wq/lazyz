@@ -1825,9 +1825,21 @@ async function makeZip(chanList){
   }
   pr.textContent='압축 중…';
   const out=await zip.generateAsync({type:'blob'});
-  const a=document.createElement('a');
   const suffix=(chanList.length===1)?('_'+chanList[0].k):'';
-  a.href=URL.createObjectURL(out); a.download=(pname||'썸네일')+suffix+'.zip'; a.click();
+  const fn=(pname||'썸네일')+suffix+'.zip';
+  // 저장 위치 선택 대화상자 (지원 시)
+  if(window.showSaveFilePicker){
+    try{
+      const handle=await window.showSaveFilePicker({suggestedName:fn,types:[{description:'ZIP',accept:{'application/zip':['.zip']}}]});
+      const w=await handle.createWritable(); await w.write(out); await w.close();
+      pr.textContent='저장 완료! ('+total+'개)'; return;
+    }catch(err){
+      if(err.name==='AbortError'){pr.textContent='취소됨'; return;}
+      // 그 외(iframe 차단 등)는 아래 기본 다운로드로
+    }
+  }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(out); a.download=fn; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),2000);
   pr.textContent='완료! ('+total+'개)';
 }
