@@ -1827,7 +1827,7 @@ window.addEventListener('mousemove',e=>{
   const cover=Math.max(dw/img.width,dh/img.height),ds=cover*t.z;
   const iw=img.width*ds, ih=img.height*ds;
   t.cx-=(e.clientX-drag.x)/iw; t.cy-=(e.clientY-drag.y)/ih;
-  const snap=3; // 가로중심만 스냅(덜 끈적이게)
+  const snap=1.5; // 가로중심만 스냅(덜 끈적이게)
   if(Math.abs((t.cx-0.5)*iw)<snap){t.cx=0.5;guideV=true;}else guideV=false;
   drag={x:e.clientX,y:e.clientY};
   draw();
@@ -1837,7 +1837,7 @@ window.addEventListener('mouseup',()=>{drag=null;if(guideV){guideV=false;draw();
 cvs.addEventListener('wheel',e=>{
   if(!curList().length)return; e.preventDefault();
   const t=curList()[curAi()].tf;
-  t.z*=(e.deltaY<0?1.06:0.94);
+  t.z*=(e.deltaY<0?1.03:0.97);  // 더 세밀하게
   t.z=Math.max(0.15,Math.min(5,t.z));  // 모든 채널 축소 가능
   draw();
 },{passive:false});
