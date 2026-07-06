@@ -1567,6 +1567,7 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
     <input id="fd" type="file" accept="image/*" webkitdirectory multiple style="display:none">
     <button class="btn btn-line" onclick="document.getElementById('fi').click()">📁 파일 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
+    <button class="btn btn-line" onclick="clearAll()">🗑 비우기</button>
     <input id="pname" placeholder="상품명 (폴더명)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:170px;">
     <select id="fmt"><option value="jpg">JPG (최상화질)</option><option value="png">PNG</option></select>
     <button class="btn btn-line" onclick="saveOne()">↓ 이 채널만 저장</button>
@@ -1786,13 +1787,20 @@ function loadFiles(fileList,fromFolder){
   });
 }
 function distribute(pool){
-  gImgs={}; gAi={};
+  // 기존 목록에 추가(append)
   Object.keys(GROUPS).forEach(grp=>{
-    const src=GROUPS[grp].png ? pool.filter(p=>/\.png$/i.test(p.name)) : pool.slice();  // 누끼채널=PNG만, 나머지=전부
-    gImgs[grp]=src.map(p=>({name:p.name,img:p.img,url:p.url,tf:{z:1,cx:0.5,cy:0.5},el:null}));
-    gAi[grp]=0;
+    if(!gImgs[grp]) gImgs[grp]=[];
+    if(gAi[grp]==null) gAi[grp]=0;
+    const src=GROUPS[grp].png ? pool.filter(p=>/\.png$/i.test(p.name)) : pool.slice();  // 누끼=PNG만, 나머지=전부
+    src.forEach(p=>gImgs[grp].push({name:p.name,img:p.img,url:p.url,tf:{z:1,cx:0.5,cy:0.5},el:null}));
   });
-  ac=0; renderTabs(); renderStrip(); draw();
+  renderTabs(); renderStrip(); draw();
+}
+function clearAll(){
+  gImgs={}; gAi={}; ac=0;
+  document.getElementById('strip').innerHTML='';
+  renderTabs(); emptyStage('이미지를 선택하세요');
+  document.getElementById('prog').textContent='';
 }
 document.getElementById('fi').addEventListener('change',e=>{loadFiles(e.target.files,false);e.target.value='';});
 document.getElementById('fd').addEventListener('change',e=>{loadFiles(e.target.files,true);e.target.value='';});
