@@ -2175,7 +2175,7 @@ elif "상세 생성기" in menu:
             import subprocess
             try:
                 r = subprocess.run(
-                    ["osascript", "-e",
+                    ["/usr/bin/osascript", "-e",
                      'POSIX path of (choose folder with prompt "제품 이미지 폴더를 선택하세요")'],
                     capture_output=True, text=True, timeout=180)
                 pth = (r.stdout or "").strip().rstrip("/")
