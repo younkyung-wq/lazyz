@@ -2002,7 +2002,7 @@ DETAIL_HTML = r"""
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Pretendard',-apple-system,sans-serif;}
 body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .wrap{display:flex;flex-direction:row;height:812px;}
-.panel{width:300px;flex-shrink:0;background:#fff;border-left:1px solid #e5e5e5;order:2;padding:22px 20px;display:flex;flex-direction:column;gap:14px;overflow:auto;}
+.panel{width:300px;flex-shrink:0;height:812px;min-height:0;background:#fff;border-left:1px solid #e5e5e5;order:2;padding:22px 20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;}
 .panel h3{font-size:15px;font-weight:800;color:#111;}
 .panel .lbl{font-size:12px;font-weight:700;color:#888;margin-bottom:-6px;}
 .btn{padding:11px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;width:100%;}
@@ -2054,6 +2054,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .models .m{width:245px;}
 .models .m .ph{position:relative;width:245px;height:300px;background:#f0f0f0;border-radius:4px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:15px;}
 .models .m .ph img{width:100%;height:100%;object-fit:cover;display:block;}
+.models .m .ph .mcv{width:100%;height:100%;display:block;}
 .models .m .mdel{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.55);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;}
 .models .m .mdel:hover{background:#ff4b4b;}
 .models .m .ph.addm{border:2px dashed #dcdcdc;background:#fafafa;color:#aaa;}
@@ -2153,6 +2154,7 @@ function renderPage(){
   // 텍스트 섹션들
   pg.insertAdjacentHTML('beforeend', sectionsHTML());
   bindEditable();
+  setupModels();
   applyZoom();
 }
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
@@ -2170,9 +2172,21 @@ function sizeGuide(){
 function modelsHTML(){
   if(!P.models||!P.models.length) return '';
   return '<div class="sec"><h2>Models</h2><div class="models">'+
-    P.models.map((m,i)=>'<div class="m"><div class="ph">'+(m.src?'<img src="'+m.src+'">':'—')+'</div><div class="cap" data-mc="'+i+'" contenteditable>'+esc(m.cap)+'</div></div>').join('')+
+    P.models.map((m,i)=>'<div class="m"><div class="ph">'+(m.src?'<canvas class="mcv" data-mci="'+i+'"></canvas>':'—')+'</div><div class="cap" data-mc="'+i+'" contenteditable>'+esc(m.cap)+'</div></div>').join('')+
   '</div></div>';
 }
+// 모델 사진 크롭(휠 확대·드래그 이동)
+let mptr=null;
+function drawModelCanvas(cv,m){ const W=245,H=300,r=2; cv.width=W*r;cv.height=H*r; const g=cv.getContext('2d'); g.setTransform(r,0,0,r,0,0); g.imageSmoothingQuality='high'; g.fillStyle='#f0f0f0'; g.fillRect(0,0,W,H); const img=m._img; if(!img)return; if(!m.crop)m.crop={z:1,cx:0.5,cy:0.5}; const t=m.crop; const base=Math.max(W/img.width,H/img.height); const z=base*t.z; const iw=img.width*z, ih=img.height*z; let dx=W/2-t.cx*iw, dy=H/2-t.cy*ih; dx=Math.min(0,Math.max(W-iw,dx)); dy=Math.min(0,Math.max(H-ih,dy)); t.cx=(W/2-dx)/iw; t.cy=(H/2-dy)/ih; g.drawImage(img,dx,dy,iw,ih); }
+function setupModels(){ P.models.forEach((m,i)=>{ if(!m.src)return; if(!m.crop)m.crop={z:1,cx:0.5,cy:0.5}; const cv=document.querySelector('.mcv[data-mci="'+i+'"]'); if(!cv)return;
+  const draw=()=>drawModelCanvas(cv,m);
+  if(m._img){ draw(); } else { const im=new Image(); im.onload=()=>{ m._img=im; draw(); }; im.src=m.src; }
+  cv.style.cursor='grab';
+  cv.addEventListener('mousedown',e=>{ e.preventDefault(); e.stopPropagation(); mptr={m,cv,lx:e.clientX,ly:e.clientY}; });
+  cv.addEventListener('wheel',e=>{ if(e.ctrlKey||e.metaKey)return; e.preventDefault(); e.stopPropagation(); m.crop.z=Math.max(1,Math.min(4,m.crop.z*(e.deltaY<0?1.05:0.95))); draw(); },{passive:false});
+}); }
+window.addEventListener('mousemove',e=>{ if(!mptr)return; const {m,cv}=mptr; const img=m._img; if(!img)return; const rect=cv.getBoundingClientRect(); const sc=245/rect.width; const base=Math.max(245/img.width,300/img.height); const z=base*m.crop.z; const iw=img.width*z, ih=img.height*z; m.crop.cx-=((e.clientX-mptr.lx)*sc)/iw; m.crop.cy-=((e.clientY-mptr.ly)*sc)/ih; mptr.lx=e.clientX; mptr.ly=e.clientY; drawModelCanvas(cv,m); });
+window.addEventListener('mouseup',()=>{ mptr=null; });
 // ── 모델 프리셋 + 그룹(브라우저 저장) ──
 const LSKEY_P='lz_model_presets', LSKEY_G='lz_model_groups';
 function newId(){ return 'm'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36); }
