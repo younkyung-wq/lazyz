@@ -2319,6 +2319,17 @@ document.querySelector('.stage').addEventListener('mousedown',e=>{ if(!e.target.
 document.querySelector('.stage').addEventListener('wheel',e=>{
   if(e.ctrlKey||e.metaKey){ e.preventDefault(); pageZoom=Math.max(0.3,Math.min(2,+(pageZoom+(e.deltaY<0?0.06:-0.06)).toFixed(2))); applyZoom(); }
 },{passive:false});
+// ⌘/Ctrl + +/- 키 = 미리보기만 확대/축소 (브라우저 기본 줌 차단)
+window.addEventListener('keydown',e=>{
+  if(!(e.ctrlKey||e.metaKey)) return;
+  const k=e.key;
+  if(k==='-'||k==='_'||k==='Subtract'){ e.preventDefault(); zoomOut(); }
+  else if(k==='='||k==='+'||k==='Add'){ e.preventDefault(); zoomIn(); }
+  else if(k==='0'){ e.preventDefault(); zoomReset(); }
+},{passive:false});
+// 미리보기 클릭 시 iframe에 포커스(키 입력 받도록)
+document.querySelector('.stage').setAttribute('tabindex','0');
+document.querySelector('.stage').addEventListener('mousedown',()=>{ window.focus(); });
 async function save(fmt){
   endCrop();
   const pg=document.getElementById('page');
