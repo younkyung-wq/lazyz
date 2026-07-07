@@ -2052,8 +2052,6 @@ table.size th{background:#f7f7f7;font-weight:700;}
     <div class="lbl">상세페이지 생성하기</div>
     <button class="btn btn-red" onclick="save('jpg')">📥 저장하기</button>
     <span id="prog"></span>
-    <div class="divider"></div>
-    <div class="hint">· 이미지 클릭 = 선택 → 휠로 확대/축소, 드래그로 이동<br>· 방향키 = 미세 조정 (Shift=크게)<br>· 다시 클릭 or ✓완료 = 선택 해제<br>· 텍스트 클릭 = 수정<br>· ⌘/Ctrl + 휠 = 전체 확대/축소<br>· 자동 정렬: 화이트→브라운→블랙, 앞뒤컷→누끼</div>
   </div>
 </div>
 <script>
@@ -2104,6 +2102,8 @@ function renderPage(){
     row.innerHTML='<span class="badge">'+(i+1)+'</span><span class="del">×</span><div class="cropbar"><span onclick="endCrop()">✓ 완료</span><span onclick="resetCrop()">초기화</span></div>';
     row.insertBefore(cv,row.firstChild);
     row.querySelector('.del').onclick=(ev)=>{ev.stopPropagation();imgs.splice(i,1);renderPage();};
+    const bd=row.querySelector('.badge'); bd.style.cursor='grab'; bd.title='드래그해서 순서 변경'; bd.textContent='⠿ '+(i+1);
+    bd.addEventListener('mousedown',ev=>{ ev.preventDefault(); ev.stopPropagation(); endCrop(); reIdx=i; document.body.style.userSelect='none'; row.style.opacity='0.45'; });
     cv.addEventListener('click',(ev)=>{ if(o._moved){o._moved=false;return;} if(cropRow===row){endCrop();}else{startCrop(row,o);} });
     cv.addEventListener('mousedown',e=>{ if(cropRow!==row)return; o._d={x:e.clientX,y:e.clientY}; });
     window.addEventListener('mousemove',e=>{ if(cropRow!==row||!o._d)return; const rect=cv.getBoundingClientRect(); const sc=1000/rect.width;
@@ -2117,6 +2117,7 @@ function renderPage(){
   // 텍스트 섹션들
   pg.insertAdjacentHTML('beforeend', sectionsHTML());
   bindEditable();
+  applyZoom();
 }
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 function sizeTable(){
@@ -2155,11 +2156,15 @@ window.addEventListener('keydown',e=>{
   e.preventDefault(); drawRow(o);
 });
 // 전체 미리보기 확대/축소
-let pageZoom=1;
+let pageZoom=0.5;
 function applyZoom(){ const pg=document.getElementById('page'); pg.style.transform='scale('+pageZoom+')'; const zl=document.getElementById('zlabel'); if(zl) zl.textContent=Math.round(pageZoom*100)+'%'; }
 function zoomIn(){ pageZoom=Math.min(2,+(pageZoom+0.1).toFixed(2)); applyZoom(); }
 function zoomOut(){ pageZoom=Math.max(0.3,+(pageZoom-0.1).toFixed(2)); applyZoom(); }
 function zoomReset(){ pageZoom=1; applyZoom(); }
+// 이미지 순서 드래그(번호 배지 잡고 끌기)
+let reIdx=null;
+window.addEventListener('mousemove',e=>{ if(reIdx===null)return; const el=document.elementFromPoint(e.clientX,e.clientY); const r=el&&el.closest&&el.closest('.imgrow'); if(!r)return; const t=imgs.findIndex(o=>o.el===r); if(t<0||t===reIdx)return; const [m]=imgs.splice(reIdx,1); imgs.splice(t,0,m); reIdx=t; renderPage(); });
+window.addEventListener('mouseup',()=>{ if(reIdx!==null){reIdx=null; document.body.style.userSelect=''; renderPage();} });
 document.getElementById('fi').addEventListener('change',e=>{
   const files=[...e.target.files].filter(f=>f.type.startsWith('image/'));
   let n=files.length; if(!n)return;
