@@ -29,16 +29,17 @@ header {visibility: hidden;}
 }
 [data-testid="stSidebar"] .stRadio > label { display: none; }
 [data-testid="stSidebar"] .stRadio div[role="radiogroup"] { gap: 4px; }
+[data-testid="stSidebar"] label[data-testid="stRadioOption"],
 [data-testid="stSidebar"] .stRadio label[data-baseweb="radio"] {
     padding: 10px 16px; border-radius: 8px; cursor: pointer; margin: 0 8px;
 }
-/* 라디오 동그라미 숨김 (버전 무관하게 넓게) */
+/* 라디오 동그라미 숨김 (최신 stRadioOption 구조 + 구버전 baseweb 둘 다) */
+[data-testid="stSidebar"] label[data-testid="stRadioOption"] > span,
+[data-testid="stSidebar"] label[data-testid="stRadioOption"] > div > div > div:first-child,
 [data-testid="stSidebar"] .stRadio label[data-baseweb="radio"] > div:first-child,
-[data-testid="stSidebar"] [role="radiogroup"] label > div:first-child,
-[data-testid="stSidebar"] .stRadio [data-testid="stRadioButton"] > div:first-child,
-[data-testid="stSidebar"] .stRadio label input[type="radio"],
-[data-testid="stSidebar"] .stRadio label svg { display: none !important; }
+[data-testid="stSidebar"] .stRadio label input[type="radio"] { display: none !important; }
 [data-testid="stSidebar"] [aria-checked="true"] { background: rgba(255,255,255,0.06); }
+[data-testid="stSidebar"] label[data-testid="stRadioOption"]:hover,
 [data-testid="stSidebar"] .stRadio label[data-baseweb="radio"]:hover {
     background: rgba(255,255,255,0.05);
 }
