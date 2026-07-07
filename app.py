@@ -2204,10 +2204,9 @@ elif "썸네일 생성기" in menu:
 
 elif "상세 생성기" in menu:
     import base64, json, re as _re
-    st.markdown("<div style='font-size:13px;font-weight:700;color:#888;margin-bottom:4px;'>이미지 폴더 나스 경로</div>", unsafe_allow_html=True)
-    c1, c2 = st.columns([6, 1])
+    sp, c1, c2 = st.columns([5, 3, 1])
     dpath = c1.text_input("path", key="dpath", label_visibility="collapsed",
-                          placeholder="/Volumes/Lazyz/.../제품폴더")
+                          placeholder="이미지 폴더 나스 경로")
     go = c2.button("불러오기", type="primary", use_container_width=True)
 
     def _crank(n):
