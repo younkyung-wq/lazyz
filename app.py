@@ -2178,7 +2178,7 @@ function savePresets(){ try{ localStorage.setItem(LSKEY, JSON.stringify(presets)
 let presets=loadPresets(); let usedIdx=[];
 function addPreset(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
   inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const rd=new FileReader();
-    rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const W=500,H=Math.round(W*im.height/im.width); const c=document.createElement('canvas'); c.width=W;c.height=H; c.getContext('2d').drawImage(im,0,0,W,H); const src=c.toDataURL('image/jpeg',0.85); const cap=(prompt('모델 정보 (예: 173cm / F size)','')||'').trim(); presets.push({cap,src}); savePresets(); renderPresetList(); }; im.src=rd.result; };
+    rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const W=500,H=Math.round(W*im.height/im.width); const c=document.createElement('canvas'); c.width=W;c.height=H; c.getContext('2d').drawImage(im,0,0,W,H); const src=c.toDataURL('image/jpeg',0.85); const cap=(prompt('모델 정보 (키/사이즈만 수정하세요)','173cm / F size')||'').trim(); presets.push({cap,src}); savePresets(); renderPresetList(); }; im.src=rd.result; };
     rd.readAsDataURL(f); };
   inp.click();
 }
