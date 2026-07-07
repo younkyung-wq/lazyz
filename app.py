@@ -2038,7 +2038,13 @@ table.size th{background:#f7f7f7;font-weight:700;}
   <div class="stage"><div id="page"></div></div>
   <div class="panel">
     <h3>상세 생성기</h3>
-    <div class="lbl">이미지 불러오기</div>
+    <div class="lbl">이미지 폴더 나스 경로</div>
+    <div style="display:flex;gap:6px;">
+      <input id="folderpath" type="text" placeholder="폴더 선택 →" readonly style="flex:1;min-width:0;padding:9px 11px;border:1.5px solid #e2e2e2;border-radius:9px;font-size:11px;color:#555;background:#fafafa;">
+      <button class="btn btn-line" style="width:auto;padding:9px 13px;white-space:nowrap;flex-shrink:0;" onclick="document.getElementById('fdir').click()">불러오기</button>
+    </div>
+    <input id="fdir" type="file" accept="image/*" webkitdirectory multiple style="display:none">
+    <div class="lbl">또는 개별 이미지 선택</div>
     <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 이미지 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <button class="btn btn-line" onclick="clearImgs()">🗑 이미지 비우기</button>
@@ -2166,12 +2172,17 @@ function zoomReset(){ pageZoom=1; applyZoom(); }
 let reIdx=null;
 window.addEventListener('mousemove',e=>{ if(reIdx===null)return; const el=document.elementFromPoint(e.clientX,e.clientY); const r=el&&el.closest&&el.closest('.imgrow'); if(!r)return; const t=imgs.findIndex(o=>o.el===r); if(t<0||t===reIdx)return; const [m]=imgs.splice(reIdx,1); imgs.splice(t,0,m); reIdx=t; renderPage(); });
 window.addEventListener('mouseup',()=>{ if(reIdx!==null){reIdx=null; document.body.style.userSelect=''; renderPage();} });
-document.getElementById('fi').addEventListener('change',e=>{
-  const files=[...e.target.files].filter(f=>f.type.startsWith('image/'));
+function addFiles(fileList){
+  const files=[...fileList].filter(f=>f.type.startsWith('image/'));
   let n=files.length; if(!n)return;
   files.forEach(f=>{ const url=URL.createObjectURL(f); const im=new Image();
     im.onload=()=>{ imgs.push({name:f.name,img:im,url,crop:{z:1,cx:0.5,cy:0.5}}); if(--n===0){sortImgs();renderPage();} }; im.src=url; });
-  e.target.value='';
+}
+document.getElementById('fi').addEventListener('change',e=>{ addFiles(e.target.files); e.target.value=''; });
+document.getElementById('fdir').addEventListener('change',e=>{
+  const first=e.target.files[0];
+  if(first){ const rel=first.webkitRelativePath||''; const folder=rel.split('/')[0]||''; if(folder) document.getElementById('folderpath').value=folder; }
+  addFiles(e.target.files); e.target.value='';
 });
 function clearImgs(){ imgs=[]; renderPage(); }
 // ⌘/Ctrl + 휠 = 전체 확대/축소
@@ -2203,51 +2214,7 @@ elif "썸네일 생성기" in menu:
     components.html(THUMB_HTML, height=820, scrolling=False)
 
 elif "상세 생성기" in menu:
-    import base64, json, re as _re
-    sp, c1, c2 = st.columns([5, 3, 1])
-    dpath = c1.text_input("path", key="dpath", label_visibility="collapsed",
-                          placeholder="이미지 폴더 나스 경로")
-    go = c2.button("불러오기", type="primary", use_container_width=True)
-
-    def _crank(n):
-        u=n.upper()
-        if 'WH' in u or '화이트' in n: return 0
-        if 'BR' in u or '브라운' in n: return 1
-        if 'BK' in u or '블랙' in n: return 2
-        return 9
-    def _grp(n):
-        if '누끼' in n: return 1
-        if '-F-' in n.upper(): return 0
-        return 2
-    def _num(n):
-        m=_re.search(r'(\d+)(?=\.[^.]+$)', n); return int(m.group(1)) if m else 0
-    def _to_rgb(im):
-        if im.mode in ('RGBA','LA','P'):
-            im=im.convert('RGBA'); bg=Image.new('RGB',im.size,'white'); bg.paste(im,mask=im.split()[-1]); return bg
-        return im.convert('RGB')
-
-    if go:
-        p=(dpath or "").strip().strip("'\"").strip().rstrip("/")
-        if not p or not os.path.isdir(p):
-            st.warning("경로를 못 찾았어요. (로컬 실행 + NAS 마운트 필요 / Finder에서 폴더 우클릭+option → '경로 이름 복사')")
-        else:
-            exts=(".jpg",".jpeg",".png",".webp")
-            files=[f for f in os.listdir(p) if f.lower().endswith(exts) and not f.startswith(".")]
-            files.sort(key=lambda n:(_grp(n),_crank(n),_num(n),n))
-            arr=[]
-            for f in files:
-                try:
-                    im=_to_rgb(Image.open(os.path.join(p,f)))
-                    if im.width>1400:
-                        im=im.resize((1400, round(1400*im.height/im.width)), Image.LANCZOS)
-                    b=io.BytesIO(); im.save(b,"JPEG",quality=88)
-                    arr.append({"name":f,"src":"data:image/jpeg;base64,"+base64.b64encode(b.getvalue()).decode()})
-                except Exception: pass
-            st.session_state.detail_init=json.dumps(arr)
-            if not arr: st.warning("폴더에 이미지가 없어요.")
-
-    init_js = st.session_state.get("detail_init","[]")
-    components.html(DETAIL_HTML.replace("__INIT_IMAGES__", init_js), height=820, scrolling=False)
+    components.html(DETAIL_HTML.replace("__INIT_IMAGES__", "[]"), height=820, scrolling=False)
 
 elif "피드 기획" in menu:
     st.markdown("""
