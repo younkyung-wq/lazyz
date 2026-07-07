@@ -2013,7 +2013,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .stage{flex:1;order:1;overflow:auto;display:flex;justify-content:flex-start;flex-direction:column;align-items:center;padding:24px;}
 #page{width:1000px;background:#fff;flex-shrink:0;height:max-content;transform-origin:top center;}
 .imgrow{position:relative;display:block;font-size:0;margin-bottom:10px;}
-.imgrow canvas{width:100%;display:block;cursor:zoom-in;}
+.imgrow canvas{width:100%;display:block;cursor:default;}
 .imgrow.cropping{outline:2px solid #ff4b4b;outline-offset:-2px;}
 .imgrow.cropping canvas{cursor:grab;}
 .imgrow .badge{position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.65);color:#fff;font-size:13px;padding:5px 11px;border-radius:12px;z-index:2;transform-origin:top left;transform:scale(var(--iz,1));font-weight:700;}
@@ -2109,7 +2109,7 @@ function renderPage(){
     row.innerHTML='<span class="badge">'+(i+1)+'</span><span class="del">×</span><div class="cropbar"><span onclick="endCrop()">✓ 완료</span><span onclick="resetCrop()">초기화</span></div>';
     row.insertBefore(cv,row.firstChild);
     row.querySelector('.del').onclick=(ev)=>{ev.stopPropagation();const k=imgs.indexOf(o);if(k>=0)imgs.splice(k,1);renderPage();};
-    cv.addEventListener('mousedown',e=>{ e.preventDefault(); pointer={o:o,row:row,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,moved:false,mode:(cropRow===row?'pan':'pending')}; });
+    cv.addEventListener('mousedown',e=>{ e.preventDefault(); const md=(cropRow===row?'pan':'pending'); if(md==='pending') startCrop(row,o); pointer={o:o,row:row,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,moved:false,mode:md}; });
     cv.addEventListener('wheel',e=>{ if(cropRow!==row)return; e.preventDefault(); o.crop.z*=(e.deltaY<0?1.04:0.96); o.crop.z=Math.max(1,Math.min(4,o.crop.z)); drawRow(o); },{passive:false});
     pg.appendChild(row); o.el=row; drawRow(o);
   });
@@ -2181,7 +2181,7 @@ window.addEventListener('mousemove',e=>{
     o.crop.cx-=((e.clientX-pointer.lx)*sc)/iw; o.crop.cy-=((e.clientY-pointer.ly)*sc)/ih;
     pointer.lx=e.clientX; pointer.ly=e.clientY; drawRow(o); return;
   }
-  if(pointer.mode==='pending' && pointer.moved){ pointer.mode='reorder'; pointer.row.style.opacity='0.4'; document.body.style.userSelect='none'; }
+  if(pointer.mode==='pending' && pointer.moved){ pointer.mode='reorder'; endCrop(); pointer.row.style.opacity='0.4'; document.body.style.userSelect='none'; }
   if(pointer.mode==='reorder'){
     const el=document.elementFromPoint(e.clientX,e.clientY); const r=el&&el.closest&&el.closest('.imgrow');
     if(r && r!==pointer.o.el){ flipReorder(pointer.o, r); }
@@ -2189,7 +2189,8 @@ window.addEventListener('mousemove',e=>{
 });
 window.addEventListener('mouseup',()=>{
   if(!pointer) return;
-  if(!pointer.moved){ if(cropRow===pointer.row){endCrop();} else {startCrop(pointer.row,pointer.o);} }
+  // 선택은 이미 mousedown에서 즉시 반영됨. 안 움직이고 '이미 선택된' 이미지를 다시 클릭하면 해제.
+  if(!pointer.moved && pointer.mode==='pan'){ endCrop(); }
   if(pointer.o.el) pointer.o.el.style.opacity='';
   document.body.style.userSelect='';
   pointer=null;
