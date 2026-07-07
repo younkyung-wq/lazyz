@@ -2037,8 +2037,6 @@ table.size th{background:#f7f7f7;font-weight:700;}
   <div class="stage"><div id="page"></div></div>
   <div class="panel">
     <h3>상세 생성기</h3>
-    <div class="lbl">이미지 폴더 나스 경로</div>
-    <input id="naspath" type="text" placeholder="/Volumes/Lazyz/.../제품폴더" style="width:100%;padding:9px 11px;border:1.5px solid #e2e2e2;border-radius:9px;font-size:12px;color:#333;outline:none;">
     <div class="lbl">이미지 불러오기</div>
     <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 이미지 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
@@ -2071,6 +2069,14 @@ const P={
  maker:'제조사: (주)레이지지  |  제조국: 중국\n혼용률: Acrylic 50% Polyester 35% Rayon 10% Span 5%\n품질보증기준: 관련법 및 소비자분쟁해결규정에 따름'
 };
 let imgs=[]; let cropRow=null;
+const INIT_IMAGES = __INIT_IMAGES__;  // 서버(경로 불러오기)에서 주입
+function loadInit(){
+  if(!INIT_IMAGES||!INIT_IMAGES.length){ renderPage(); return; }
+  let n=INIT_IMAGES.length;
+  INIT_IMAGES.forEach(it=>{ const im=new Image();
+    im.onload=()=>{ imgs.push({name:it.name,img:im,url:it.src,crop:{z:1,cx:0.5,cy:0.5}}); if(--n===0){sortImgs();renderPage();} };
+    im.src=it.src; });
+}
 function colorRank(n){n=n.toUpperCase(); if(n.includes('WH')||n.includes('화이트'))return 0; if(n.includes('BR')||n.includes('브라운'))return 1; if(n.includes('BK')||n.includes('블랙'))return 2; return 9;}
 function grp(n){ if(n.includes('누끼'))return 1; if(/-F-/i.test(n))return 0; return 2; }
 function numOf(n){const m=n.match(/(\d+)(?=\.\w+$)/); return m?parseInt(m[1]):0;}
@@ -2179,7 +2185,7 @@ async function save(fmt){
   setTimeout(()=>URL.revokeObjectURL(a.href),1500);
   document.getElementById('prog').textContent='완료!';
 }
-renderPage();
+loadInit();
 </script></body></html>
 """
 
@@ -2191,7 +2197,52 @@ elif "썸네일 생성기" in menu:
     components.html(THUMB_HTML, height=820, scrolling=False)
 
 elif "상세 생성기" in menu:
-    components.html(DETAIL_HTML, height=820, scrolling=False)
+    import base64, json, re as _re
+    st.markdown("<div style='font-size:13px;font-weight:700;color:#888;margin-bottom:4px;'>이미지 폴더 나스 경로</div>", unsafe_allow_html=True)
+    c1, c2 = st.columns([6, 1])
+    dpath = c1.text_input("path", key="dpath", label_visibility="collapsed",
+                          placeholder="/Volumes/Lazyz/.../제품폴더")
+    go = c2.button("불러오기", type="primary", use_container_width=True)
+
+    def _crank(n):
+        u=n.upper()
+        if 'WH' in u or '화이트' in n: return 0
+        if 'BR' in u or '브라운' in n: return 1
+        if 'BK' in u or '블랙' in n: return 2
+        return 9
+    def _grp(n):
+        if '누끼' in n: return 1
+        if '-F-' in n.upper(): return 0
+        return 2
+    def _num(n):
+        m=_re.search(r'(\d+)(?=\.[^.]+$)', n); return int(m.group(1)) if m else 0
+    def _to_rgb(im):
+        if im.mode in ('RGBA','LA','P'):
+            im=im.convert('RGBA'); bg=Image.new('RGB',im.size,'white'); bg.paste(im,mask=im.split()[-1]); return bg
+        return im.convert('RGB')
+
+    if go:
+        p=(dpath or "").strip().strip("'\"").strip().rstrip("/")
+        if not p or not os.path.isdir(p):
+            st.warning("경로를 못 찾았어요. (로컬 실행 + NAS 마운트 필요 / Finder에서 폴더 우클릭+option → '경로 이름 복사')")
+        else:
+            exts=(".jpg",".jpeg",".png",".webp")
+            files=[f for f in os.listdir(p) if f.lower().endswith(exts) and not f.startswith(".")]
+            files.sort(key=lambda n:(_grp(n),_crank(n),_num(n),n))
+            arr=[]
+            for f in files:
+                try:
+                    im=_to_rgb(Image.open(os.path.join(p,f)))
+                    if im.width>1400:
+                        im=im.resize((1400, round(1400*im.height/im.width)), Image.LANCZOS)
+                    b=io.BytesIO(); im.save(b,"JPEG",quality=88)
+                    arr.append({"name":f,"src":"data:image/jpeg;base64,"+base64.b64encode(b.getvalue()).decode()})
+                except Exception: pass
+            st.session_state.detail_init=json.dumps(arr)
+            if not arr: st.warning("폴더에 이미지가 없어요.")
+
+    init_js = st.session_state.get("detail_init","[]")
+    components.html(DETAIL_HTML.replace("__INIT_IMAGES__", init_js), height=820, scrolling=False)
 
 elif "피드 기획" in menu:
     st.markdown("""
