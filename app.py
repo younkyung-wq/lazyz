@@ -2290,14 +2290,28 @@ elif "상세 생성기" in menu:
         except Exception as e: st.warning("저장 실패: " + str(e))
     presets = _load_presets()
 
-    main_col, side_col = st.columns([3.2, 1])
+    # 컴포넌트에 넣을 모델 = 지난 선택값(session_state)에서 계산
+    sel_idx = []
+    for s in (st.session_state.get("modelsel") or []):
+        try:
+            i = int(str(s).split(".")[0])
+            if 0 <= i < len(presets): sel_idx.append(i)
+        except Exception: pass
+    if sel_idx:
+        models = [{"src": presets[i]["src"], "cap": presets[i].get("cap","")} for i in sel_idx]
+    else:
+        models = [{"src": "", "cap": "173cm / F size"}, {"src": "", "cap": "172cm / F size"}]
 
-    with side_col:
-        st.markdown("<div style='font-weight:800;font-size:15px;'>👤 모델 관리</div>", unsafe_allow_html=True)
-        st.caption("시즌 모델 저장 후 골라 쓰기")
-        up = st.file_uploader("사진", type=["png","jpg","jpeg","webp"], label_visibility="collapsed", key="modelup")
-        cap = st.text_input("정보", placeholder="예: 173cm / F size", label_visibility="collapsed", key="modelcap")
-        if st.button("＋ 저장", use_container_width=True):
+    # 미리보기 (전체 폭)
+    html = DETAIL_HTML.replace("__INIT_IMAGES__", "[]").replace("__MODELS__", json.dumps(models, ensure_ascii=False))
+    components.html(html, height=820, scrolling=False)
+
+    # 모델 관리 (아코디언, 미리보기 아래)
+    with st.expander("👤 모델 관리  ·  시즌 모델 저장 후 골라 쓰기", expanded=False):
+        uc1, uc2, uc3 = st.columns([2, 2, 1])
+        up = uc1.file_uploader("사진", type=["png","jpg","jpeg","webp"], label_visibility="collapsed", key="modelup")
+        cap = uc2.text_input("정보", placeholder="예: 173cm / F size", label_visibility="collapsed", key="modelcap")
+        if uc3.button("＋ 저장", use_container_width=True):
             if up is not None:
                 try:
                     im = Image.open(up).convert("RGB")
@@ -2310,28 +2324,20 @@ elif "상세 생성기" in menu:
                 st.warning("사진을 먼저 올려주세요.")
 
         if presets:
-            st.markdown("<div style='font-size:12px;color:#888;margin-top:6px;'>저장된 모델</div>", unsafe_allow_html=True)
+            st.markdown("<div style='font-size:12px;color:#888;'>저장된 모델</div>", unsafe_allow_html=True)
+            cols = st.columns(6)
             for i, m in enumerate(presets):
-                pc1, pc2 = st.columns([1, 2])
-                pc1.image(m["src"], use_container_width=True)
-                pc2.markdown(f"<div style='font-size:12px;margin-top:6px;'>{m.get('cap','') or '—'}</div>", unsafe_allow_html=True)
-                if pc2.button("🗑 삭제", key=f"delm{i}", use_container_width=True):
-                    presets.pop(i); _save_presets(presets); st.rerun()
+                with cols[i % 6]:
+                    st.image(m["src"], use_container_width=True)
+                    st.caption(m.get("cap", "") or "—")
+                    if st.button("🗑", key=f"delm{i}", use_container_width=True):
+                        presets.pop(i); _save_presets(presets); st.rerun()
         else:
-            st.caption("아직 저장된 모델이 없어요.")
+            st.caption("아직 저장된 모델이 없어요. 위에서 사진+정보를 추가하세요.")
 
         opts = [f"{i}. {m.get('cap','') or '(정보없음)'}" for i, m in enumerate(presets)]
-        sel = st.multiselect("사용할 모델 (고른 순서대로)", opts, key="modelsel")
-        sel_idx = [int(s.split(".")[0]) for s in sel]
-
-    if sel_idx:
-        models = [{"src": presets[i]["src"], "cap": presets[i].get("cap","")} for i in sel_idx]
-    else:
-        models = [{"src": "", "cap": "173cm / F size"}, {"src": "", "cap": "172cm / F size"}]
-
-    with main_col:
-        html = DETAIL_HTML.replace("__INIT_IMAGES__", "[]").replace("__MODELS__", json.dumps(models, ensure_ascii=False))
-        components.html(html, height=820, scrolling=False)
+        st.multiselect("사용할 모델 (고른 순서대로 배치)", opts, key="modelsel")
+        st.caption("선택을 바꾸면 위 미리보기에 자동 반영돼요.")
 
 elif "피드 기획" in menu:
     st.markdown("""
