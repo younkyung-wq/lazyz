@@ -2022,16 +2022,23 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .imgrow .cropbar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%) scale(var(--iz,1));transform-origin:bottom center;background:#111;color:#fff;font-size:13px;padding:6px 14px;border-radius:20px;z-index:3;display:none;gap:12px;}
 .imgrow.cropping .cropbar{display:flex;}
 .imgrow .cropbar span{cursor:pointer;}
-.sec{padding:56px 70px;}
-.sec h2{font-size:22px;font-weight:800;letter-spacing:-0.5px;margin-bottom:22px;}
-.sec .k{font-size:15px;line-height:2;color:#333;white-space:pre-wrap;outline:none;}
-.sec.center{text-align:center;}
-table.size{width:100%;border-collapse:collapse;font-size:14px;}
-table.size th,table.size td{border:1px solid #e2e2e2;padding:11px;text-align:center;}
-table.size th{background:#f7f7f7;font-weight:700;}
-.colorbar{display:flex;justify-content:center;gap:26px;padding:34px 0;}
-.colorbar .c{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:13px;color:#555;}
-.colorbar .sw{width:34px;height:34px;border-radius:50%;border:1px solid #ddd;}
+.sec{padding:52px 90px;}
+.sec h2{font-size:30px;font-weight:800;letter-spacing:-0.6px;margin-bottom:26px;color:#111;}
+.sec .k{font-size:15px;line-height:1.95;color:#3a3a3a;white-space:pre-wrap;outline:none;}
+.sec .fab{font-size:15px;color:#3a3a3a;margin-bottom:26px;}
+.sizehead{display:flex;align-items:flex-end;margin-bottom:14px;}
+.sizehead h2{flex:1;margin:0;}
+.sizehead .col{font-size:26px;font-weight:800;color:#111;width:150px;}
+.szrow{display:flex;font-size:15px;color:#333;padding:14px 0;}
+.szrow .l{flex:1;} .szrow .v{width:150px;}
+.szrow .v:focus,.szrow .l:focus{outline:none;}
+.szrow.head{color:#111;font-weight:700;}
+.sznote{font-size:14px;color:#8a8a8a;margin-top:22px;}
+.models{display:flex;gap:20px;flex-wrap:wrap;}
+.models .m{width:230px;}
+.models .m .ph{width:230px;height:300px;background:#f0f0f0;border-radius:4px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:13px;}
+.models .m .ph img{width:100%;height:100%;object-fit:cover;display:block;}
+.models .m .cap{font-size:14px;color:#555;margin-top:12px;outline:none;}
 [contenteditable]:focus{background:#fffef2;}
 </style></head><body>
 <div class="wrap">
@@ -2064,14 +2071,16 @@ table.size th{background:#f7f7f7;font-weight:700;}
 <script>
 // 시트에서 가져온 제품 정보(수정 가능)
 const P={
- name_ko:'슬로우 멜트 케이블 니트', name_en:'Slow Melt Cable Knit',
- desc:'· 넥라인 여유를 활용한 오프숄더 투웨이 연출 가능\n· 도톰하게 짜인 케이블 니트 조직으로 보온성 확보\n· 오버핏 실루엣과 여유로운 소매 기장으로 여리여리한 무드 연출\n· 까슬거림 없는 부드러운 터치감으로 피부 자극 최소화\n· 밑단 자연스러운 롤링 디테일로 내추럴하고 편안한 스타일링 가능\n· 홈웨어는 물론 원마일웨어로도 활용 가능한 디자인',
- sizeItems:['총장','어깨너비','가슴단면','밑단단면','소매길이','암홀','목너비'],
- sizeVals:{'F':['70','50','40','50','40','10','20']},
- model:'MODEL 173cm · FREE 착용',
- care:'· 첫 세탁은 단독 손세탁을 권장합니다.\n· 30℃ 이하 미온수에 중성세제로 가볍게 손세탁하세요.\n· 비틀어 짜지 말고 뉘어서 그늘에 건조하세요.\n· 표백제, 건조기, 드라이클리닝 사용을 피해주세요.\n· 케이블 조직 특성상 날카로운 물체에 올 빠짐이 발생할 수 있어 주의를 권장합니다.',
- refund:'· 상품 수령 후 7일 이내 교환/반품 신청 가능합니다.\n· 단순 변심에 의한 반품 시 왕복 배송비는 고객 부담입니다.\n· 착용 흔적, 오염, 택 제거, 세탁한 상품은 교환/반품이 불가합니다.\n· 색상/사이즈 교환은 재고 상황에 따라 제한될 수 있습니다.',
- maker:'제조사: (주)레이지지  |  제조국: 중국\n혼용률: Acrylic 50% Polyester 35% Rayon 10% Span 5%\n품질보증기준: 관련법 및 소비자분쟁해결규정에 따름'
+ name_en:'Salt and Sun Stripe Shirt',
+ desc:'- 레이지지 베스트셀러 ‘클래식 체크 셔츠’의 검증된 루즈핏 적용\n- 소매 절개 디테일로 활동성과 유니크한 스타일링 동시 확보',
+ sizeItems:['Total Length','Shoulder Width','Chest','Hem','Sleeve Length','Armhole','Neck Width'],
+ sizeVals:{'Free':['72.5','55','71.5','68','57','25','17']},
+ fabric:'Cotton 90% Polyester 10%',
+ models:[{src:'',cap:'173cm / F size'},{src:'',cap:'172cm / F size'}],
+ // ── 하단 공통(고정) 케어 가이드 ──
+ care:'- 중성세제를 사용하여 30℃ 이하의 미지근한 물에 단독 세탁해 주세요.\n- 세탁기 사용 시 약한 세탁 코스를 권장합니다.\n- 표백제 사용은 원단 손상의 원인이 될 수 있으므로 삼가해 주세요.\n- 건조기 사용은 제품 변형 및 수축의 원인이 될 수 있으므로 사용을 피해 주세요.\n- 세탁 후에는 평평한 곳에 뉘어 자연 건조해 주세요.\n\nCotton / Cotton Blend\n- 첫 세탁 시 물 빠짐이 있을 수 있으므로 단독 세탁을 권장합니다.\n- 고온 세탁 및 건조 시 수축이 발생할 수 있으니 주의해 주세요.\n\nModal / Rayon / Tencel\n- 물에 장시간 담가두지 마세요.\n- 강한 탈수 및 비틀어 짜는 행위는 원단 변형의 원인이 될 수 있습니다.\n\nWool / Wool Blend\n- 드라이클리닝을 권장합니다.\n- 물세탁 시 수축 및 변형이 발생할 수 있으므로 주의해 주세요.\n\nPolyester / Synthetic Fabric\n- 고온 세탁 및 건조기 사용 시 원단 변형이 발생할 수 있으니 주의해 주세요.\n- 다림질 시 낮은 온도를 사용해 주세요.',
+ // ── 하단 공통(고정) 교환/환불 ──
+ refund:'교환 및 반품 안내\n- 기한: 상품 수령 후 7일 이내 신청 가능\n- 배송비: 오배송 및 제품 불량 시 무료 / 단순 변심 시 왕복 배송비 고객 부담\n\n불량 사유에 해당하지 않는 경우\n- 원단 특성: 면 소재의 잡사(실 뭉침), 천연 염색 및 염색 공정상 발생하는 미세한 색상 차이\n- 공정 흔적: 생산 과정의 오일 마크, 원단 고정 시침 자국\n- 기타: 사용 환경(PC/모바일)에 따른 모니터 해상도 및 색상 차이\n\n교환 및 환불이 불가능한 경우\n- 7일의 기간이 경과한 경우\n- 사용 흔적, 세탁, 향수 냄새, 오염 등 상품 가치가 훼손된 경우\n- 잘못된 세탁 방법(권장 방식 외)으로 인해 변형된 경우'
 };
 let imgs=[]; let cropRow=null;
 const INIT_IMAGES = __INIT_IMAGES__;  // 서버(경로 불러오기)에서 주입
@@ -2120,24 +2129,36 @@ function renderPage(){
   bindEditable();
   applyZoom();
 }
-function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;');}
-function sizeTable(){
-  let th='<th>구분</th>'+P.sizeItems.map(x=>'<th>'+x+'</th>').join('');
-  let rows=Object.keys(P.sizeVals).map(sz=>'<tr><td>'+sz+'</td>'+P.sizeVals[sz].map(v=>'<td>'+v+'</td>').join('')+'</tr>').join('');
-  return '<table class="size"><tr>'+th+'</tr>'+rows+'</table>';
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+function sizeGuide(){
+  const sizes=Object.keys(P.sizeVals);
+  let head='<div class="sizehead"><h2>Size Guide(cm)</h2>'+sizes.map(s=>'<div class="col" data-sk="'+s+'" contenteditable>'+esc(s)+'</div>').join('')+'</div>';
+  let rows=P.sizeItems.map((it,idx)=>'<div class="szrow"><div class="l" data-sl="'+idx+'" contenteditable>'+esc(it)+'</div>'+sizes.map(s=>'<div class="v" data-ss="'+s+'" data-si="'+idx+'" contenteditable>'+esc(P.sizeVals[s][idx]||'')+'</div>').join('')+'</div>').join('');
+  return head+rows+'<div class="sznote">1~2cm 의 오차가 발생할 수 있습니다.</div>';
+}
+function modelsHTML(){
+  return '<div class="sec"><h2>Models</h2><div class="models">'+
+    P.models.map((m,i)=>'<div class="m"><div class="ph" data-mi="'+i+'">'+(m.src?'<img src="'+m.src+'">':'📷 클릭해서 추가')+'</div><div class="cap" data-mc="'+i+'" contenteditable>'+esc(m.cap)+'</div></div>').join('')+
+  '</div></div>';
+}
+function pickModel(i){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+  inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const rd=new FileReader(); rd.onload=()=>{ P.models[i].src=rd.result; renderPage(); }; rd.readAsDataURL(f); };
+  inp.click();
 }
 function sectionsHTML(){
   return ''
-  +'<div class="sec center"><h2>'+esc(P.name_en)+'</h2><div class="k" data-k="name_ko" contenteditable>'+esc(P.name_ko)+'</div></div>'
-  +'<div class="sec"><h2>PRODUCT</h2><div class="k" data-k="desc" contenteditable>'+esc(P.desc)+'</div></div>'
-  +'<div class="sec"><h2>SIZE (cm)</h2>'+sizeTable()+'<div class="k" style="font-size:12px;color:#999;margin-top:10px">* 측정 방법에 따라 1~3cm 오차가 있을 수 있습니다.</div></div>'
-  +'<div class="sec center"><h2>MODEL</h2><div class="k" data-k="model" contenteditable>'+esc(P.model)+'</div></div>'
-  +'<div class="sec"><h2>CARE</h2><div class="k" data-k="care" contenteditable>'+esc(P.care)+'</div></div>'
-  +'<div class="sec"><h2>EXCHANGE / REFUND</h2><div class="k" data-k="refund" contenteditable>'+esc(P.refund)+'</div></div>'
-  +'<div class="sec"><h2>MADE</h2><div class="k" data-k="maker" contenteditable>'+esc(P.maker)+'</div></div>';
+  +'<div class="sec"><h2 data-k="name_en" contenteditable>'+esc(P.name_en)+'</h2><div class="k" data-k="desc" contenteditable>'+esc(P.desc)+'</div></div>'
+  +'<div class="sec">'+sizeGuide()+'</div>'
+  +modelsHTML()
+  +'<div class="sec"><h2>Care</h2><div class="fab">Fabric : <span data-k="fabric" contenteditable>'+esc(P.fabric)+'</span></div><div class="k" data-k="care" contenteditable>'+esc(P.care)+'</div></div>'
+  +'<div class="sec"><h2>Exchange / Refund</h2><div class="k" data-k="refund" contenteditable>'+esc(P.refund)+'</div></div>';
 }
 function bindEditable(){
   document.querySelectorAll('[data-k]').forEach(el=>{ el.addEventListener('blur',()=>{ P[el.dataset.k]=el.innerText; }); });
+  document.querySelectorAll('[data-ss]').forEach(el=>{ el.addEventListener('blur',()=>{ P.sizeVals[el.dataset.ss][+el.dataset.si]=el.innerText.trim(); }); });
+  document.querySelectorAll('[data-sl]').forEach(el=>{ el.addEventListener('blur',()=>{ P.sizeItems[+el.dataset.sl]=el.innerText.trim(); }); });
+  document.querySelectorAll('[data-mc]').forEach(el=>{ el.addEventListener('blur',()=>{ P.models[+el.dataset.mc].cap=el.innerText; }); });
+  document.querySelectorAll('[data-mi]').forEach(el=>{ el.addEventListener('click',()=>{ pickModel(+el.dataset.mi); }); });
 }
 function startCrop(row,o){ if(cropRow&&cropRow!==row)cropRow.classList.remove('cropping'); cropRow=row; row.classList.add('cropping'); }
 function endCrop(){ if(cropRow){cropRow.classList.remove('cropping');cropRow=null;} }
