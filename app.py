@@ -2003,6 +2003,7 @@ DETAIL_HTML = r"""
 body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .wrap{display:flex;flex-direction:row;height:812px;}
 .panel{width:300px;flex-shrink:0;height:812px;min-height:0;background:#fff;border-left:1px solid #e5e5e5;order:2;padding:22px 20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;}
+.panel>*{flex-shrink:0;}
 .panel h3{font-size:15px;font-weight:800;color:#111;}
 .panel .lbl{font-size:12px;font-weight:700;color:#888;margin-bottom:-6px;}
 .btn{padding:11px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;width:100%;}
