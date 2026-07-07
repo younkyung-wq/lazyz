@@ -1,7 +1,61 @@
 import streamlit as st
 import streamlit.components.v1 as components
 import os, io, zipfile
+import json as _json, csv as _csv, urllib.request as _urlreq, ssl as _ssl
 from PIL import Image, ImageOps
+try:
+    import certifi as _certifi
+    _SSLCTX = _ssl.create_default_context(cafile=_certifi.where())
+except Exception:
+    _SSLCTX = _ssl.create_default_context()
+    _SSLCTX.check_hostname = False; _SSLCTX.verify_mode = _ssl.CERT_NONE
+
+# ── STYLE_INFO 시트에서 상품 상세정보 로드 ──
+STYLE_SHEET_ID = "1825b8VnuGshIFGmySBS3prR66QjZni7pYjbkBs6m_58"
+SIZE_EN = {
+    '총장':'Total Length','기장':'Length','어깨너비':'Shoulder Width','가슴단면':'Chest',
+    '밑단단면':'Hem','밑단둘레':'Hem','소매길이':'Sleeve Length','암홀':'Armhole','목너비':'Neck Width',
+    '허리단면':'Waist','밑위':'Rise','엉덩이단면':'Hip','허벅지단면':'Thigh','인심':'Inseam',
+    '아웃심':'Outseam','밑단':'Hem','소매통':'Sleeve Width','팔통':'Sleeve Width',
+}
+
+@st.cache_data(ttl=300, show_spinner=False)
+def load_style_info():
+    url = f"https://docs.google.com/spreadsheets/d/{STYLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=STYLE_INFO"
+    raw = _urlreq.urlopen(url, timeout=15, context=_SSLCTX).read().decode("utf-8")
+    rows = list(_csv.reader(io.StringIO(raw)))
+    if len(rows) < 2: return []
+    hdr = [h.replace("\n", " ").strip() for h in rows[1]]
+    def ci(name):
+        for i, h in enumerate(hdr):
+            if h == name: return i
+        return -1
+    def cell(r, i):
+        return r[i].strip() if 0 <= i < len(r) else ""
+    keys = {k: ci(k) for k in ["스타일넘버","상품명","영문 상품명","혼용률","제조국","제품설명","세부 사이즈(JSON)"]}
+    out = []
+    for r in rows[2:]:
+        style = cell(r, keys["스타일넘버"]); name = cell(r, keys["상품명"])
+        if not style and not name: continue
+        out.append({
+            "style": style, "name": name,
+            "name_en": cell(r, keys["영문 상품명"]),
+            "fabric": cell(r, keys["혼용률"]),
+            "country": cell(r, keys["제조국"]),
+            "desc": cell(r, keys["제품설명"]),
+            "sizejson": cell(r, keys["세부 사이즈(JSON)"]),
+        })
+    return out
+
+def parse_size_json(s):
+    try:
+        j = _json.loads(s); comp = j["components"][0]
+        items = comp["items"]; sizes = comp["sizes"]; vals = comp.get("vals", {})
+        items_en = [SIZE_EN.get(it, it) for it in items]
+        sv = {sz: [str(vals.get(sz, {}).get(it, "")) for it in items] for sz in sizes}
+        return items_en, sv
+    except Exception:
+        return None, None
 
 st.set_page_config(
     page_title="LAZYZ Dashboard",
@@ -2099,11 +2153,11 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 <script>
 // 시트에서 가져온 제품 정보(수정 가능)
 const P={
- name_en:'Salt and Sun Stripe Shirt',
- desc:'- 레이지지 베스트셀러 ‘클래식 체크 셔츠’의 검증된 루즈핏 적용\n- 소매 절개 디테일로 활동성과 유니크한 스타일링 동시 확보',
- sizeItems:['Total Length','Shoulder Width','Chest','Hem','Sleeve Length','Armhole','Neck Width'],
- sizeVals:{'Free':['72.5','55','71.5','68','57','25','17']},
- fabric:'Cotton 90% Polyester 10%',
+ name_en: __NAME_EN__,
+ desc: __DESC__,
+ sizeItems: __SIZEITEMS__,
+ sizeVals: __SIZEVALS__,
+ fabric: __FABRIC__,
  models: __MODELS__,
  // ── 하단 공통(고정) 케어 가이드 ──
  care:'- 중성세제를 사용하여 30°C 이하의 미지근한 물에 단독 세탁해 주세요.\n- 세탁기 사용 시 약한 세탁 코스를 권장합니다.\n- 표백제 사용은 원단 손상의 원인이 될 수 있으므로 삼가해 주세요.\n- 건조기 사용은 제품 변형 및 수축의 원인이 될 수 있으므로 사용을 피해 주세요.\n- 세탁 후에는 평평한 곳에 뉘어 자연 건조해 주세요.\n\nCotton / Cotton Blend\n- 첫 세탁 시 물 빠짐이 있을 수 있으므로 단독 세탁을 권장합니다.\n- 고온 세탁 및 건조 시 수축이 발생할 수 있으니 주의해 주세요.\n\nModal / Rayon / Tencel\n- 물에 장시간 담가두지 마세요.\n- 강한 탈수 및 비틀어 짜는 행위는 원단 변형의 원인이 될 수 있습니다.\n\nWool / Wool Blend\n- 드라이클리닝을 권장합니다.\n- 물세탁 시 수축 및 변형이 발생할 수 있으므로 주의해 주세요.\n\nPolyester / Synthetic Fabric\n- 고온 세탁 및 건조기 사용 시 원단 변형이 발생할 수 있으니 주의해 주세요.\n- 다림질 시 낮은 온도를 사용해 주세요.',
@@ -2370,8 +2424,44 @@ elif "썸네일 생성기" in menu:
     components.html(THUMB_HTML, height=820, scrolling=False)
 
 elif "상세 생성기" in menu:
+    prods = []
+    try:
+        prods = load_style_info()
+    except Exception as e:
+        st.warning("STYLE_INFO 시트 로드 실패: " + str(e))
+
+    tc1, tc2 = st.columns([6, 1])
+    sel = None
+    if prods:
+        labels = [ (p["name"] + (f"  ({p['name_en']})" if p["name_en"] else "") + (f"  · {p['style']}" if p["style"] else "")) for p in prods ]
+        sel = tc1.selectbox("상품 선택 (STYLE_INFO 시트)", range(len(prods)),
+                            format_func=lambda i: labels[i], key="prodsel")
+    else:
+        tc1.info("시트에서 상품을 불러오지 못했어요. 아래는 기본값입니다.")
+    if tc2.button("↻ 시트 새로고침", use_container_width=True):
+        load_style_info.clear(); st.rerun()
+
+    if prods and sel is not None:
+        p = prods[sel]
+        items, sv = parse_size_json(p["sizejson"])
+        if not items:
+            items, sv = ["Total Length"], {"Free": [""]}
+        name_en = p["name_en"] or p["name"] or "Product"
+        desc = p["desc"] or ""
+        fabric = p["fabric"] or ""
+    else:
+        name_en, desc, fabric = "Salt and Sun Stripe Shirt", "-", "Cotton 90% Polyester 10%"
+        items, sv = ["Total Length","Shoulder Width","Chest","Hem","Sleeve Length","Armhole","Neck Width"], {"Free": ["72.5","55","71.5","68","57","25","17"]}
+
     _default_models = '[{"src":"","cap":"173cm / F size"},{"src":"","cap":"172cm / F size"}]'
-    html = DETAIL_HTML.replace("__INIT_IMAGES__", "[]").replace("__MODELS__", _default_models)
+    html = (DETAIL_HTML
+            .replace("__INIT_IMAGES__", "[]")
+            .replace("__MODELS__", _default_models)
+            .replace("__NAME_EN__", _json.dumps(name_en, ensure_ascii=False))
+            .replace("__DESC__", _json.dumps(desc, ensure_ascii=False))
+            .replace("__FABRIC__", _json.dumps(fabric, ensure_ascii=False))
+            .replace("__SIZEITEMS__", _json.dumps(items, ensure_ascii=False))
+            .replace("__SIZEVALS__", _json.dumps(sv, ensure_ascii=False)))
     components.html(html, height=820, scrolling=False)
 
 elif "피드 기획" in menu:
