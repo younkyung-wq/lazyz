@@ -1996,13 +1996,16 @@ DETAIL_HTML = r"""
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Pretendard',-apple-system,sans-serif;}
 body{background:#eee;height:812px;overflow:hidden;color:#222;}
-.wrap{display:flex;flex-direction:column;height:812px;}
-.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 18px;background:#fff;border-bottom:1px solid #e5e5e5;}
-.btn{padding:9px 15px;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;}
+.wrap{display:flex;flex-direction:row;height:812px;}
+.panel{width:300px;flex-shrink:0;background:#fff;border-left:1px solid #e5e5e5;order:2;padding:22px 20px;display:flex;flex-direction:column;gap:14px;overflow:auto;}
+.panel h3{font-size:15px;font-weight:800;color:#111;}
+.panel .lbl{font-size:12px;font-weight:700;color:#888;margin-bottom:-6px;}
+.btn{padding:11px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;width:100%;}
 .btn-dark{background:#111;color:#fff;} .btn-line{background:#fff;border:1.5px solid #ddd;color:#555;} .btn-red{background:#ff4b4b;color:#fff;}
-.hint{font-size:12px;color:#999;}
-#prog{font-size:12px;color:#2e9e44;font-weight:700;}
-.stage{flex:1;overflow:auto;display:flex;justify-content:center;padding:24px;}
+.hint{font-size:11.5px;color:#aaa;line-height:1.7;}
+.divider{height:1px;background:#eee;margin:4px 0;}
+#prog{font-size:12px;color:#2e9e44;font-weight:700;min-height:16px;}
+.stage{flex:1;order:1;overflow:auto;display:flex;justify-content:center;padding:24px;}
 #page{width:1000px;background:#fff;flex-shrink:0;height:max-content;}
 .imgrow{position:relative;display:block;font-size:0;}
 .imgrow canvas{width:100%;display:block;cursor:zoom-in;}
@@ -2026,15 +2029,20 @@ table.size th{background:#f7f7f7;font-weight:700;}
 [contenteditable]:focus{background:#fffef2;}
 </style></head><body>
 <div class="wrap">
-  <div class="top">
+  <div class="stage"><div id="page"></div></div>
+  <div class="panel">
+    <h3>상세 생성기</h3>
+    <div class="lbl">이미지 불러오기</div>
     <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 이미지 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <button class="btn btn-line" onclick="clearImgs()">🗑 이미지 비우기</button>
-    <button class="btn btn-red" onclick="save('jpg')">📥 상세페이지 저장</button>
+    <div class="divider"></div>
+    <div class="lbl">상세페이지 생성하기</div>
+    <button class="btn btn-red" onclick="save('jpg')">📥 저장하기</button>
     <span id="prog"></span>
-    <span class="hint">이미지 더블클릭=크롭(드래그/휠) · 텍스트 클릭=수정</span>
+    <div class="divider"></div>
+    <div class="hint">· 이미지 더블클릭 = 크롭 (드래그/휠 줌)<br>· 텍스트 클릭 = 수정<br>· 자동 정렬: 화이트→브라운→블랙, 앞뒤컷→누끼</div>
   </div>
-  <div class="stage"><div id="page"></div></div>
 </div>
 <script>
 // 시트에서 가져온 제품 정보(수정 가능)
