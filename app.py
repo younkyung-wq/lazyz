@@ -52,7 +52,8 @@ def parse_size_json(s):
         j = _json.loads(s); comp = j["components"][0]
         items = comp["items"]; sizes = comp["sizes"]; vals = comp.get("vals", {})
         items_en = [SIZE_EN.get(it, it) for it in items]
-        sv = {sz: [str(vals.get(sz, {}).get(it, "")) for it in items] for sz in sizes}
+        def sname(x): return "Free" if str(x).strip().upper() == "F" else x
+        sv = {sname(sz): [str(vals.get(sz, {}).get(it, "")) for it in items] for sz in sizes}
         return items_en, sv
     except Exception:
         return None, None
@@ -2430,12 +2431,13 @@ elif "상세 생성기" in menu:
     except Exception as e:
         st.warning("STYLE_INFO 시트 로드 실패: " + str(e))
 
+    st.markdown("<div style='font-size:13px;font-weight:700;color:#888;margin-bottom:2px;'>상품 선택 (STYLE_INFO 시트)</div>", unsafe_allow_html=True)
     tc1, tc2 = st.columns([6, 1])
     sel = None
     if prods:
         labels = [ (p["name"] + (f"  ({p['name_en']})" if p["name_en"] else "") + (f"  · {p['style']}" if p["style"] else "")) for p in prods ]
-        sel = tc1.selectbox("상품 선택 (STYLE_INFO 시트)", range(len(prods)),
-                            format_func=lambda i: labels[i], key="prodsel")
+        sel = tc1.selectbox("상품 선택", range(len(prods)),
+                            format_func=lambda i: labels[i], key="prodsel", label_visibility="collapsed")
     else:
         tc1.info("시트에서 상품을 불러오지 못했어요. 아래는 기본값입니다.")
     if tc2.button("↻ 시트 새로고침", use_container_width=True):
