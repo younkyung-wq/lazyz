@@ -2083,7 +2083,11 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
       <div class="accbody">
         <button class="btn btn-line" onclick="addPreset()">＋ 새 모델 저장</button>
         <div id="presetList"></div>
-        <div class="acchint">체크한 모델이 위 Models에 순서대로 들어가요. 저장은 이 브라우저에 유지돼요.</div>
+        <div class="acchint">‘사용’한 모델이 위 Models에 순서대로 들어가요.</div>
+        <div class="divider"></div>
+        <button class="btn btn-line" onclick="makeGroup()">⧉ 사용중인 모델을 그룹으로 묶기</button>
+        <div id="groupList"></div>
+        <div class="acchint">그룹 ‘적용’ 시 그룹 멤버가 한 번에 들어가요. 이름은 구분용이라 상세엔 안 보여요. 저장은 이 브라우저에 유지돼요.</div>
       </div>
     </details>
     <div class="divider"></div>
@@ -2171,22 +2175,42 @@ function modelsHTML(){
     P.models.map((m,i)=>'<div class="m"><div class="ph">'+(m.src?'<img src="'+m.src+'">':'—')+'</div><div class="cap" data-mc="'+i+'" contenteditable>'+esc(m.cap)+'</div></div>').join('')+
   '</div></div>';
 }
-// ── 모델 프리셋(브라우저 저장) ──
-const LSKEY='lz_model_presets';
-function loadPresets(){ try{ return JSON.parse(localStorage.getItem(LSKEY)||'[]'); }catch(e){ return []; } }
-function savePresets(){ try{ localStorage.setItem(LSKEY, JSON.stringify(presets)); }catch(e){} }
-let presets=loadPresets(); let usedIdx=[];
+// ── 모델 프리셋 + 그룹(브라우저 저장) ──
+const LSKEY_P='lz_model_presets', LSKEY_G='lz_model_groups';
+function newId(){ return 'm'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36); }
+function loadPresets(){ let a=[]; try{a=JSON.parse(localStorage.getItem(LSKEY_P)||'[]');}catch(e){} a.forEach(m=>{ if(!m.id)m.id=newId(); if(m.name===undefined)m.name=''; }); return a; }
+function loadGroups(){ try{return JSON.parse(localStorage.getItem(LSKEY_G)||'[]');}catch(e){return [];} }
+function savePresets(){ try{localStorage.setItem(LSKEY_P, JSON.stringify(presets));}catch(e){} }
+function saveGroups(){ try{localStorage.setItem(LSKEY_G, JSON.stringify(groups));}catch(e){} }
+let presets=loadPresets(); let groups=loadGroups(); let usedIds=[];
+function findP(id){ return presets.find(m=>m.id===id); }
 function addPreset(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
   inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const rd=new FileReader();
-    rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const W=500,H=Math.round(W*im.height/im.width); const c=document.createElement('canvas'); c.width=W;c.height=H; c.getContext('2d').drawImage(im,0,0,W,H); const src=c.toDataURL('image/jpeg',0.85); const cap=(prompt('모델 정보 (키/사이즈만 수정하세요)','173cm / F size')||'').trim(); presets.push({cap,src}); savePresets(); renderPresetList(); }; im.src=rd.result; };
+    rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const W=500,H=Math.round(W*im.height/im.width); const c=document.createElement('canvas'); c.width=W;c.height=H; c.getContext('2d').drawImage(im,0,0,W,H); const src=c.toDataURL('image/jpeg',0.85);
+      const name=(prompt('구분용 이름 (상세페이지엔 안 보임 · 예: 지은)','')||'').trim();
+      const cap=(prompt('모델 정보 (키/사이즈만 수정하세요)','173cm / F size')||'').trim();
+      presets.push({id:newId(),name,cap,src}); savePresets(); renderModelUI(); }; im.src=rd.result; };
     rd.readAsDataURL(f); };
   inp.click();
 }
-function delPreset(i){ presets.splice(i,1); savePresets(); usedIdx=usedIdx.filter(x=>x!==i).map(x=>x>i?x-1:x); syncModels(); renderPresetList(); }
-function toggleUse(i){ const p=usedIdx.indexOf(i); if(p>=0)usedIdx.splice(p,1); else usedIdx.push(i); syncModels(); renderPresetList(); }
-function syncModels(){ P.models = usedIdx.length? usedIdx.map(i=>({src:presets[i].src,cap:presets[i].cap})) : [{src:'',cap:'173cm / F size'},{src:'',cap:'172cm / F size'}]; renderPage(); }
-function renderPresetList(){ const el=document.getElementById('presetList'); if(!el)return;
-  el.innerHTML = presets.length ? presets.map((m,i)=>'<div class="prow"><img src="'+m.src+'"><div class="pc">'+esc(m.cap||'—')+'</div><button class="puse'+(usedIdx.includes(i)?' on':'')+'" onclick="toggleUse('+i+')">'+(usedIdx.includes(i)?'사용중':'사용')+'</button><button class="pdel" onclick="delPreset('+i+')">×</button></div>').join('') : '<div class="pempty">저장된 모델이 없어요</div>';
+function delPreset(id){ presets=presets.filter(m=>m.id!==id); savePresets(); groups.forEach(g=>g.members=g.members.filter(x=>x!==id)); saveGroups(); usedIds=usedIds.filter(x=>x!==id); syncModels(); renderModelUI(); }
+function toggleUse(id){ const p=usedIds.indexOf(id); if(p>=0)usedIds.splice(p,1); else usedIds.push(id); syncModels(); renderModelUI(); }
+function makeGroup(){ if(!usedIds.length){ alert('먼저 그룹으로 묶을 모델을 ‘사용’으로 켜주세요.'); return; }
+  const name=(prompt('그룹 이름 (예: 1팀 / 봄시즌A)','')||'').trim(); if(name===null) return;
+  groups.push({id:newId(),name:name||('그룹 '+(groups.length+1)),members:[...usedIds]}); saveGroups(); renderModelUI();
+}
+function useGroup(gid){ const g=groups.find(x=>x.id===gid); if(!g)return; usedIds=g.members.filter(id=>findP(id)); syncModels(); renderModelUI(); }
+function delGroup(gid){ groups=groups.filter(g=>g.id!==gid); saveGroups(); renderModelUI(); }
+function syncModels(){ const list=usedIds.map(id=>findP(id)).filter(Boolean); P.models = list.length? list.map(m=>({src:m.src,cap:m.cap})) : [{src:'',cap:'173cm / F size'},{src:'',cap:'172cm / F size'}]; renderPage(); }
+function renderModelUI(){
+  const pl=document.getElementById('presetList');
+  if(pl) pl.innerHTML = presets.length ? presets.map(m=>{ const on=usedIds.includes(m.id);
+    return '<div class="prow"><img src="'+m.src+'"><div class="pc">'+(m.name?'<b>'+esc(m.name)+'</b> ':'')+esc(m.cap||'—')+'</div><button class="puse'+(on?' on':'')+'" onclick="toggleUse(\''+m.id+'\')">'+(on?'사용중':'사용')+'</button><button class="pdel" onclick="delPreset(\''+m.id+'\')">×</button></div>';
+  }).join('') : '<div class="pempty">저장된 모델이 없어요</div>';
+  const gl=document.getElementById('groupList');
+  if(gl) gl.innerHTML = groups.length ? groups.map(g=>{ const cnt=g.members.filter(id=>findP(id)).length;
+    return '<div class="prow"><div class="pc">⧉ <b>'+esc(g.name)+'</b> <span style="color:#aaa">('+cnt+'명)</span></div><button class="puse" onclick="useGroup(\''+g.id+'\')">적용</button><button class="pdel" onclick="delGroup(\''+g.id+'\')">×</button></div>';
+  }).join('') : '';
 }
 function sectionsHTML(){
   return ''
@@ -2309,7 +2333,7 @@ async function save(fmt){
   document.getElementById('prog').textContent='완료!';
 }
 loadInit();
-renderPresetList();
+renderModelUI();
 </script></body></html>
 """
 
