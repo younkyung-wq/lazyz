@@ -2201,7 +2201,7 @@ function delGroup(gid){ groups=groups.filter(g=>g.id!==gid); saveGroups(); rende
 function syncModels(){ const list=usedIds.map(id=>findP(id)).filter(Boolean); P.models = list.length? list.map(m=>({src:m.src,cap:m.cap})) : [{src:'',cap:'173cm / F size'},{src:'',cap:'172cm / F size'}]; renderPage(); }
 function renderModelUI(){
   const af=document.getElementById('addForm');
-  if(af) af.innerHTML = pendingSrc ? '<div class="addform"><img class="apimg" src="'+pendingSrc+'"><input id="mName" placeholder="이름 (구분용 · 상세엔 안 보임)"><input id="mCap" value="173cm / F size" placeholder="키 / 사이즈"><div class="arow"><button class="btn btn-line" onclick="cancelAdd()">취소</button><button class="btn btn-dark" onclick="confirmAdd()">확인</button></div></div>' : '';
+  if(af) af.innerHTML = pendingSrc ? '<div class="addform"><img class="apimg" src="'+pendingSrc+'"><input id="mName" placeholder="이름"><input id="mCap" value="173cm / F size" placeholder="키 / 사이즈"><div class="arow"><button class="btn btn-line" onclick="cancelAdd()">취소</button><button class="btn btn-dark" onclick="confirmAdd()">확인</button></div></div>' : '';
   const pl=document.getElementById('presetList');
   if(pl) pl.innerHTML = presets.length ? presets.map(m=>{ const on=usedIds.includes(m.id);
     return '<div class="prow"><img src="'+m.src+'"><div class="pc">'+esc(m.name||'(이름 없음)')+'</div><button class="puse'+(on?' on':'')+'" onclick="toggleUse(\''+m.id+'\')">'+(on?'사용중':'사용')+'</button><button class="pdel" onclick="delPreset(\''+m.id+'\')">×</button></div>';
