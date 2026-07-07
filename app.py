@@ -2032,8 +2032,11 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .sznote{font-size:23px;font-weight:300;letter-spacing:-0.03em;color:#8a8a8a;margin-top:40px;}
 .models{display:flex;gap:24px;flex-wrap:wrap;}
 .models .m{width:250px;}
-.models .m .ph{width:250px;height:330px;background:#f0f0f0;border-radius:4px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:15px;}
+.models .m .ph{position:relative;width:250px;height:330px;background:#f0f0f0;border-radius:4px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:15px;}
 .models .m .ph img{width:100%;height:100%;object-fit:cover;display:block;}
+.models .m .mdel{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.55);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;}
+.models .m .mdel:hover{background:#ff4b4b;}
+.models .m .ph.addm{border:2px dashed #dcdcdc;background:#fafafa;color:#aaa;}
 .models .m .cap{font-size:23px;font-weight:300;letter-spacing:-0.03em;color:#555;margin-top:16px;outline:none;}
 [contenteditable]:focus{background:#fffef2;}
 </style></head><body>
@@ -2072,7 +2075,7 @@ const P={
  sizeItems:['Total Length','Shoulder Width','Chest','Hem','Sleeve Length','Armhole','Neck Width'],
  sizeVals:{'Free':['72.5','55','71.5','68','57','25','17']},
  fabric:'Cotton 90% Polyester 10%',
- models:[{src:'',cap:'173cm / F size'},{src:'',cap:'172cm / F size'}],
+ models: __MODELS__,
  // ── 하단 공통(고정) 케어 가이드 ──
  care:'- 중성세제를 사용하여 30℃ 이하의 미지근한 물에 단독 세탁해 주세요.\n- 세탁기 사용 시 약한 세탁 코스를 권장합니다.\n- 표백제 사용은 원단 손상의 원인이 될 수 있으므로 삼가해 주세요.\n- 건조기 사용은 제품 변형 및 수축의 원인이 될 수 있으므로 사용을 피해 주세요.\n- 세탁 후에는 평평한 곳에 뉘어 자연 건조해 주세요.\n\nCotton / Cotton Blend\n- 첫 세탁 시 물 빠짐이 있을 수 있으므로 단독 세탁을 권장합니다.\n- 고온 세탁 및 건조 시 수축이 발생할 수 있으니 주의해 주세요.\n\nModal / Rayon / Tencel\n- 물에 장시간 담가두지 마세요.\n- 강한 탈수 및 비틀어 짜는 행위는 원단 변형의 원인이 될 수 있습니다.\n\nWool / Wool Blend\n- 드라이클리닝을 권장합니다.\n- 물세탁 시 수축 및 변형이 발생할 수 있으므로 주의해 주세요.\n\nPolyester / Synthetic Fabric\n- 고온 세탁 및 건조기 사용 시 원단 변형이 발생할 수 있으니 주의해 주세요.\n- 다림질 시 낮은 온도를 사용해 주세요.',
  // ── 하단 공통(고정) 교환/환불 ──
@@ -2139,13 +2142,16 @@ function sizeGuide(){
 }
 function modelsHTML(){
   return '<div class="sec"><h2>Models</h2><div class="models">'+
-    P.models.map((m,i)=>'<div class="m"><div class="ph" data-mi="'+i+'">'+(m.src?'<img src="'+m.src+'">':'📷 클릭해서 추가')+'</div><div class="cap" data-mc="'+i+'" contenteditable>'+esc(m.cap)+'</div></div>').join('')+
+    P.models.map((m,i)=>'<div class="m"><div class="ph" data-mi="'+i+'">'+(m.src?'<img src="'+m.src+'">':'📷 클릭해서 추가')+'<span class="mdel" data-md="'+i+'">×</span></div><div class="cap" data-mc="'+i+'" contenteditable>'+esc(m.cap)+'</div></div>').join('')+
+    '<div class="m"><div class="ph addm" onclick="addModel()">＋ 모델 추가</div></div>'+
   '</div></div>';
 }
 function pickModel(i){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
   inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const rd=new FileReader(); rd.onload=()=>{ P.models[i].src=rd.result; renderPage(); }; rd.readAsDataURL(f); };
   inp.click();
 }
+function addModel(){ P.models.push({src:'',cap:''}); renderPage(); }
+function removeModel(i){ P.models.splice(i,1); renderPage(); }
 function sectionsHTML(){
   return ''
   +'<div class="sec"><h2 data-k="name_en" contenteditable>'+esc(P.name_en)+'</h2><div class="k" data-k="desc" contenteditable>'+esc(P.desc)+'</div></div>'
@@ -2159,7 +2165,8 @@ function bindEditable(){
   document.querySelectorAll('[data-ss]').forEach(el=>{ el.addEventListener('blur',()=>{ P.sizeVals[el.dataset.ss][+el.dataset.si]=el.innerText.trim(); }); });
   document.querySelectorAll('[data-sl]').forEach(el=>{ el.addEventListener('blur',()=>{ P.sizeItems[+el.dataset.sl]=el.innerText.trim(); }); });
   document.querySelectorAll('[data-mc]').forEach(el=>{ el.addEventListener('blur',()=>{ P.models[+el.dataset.mc].cap=el.innerText; }); });
-  document.querySelectorAll('[data-mi]').forEach(el=>{ el.addEventListener('click',()=>{ pickModel(+el.dataset.mi); }); });
+  document.querySelectorAll('[data-mi]').forEach(el=>{ el.addEventListener('click',(e)=>{ if(e.target.classList.contains('mdel'))return; pickModel(+el.dataset.mi); }); });
+  document.querySelectorAll('[data-md]').forEach(el=>{ el.addEventListener('click',(e)=>{ e.stopPropagation(); removeModel(+el.dataset.md); }); });
 }
 function startCrop(row,o){ if(cropRow&&cropRow!==row)cropRow.classList.remove('cropping'); cropRow=row; row.classList.add('cropping'); }
 function endCrop(){ if(cropRow){cropRow.classList.remove('cropping');cropRow=null;} }
@@ -2279,7 +2286,58 @@ elif "썸네일 생성기" in menu:
     components.html(THUMB_HTML, height=820, scrolling=False)
 
 elif "상세 생성기" in menu:
-    components.html(DETAIL_HTML.replace("__INIT_IMAGES__", "[]"), height=820, scrolling=False)
+    import json, base64
+    PRESET_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_presets.json")
+    def _load_presets():
+        try:
+            with open(PRESET_FILE, encoding="utf-8") as f: return json.load(f)
+        except Exception: return []
+    def _save_presets(p):
+        try:
+            with open(PRESET_FILE, "w", encoding="utf-8") as f: json.dump(p, f, ensure_ascii=False)
+        except Exception as e: st.warning("저장 실패: " + str(e))
+    presets = _load_presets()
+
+    with st.expander("👤 모델 관리  ·  시즌 모델 저장 후 골라 쓰기", expanded=False):
+        uc1, uc2, uc3 = st.columns([2, 2, 1])
+        up = uc1.file_uploader("사진", type=["png","jpg","jpeg","webp"], label_visibility="collapsed", key="modelup")
+        cap = uc2.text_input("정보", placeholder="예: 173cm / F size", label_visibility="collapsed", key="modelcap")
+        if uc3.button("＋ 저장", use_container_width=True):
+            if up is not None:
+                try:
+                    im = Image.open(up)
+                    im = im.convert("RGB")
+                    if im.width > 600: im = im.resize((600, round(600*im.height/im.width)), Image.LANCZOS)
+                    b = io.BytesIO(); im.save(b, "JPEG", quality=85)
+                    presets.append({"cap": (cap or "").strip(), "src": "data:image/jpeg;base64,"+base64.b64encode(b.getvalue()).decode()})
+                    _save_presets(presets); st.rerun()
+                except Exception as e: st.warning("이미지 오류: " + str(e))
+            else:
+                st.warning("사진을 먼저 올려주세요.")
+
+        if presets:
+            st.caption("저장된 모델")
+            cols = st.columns(6)
+            for i, m in enumerate(presets):
+                with cols[i % 6]:
+                    st.image(m["src"], use_container_width=True)
+                    st.caption(m.get("cap", "") or "—")
+                    if st.button("🗑", key=f"delm{i}", use_container_width=True):
+                        presets.pop(i); _save_presets(presets); st.rerun()
+        else:
+            st.caption("아직 저장된 모델이 없어요. 위에서 사진+정보를 추가하세요.")
+
+        opts = [f"{i}. {m.get('cap','') or '(정보없음)'}" for i, m in enumerate(presets)]
+        sel = st.multiselect("이 제품에 사용할 모델 (고른 순서대로 배치)", opts, key="modelsel")
+        sel_idx = [int(s.split(".")[0]) for s in sel]
+
+    if sel_idx:
+        models = [{"src": presets[i]["src"], "cap": presets[i].get("cap","")} for i in sel_idx]
+    else:
+        models = [{"src": "", "cap": "173cm / F size"}, {"src": "", "cap": "172cm / F size"}]
+
+    html = DETAIL_HTML.replace("__INIT_IMAGES__", "[]").replace("__MODELS__", json.dumps(models, ensure_ascii=False))
+    components.html(html, height=820, scrolling=False)
 
 elif "피드 기획" in menu:
     st.markdown("""
