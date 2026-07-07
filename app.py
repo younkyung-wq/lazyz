@@ -2009,10 +2009,11 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .hint{font-size:11.5px;color:#aaa;line-height:1.7;}
 .divider{height:1px;background:#eee;margin:4px 0;}
 #prog{font-size:12px;color:#2e9e44;font-weight:700;min-height:16px;}
-.stage{flex:1;order:1;overflow:auto;display:flex;justify-content:center;padding:24px;}
-#page{width:1000px;background:#fff;flex-shrink:0;height:max-content;}
-.imgrow{position:relative;display:block;font-size:0;}
+.stage{flex:1;order:1;overflow:auto;display:flex;justify-content:flex-start;flex-direction:column;align-items:center;padding:24px;}
+#page{width:1000px;background:#fff;flex-shrink:0;height:max-content;transform-origin:top center;}
+.imgrow{position:relative;display:block;font-size:0;margin-bottom:10px;}
 .imgrow canvas{width:100%;display:block;cursor:zoom-in;}
+.imgrow.cropping{outline:2px solid #ff4b4b;outline-offset:-2px;}
 .imgrow.cropping canvas{cursor:grab;}
 .imgrow .badge{position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;padding:2px 7px;border-radius:10px;z-index:2;}
 .imgrow .del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;width:22px;height:22px;border-radius:50%;font-size:14px;line-height:22px;text-align:center;cursor:pointer;z-index:2;}
@@ -2043,11 +2044,18 @@ table.size th{background:#f7f7f7;font-weight:700;}
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <button class="btn btn-line" onclick="clearImgs()">🗑 이미지 비우기</button>
     <div class="divider"></div>
+    <div class="lbl">전체 미리보기 확대/축소</div>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-line" style="padding:8px;" onclick="zoomOut()">－</button>
+      <button class="btn btn-line" style="padding:8px;" onclick="zoomReset()"><span id="zlabel">100%</span></button>
+      <button class="btn btn-line" style="padding:8px;" onclick="zoomIn()">＋</button>
+    </div>
+    <div class="divider"></div>
     <div class="lbl">상세페이지 생성하기</div>
     <button class="btn btn-red" onclick="save('jpg')">📥 저장하기</button>
     <span id="prog"></span>
     <div class="divider"></div>
-    <div class="hint">· 이미지 더블클릭 = 크롭 (드래그/휠 줌)<br>· 텍스트 클릭 = 수정<br>· 자동 정렬: 화이트→브라운→블랙, 앞뒤컷→누끼</div>
+    <div class="hint">· 이미지 클릭 = 선택 → 휠로 확대/축소, 드래그로 이동<br>· 방향키 = 미세 조정 (Shift=크게)<br>· 다시 클릭 or ✓완료 = 선택 해제<br>· 텍스트 클릭 = 수정<br>· ⌘/Ctrl + 휠 = 전체 확대/축소<br>· 자동 정렬: 화이트→브라운→블랙, 앞뒤컷→누끼</div>
   </div>
 </div>
 <script>
@@ -2089,10 +2097,11 @@ function renderPage(){
     const cv=document.createElement('canvas'); o.canvas=cv;
     row.innerHTML='<span class="badge">'+(i+1)+'</span><span class="del">×</span><div class="cropbar"><span onclick="endCrop()">✓ 완료</span><span onclick="resetCrop()">초기화</span></div>';
     row.insertBefore(cv,row.firstChild);
-    row.querySelector('.del').onclick=()=>{imgs.splice(i,1);renderPage();};
-    cv.addEventListener('dblclick',()=>startCrop(row,o));
+    row.querySelector('.del').onclick=(ev)=>{ev.stopPropagation();imgs.splice(i,1);renderPage();};
+    cv.addEventListener('click',(ev)=>{ if(o._moved){o._moved=false;return;} if(cropRow===row){endCrop();}else{startCrop(row,o);} });
     cv.addEventListener('mousedown',e=>{ if(cropRow!==row)return; o._d={x:e.clientX,y:e.clientY}; });
     window.addEventListener('mousemove',e=>{ if(cropRow!==row||!o._d)return; const rect=cv.getBoundingClientRect(); const sc=1000/rect.width;
+      if(Math.abs(e.clientX-o._d.x)+Math.abs(e.clientY-o._d.y)>2) o._moved=true;
       const iw=1000*o.crop.z, ih=(1000*o.img.height/o.img.width)*o.crop.z;
       o.crop.cx-=((e.clientX-o._d.x)*sc)/iw; o.crop.cy-=((e.clientY-o._d.y)*sc)/ih; o._d={x:e.clientX,y:e.clientY}; drawRow(o); });
     window.addEventListener('mouseup',()=>{o._d=null;});
@@ -2125,6 +2134,26 @@ function bindEditable(){
 function startCrop(row,o){ if(cropRow&&cropRow!==row)cropRow.classList.remove('cropping'); cropRow=row; row.classList.add('cropping'); }
 function endCrop(){ if(cropRow){cropRow.classList.remove('cropping');cropRow=null;} }
 function resetCrop(){ if(!cropRow)return; const o=imgs.find(x=>x.el===cropRow); if(o){o.crop={z:1,cx:0.5,cy:0.5};drawRow(o);} }
+// 방향키 = 선택 이미지 미세조정
+window.addEventListener('keydown',e=>{
+  if(!cropRow) return;
+  if(document.activeElement&&document.activeElement.isContentEditable) return;
+  const o=imgs.find(x=>x.el===cropRow); if(!o) return;
+  const iw=1000*o.crop.z, ih=(1000*o.img.height/o.img.width)*o.crop.z;
+  const step=(e.shiftKey?10:2);
+  if(e.key==='ArrowLeft'){o.crop.cx-= step/iw;}
+  else if(e.key==='ArrowRight'){o.crop.cx+= step/iw;}
+  else if(e.key==='ArrowUp'){o.crop.cy-= step/ih;}
+  else if(e.key==='ArrowDown'){o.crop.cy+= step/ih;}
+  else return;
+  e.preventDefault(); drawRow(o);
+});
+// 전체 미리보기 확대/축소
+let pageZoom=1;
+function applyZoom(){ const pg=document.getElementById('page'); pg.style.transform='scale('+pageZoom+')'; const zl=document.getElementById('zlabel'); if(zl) zl.textContent=Math.round(pageZoom*100)+'%'; }
+function zoomIn(){ pageZoom=Math.min(2,+(pageZoom+0.1).toFixed(2)); applyZoom(); }
+function zoomOut(){ pageZoom=Math.max(0.3,+(pageZoom-0.1).toFixed(2)); applyZoom(); }
+function zoomReset(){ pageZoom=1; applyZoom(); }
 document.getElementById('fi').addEventListener('change',e=>{
   const files=[...e.target.files].filter(f=>f.type.startsWith('image/'));
   let n=files.length; if(!n)return;
@@ -2133,11 +2162,17 @@ document.getElementById('fi').addEventListener('change',e=>{
   e.target.value='';
 });
 function clearImgs(){ imgs=[]; renderPage(); }
+// ⌘/Ctrl + 휠 = 전체 확대/축소
+document.querySelector('.stage').addEventListener('wheel',e=>{
+  if(e.ctrlKey||e.metaKey){ e.preventDefault(); pageZoom=Math.max(0.3,Math.min(2,+(pageZoom+(e.deltaY<0?0.06:-0.06)).toFixed(2))); applyZoom(); }
+},{passive:false});
 async function save(fmt){
   endCrop();
   const pg=document.getElementById('page');
+  const oz=pg.style.transform; pg.style.transform='none';   // 저장 시 실제 크기로
   document.getElementById('prog').textContent='저장 중…';
   const canvas=await html2canvas(pg,{scale:2,backgroundColor:'#ffffff',useCORS:true});
+  pg.style.transform=oz;
   const mime=fmt==='png'?'image/png':'image/jpeg';
   const blob=await new Promise(res=>canvas.toBlob(res,mime,fmt==='png'?undefined:0.95));
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(P.name_en||'상세페이지')+'.'+fmt; a.click();
