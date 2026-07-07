@@ -2109,6 +2109,8 @@ function renderPage(){
     row.innerHTML='<span class="badge">'+(i+1)+'</span><span class="del">×</span><div class="cropbar"><span onclick="endCrop()">✓ 완료</span><span onclick="resetCrop()">초기화</span></div>';
     row.insertBefore(cv,row.firstChild);
     row.querySelector('.del').onclick=(ev)=>{ev.stopPropagation();const k=imgs.indexOf(o);if(k>=0)imgs.splice(k,1);renderPage();};
+    const bd=row.querySelector('.badge'); bd.textContent='⠿ '+(i+1); bd.style.cursor='grab'; bd.title='드래그해서 순서 변경';
+    bd.addEventListener('mousedown',ev=>{ ev.preventDefault(); ev.stopPropagation(); endCrop(); pointer={o:o,row:row,sx:ev.clientX,sy:ev.clientY,lx:ev.clientX,ly:ev.clientY,moved:true,mode:'reorder'}; row.style.opacity='0.4'; document.body.style.userSelect='none'; });
     cv.addEventListener('mousedown',e=>{ e.preventDefault(); const md=(cropRow===row?'pan':'pending'); if(md==='pending') startCrop(row,o); pointer={o:o,row:row,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,moved:false,mode:md}; });
     cv.addEventListener('wheel',e=>{ if(cropRow!==row)return; e.preventDefault(); o.crop.z*=(e.deltaY<0?1.04:0.96); o.crop.z=Math.max(1,Math.min(4,o.crop.z)); drawRow(o); },{passive:false});
     pg.appendChild(row); o.el=row; drawRow(o);
@@ -2181,7 +2183,7 @@ window.addEventListener('mousemove',e=>{
     o.crop.cx-=((e.clientX-pointer.lx)*sc)/iw; o.crop.cy-=((e.clientY-pointer.ly)*sc)/ih;
     pointer.lx=e.clientX; pointer.ly=e.clientY; drawRow(o); return;
   }
-  if(pointer.mode==='pending' && pointer.moved){ pointer.mode='reorder'; endCrop(); pointer.row.style.opacity='0.4'; document.body.style.userSelect='none'; }
+  if(pointer.mode==='pending' && pointer.moved){ pointer.mode='pan'; pointer.lx=e.clientX; pointer.ly=e.clientY; }
   if(pointer.mode==='reorder'){
     const el=document.elementFromPoint(e.clientX,e.clientY); const r=el&&el.closest&&el.closest('.imgrow');
     if(r && r!==pointer.o.el){ flipReorder(pointer.o, r); }
