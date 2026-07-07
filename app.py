@@ -2030,9 +2030,9 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .sizegrid .gh{font-size:40px;font-weight:700;letter-spacing:-0.5px;color:#111;padding-bottom:40px;outline:none;}
 .sizegrid .gl,.sizegrid .gv{font-size:23px;font-weight:300;letter-spacing:-0.03em;color:#333;padding:15px 0;outline:none;}
 .sznote{font-size:23px;font-weight:300;letter-spacing:-0.03em;color:#8a8a8a;margin-top:40px;}
-.models{display:flex;gap:24px;flex-wrap:wrap;}
-.models .m{width:250px;}
-.models .m .ph{position:relative;width:250px;height:330px;background:#f0f0f0;border-radius:4px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:15px;}
+.models{display:flex;gap:45px;flex-wrap:wrap;}
+.models .m{width:245px;}
+.models .m .ph{position:relative;width:245px;height:300px;background:#f0f0f0;border-radius:4px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:15px;}
 .models .m .ph img{width:100%;height:100%;object-fit:cover;display:block;}
 .models .m .mdel{position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,0.55);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;line-height:1;cursor:pointer;}
 .models .m .mdel:hover{background:#ff4b4b;}
