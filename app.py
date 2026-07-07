@@ -2039,7 +2039,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .imgrow.cropping .cropbar{display:flex;}
 .imgrow .cropbar span{cursor:pointer;}
 .sec{padding:0 110px;margin-top:190px;}
-.sec h2{font-size:40px;font-weight:700;letter-spacing:-0.5px;line-height:1;margin-bottom:55px;color:#111;}
+.sec h2{font-size:40px;font-weight:700;letter-spacing:-0.5px;line-height:1;margin-bottom:52px;color:#111;}
 .sec .k{font-size:23px;font-weight:300;line-height:47px;letter-spacing:-0.03em;color:#3a3a3a;white-space:pre-wrap;outline:none;}
 .sec .fab{font-size:23px;font-weight:300;letter-spacing:-0.03em;color:#3a3a3a;margin-bottom:34px;}
 .sizegrid{display:grid;column-gap:200px;align-items:baseline;justify-content:start;}
