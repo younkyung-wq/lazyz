@@ -2141,17 +2141,11 @@ function sizeGuide(){
   return '<div class="sizegrid" style="grid-template-columns:'+cols+';">'+cells+'</div><div class="sznote">1~2cm 의 오차가 발생할 수 있습니다.</div>';
 }
 function modelsHTML(){
+  if(!P.models||!P.models.length) return '';
   return '<div class="sec"><h2>Models</h2><div class="models">'+
-    P.models.map((m,i)=>'<div class="m"><div class="ph" data-mi="'+i+'">'+(m.src?'<img src="'+m.src+'">':'📷 클릭해서 추가')+'<span class="mdel" data-md="'+i+'">×</span></div><div class="cap" data-mc="'+i+'" contenteditable>'+esc(m.cap)+'</div></div>').join('')+
-    '<div class="m"><div class="ph addm" onclick="addModel()">＋ 모델 추가</div></div>'+
+    P.models.map((m,i)=>'<div class="m"><div class="ph">'+(m.src?'<img src="'+m.src+'">':'—')+'</div><div class="cap" data-mc="'+i+'" contenteditable>'+esc(m.cap)+'</div></div>').join('')+
   '</div></div>';
 }
-function pickModel(i){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
-  inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const rd=new FileReader(); rd.onload=()=>{ P.models[i].src=rd.result; renderPage(); }; rd.readAsDataURL(f); };
-  inp.click();
-}
-function addModel(){ P.models.push({src:'',cap:''}); renderPage(); }
-function removeModel(i){ P.models.splice(i,1); renderPage(); }
 function sectionsHTML(){
   return ''
   +'<div class="sec"><h2 data-k="name_en" contenteditable>'+esc(P.name_en)+'</h2><div class="k" data-k="desc" contenteditable>'+esc(P.desc)+'</div></div>'
@@ -2165,8 +2159,6 @@ function bindEditable(){
   document.querySelectorAll('[data-ss]').forEach(el=>{ el.addEventListener('blur',()=>{ P.sizeVals[el.dataset.ss][+el.dataset.si]=el.innerText.trim(); }); });
   document.querySelectorAll('[data-sl]').forEach(el=>{ el.addEventListener('blur',()=>{ P.sizeItems[+el.dataset.sl]=el.innerText.trim(); }); });
   document.querySelectorAll('[data-mc]').forEach(el=>{ el.addEventListener('blur',()=>{ P.models[+el.dataset.mc].cap=el.innerText; }); });
-  document.querySelectorAll('[data-mi]').forEach(el=>{ el.addEventListener('click',(e)=>{ if(e.target.classList.contains('mdel'))return; pickModel(+el.dataset.mi); }); });
-  document.querySelectorAll('[data-md]').forEach(el=>{ el.addEventListener('click',(e)=>{ e.stopPropagation(); removeModel(+el.dataset.md); }); });
 }
 function startCrop(row,o){ if(cropRow&&cropRow!==row)cropRow.classList.remove('cropping'); cropRow=row; row.classList.add('cropping'); }
 function endCrop(){ if(cropRow){cropRow.classList.remove('cropping');cropRow=null;} }
@@ -2298,15 +2290,17 @@ elif "상세 생성기" in menu:
         except Exception as e: st.warning("저장 실패: " + str(e))
     presets = _load_presets()
 
-    with st.expander("👤 모델 관리  ·  시즌 모델 저장 후 골라 쓰기", expanded=False):
-        uc1, uc2, uc3 = st.columns([2, 2, 1])
-        up = uc1.file_uploader("사진", type=["png","jpg","jpeg","webp"], label_visibility="collapsed", key="modelup")
-        cap = uc2.text_input("정보", placeholder="예: 173cm / F size", label_visibility="collapsed", key="modelcap")
-        if uc3.button("＋ 저장", use_container_width=True):
+    main_col, side_col = st.columns([3.2, 1])
+
+    with side_col:
+        st.markdown("<div style='font-weight:800;font-size:15px;'>👤 모델 관리</div>", unsafe_allow_html=True)
+        st.caption("시즌 모델 저장 후 골라 쓰기")
+        up = st.file_uploader("사진", type=["png","jpg","jpeg","webp"], label_visibility="collapsed", key="modelup")
+        cap = st.text_input("정보", placeholder="예: 173cm / F size", label_visibility="collapsed", key="modelcap")
+        if st.button("＋ 저장", use_container_width=True):
             if up is not None:
                 try:
-                    im = Image.open(up)
-                    im = im.convert("RGB")
+                    im = Image.open(up).convert("RGB")
                     if im.width > 600: im = im.resize((600, round(600*im.height/im.width)), Image.LANCZOS)
                     b = io.BytesIO(); im.save(b, "JPEG", quality=85)
                     presets.append({"cap": (cap or "").strip(), "src": "data:image/jpeg;base64,"+base64.b64encode(b.getvalue()).decode()})
@@ -2316,19 +2310,18 @@ elif "상세 생성기" in menu:
                 st.warning("사진을 먼저 올려주세요.")
 
         if presets:
-            st.caption("저장된 모델")
-            cols = st.columns(6)
+            st.markdown("<div style='font-size:12px;color:#888;margin-top:6px;'>저장된 모델</div>", unsafe_allow_html=True)
             for i, m in enumerate(presets):
-                with cols[i % 6]:
-                    st.image(m["src"], use_container_width=True)
-                    st.caption(m.get("cap", "") or "—")
-                    if st.button("🗑", key=f"delm{i}", use_container_width=True):
-                        presets.pop(i); _save_presets(presets); st.rerun()
+                pc1, pc2 = st.columns([1, 2])
+                pc1.image(m["src"], use_container_width=True)
+                pc2.markdown(f"<div style='font-size:12px;margin-top:6px;'>{m.get('cap','') or '—'}</div>", unsafe_allow_html=True)
+                if pc2.button("🗑 삭제", key=f"delm{i}", use_container_width=True):
+                    presets.pop(i); _save_presets(presets); st.rerun()
         else:
-            st.caption("아직 저장된 모델이 없어요. 위에서 사진+정보를 추가하세요.")
+            st.caption("아직 저장된 모델이 없어요.")
 
         opts = [f"{i}. {m.get('cap','') or '(정보없음)'}" for i, m in enumerate(presets)]
-        sel = st.multiselect("이 제품에 사용할 모델 (고른 순서대로 배치)", opts, key="modelsel")
+        sel = st.multiselect("사용할 모델 (고른 순서대로)", opts, key="modelsel")
         sel_idx = [int(s.split(".")[0]) for s in sel]
 
     if sel_idx:
@@ -2336,8 +2329,9 @@ elif "상세 생성기" in menu:
     else:
         models = [{"src": "", "cap": "173cm / F size"}, {"src": "", "cap": "172cm / F size"}]
 
-    html = DETAIL_HTML.replace("__INIT_IMAGES__", "[]").replace("__MODELS__", json.dumps(models, ensure_ascii=False))
-    components.html(html, height=820, scrolling=False)
+    with main_col:
+        html = DETAIL_HTML.replace("__INIT_IMAGES__", "[]").replace("__MODELS__", json.dumps(models, ensure_ascii=False))
+        components.html(html, height=820, scrolling=False)
 
 elif "피드 기획" in menu:
     st.markdown("""
