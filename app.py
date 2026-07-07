@@ -2017,7 +2017,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .imgrow.cropping{outline:2px solid #ff4b4b;outline-offset:-2px;}
 .imgrow.cropping canvas{cursor:grab;}
 .imgrow .badge{position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.65);color:#fff;font-size:13px;padding:5px 11px;border-radius:12px;z-index:2;transform-origin:top left;transform:scale(var(--iz,1));font-weight:700;}
-.imgrow .del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.65);color:#fff;width:30px;height:30px;border-radius:50%;font-size:18px;line-height:30px;text-align:center;cursor:pointer;z-index:2;transform-origin:top right;transform:scale(var(--iz,1));}
+.imgrow .del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.65);color:#fff;width:30px;height:30px;border-radius:50%;font-size:17px;display:flex;align-items:center;justify-content:center;line-height:1;cursor:pointer;z-index:2;transform-origin:top right;transform:scale(var(--iz,1));}
 .imgrow .del:hover{background:#ff4b4b;}
 .imgrow .cropbar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%) scale(var(--iz,1));transform-origin:bottom center;background:#111;color:#fff;font-size:13px;padding:6px 14px;border-radius:20px;z-index:3;display:none;gap:12px;}
 .imgrow.cropping .cropbar{display:flex;}
