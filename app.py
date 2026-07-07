@@ -2165,10 +2165,12 @@ elif "상세 생성기" in menu:
     col1, col2 = st.columns([1.25, 1])
     with col2:
         st.markdown("**이미지 폴더 나스 경로 입력**")
-        # 폴더 찾기: 네이티브 macOS 폴더 선택창 (로컬 실행 전용)
-        bc1, bc2 = st.columns(2)
-        pickbtn = bc1.button("📁 폴더 찾기", use_container_width=True)
-        loadbtn = bc2.button("불러오기", type="primary", use_container_width=True)
+        # 한 줄: 경로입력 — 폴더찾기 — 불러오기
+        pc1, pc2, pc3 = st.columns([3, 1.4, 1.2])
+        path = pc1.text_input("path", key="dpath", label_visibility="collapsed",
+                             placeholder="/Volumes/Lazyz/.../제품폴더")
+        pickbtn = pc2.button("📁 폴더찾기", use_container_width=True)
+        loadbtn = pc3.button("불러오기", type="primary", use_container_width=True)
         if pickbtn:
             import subprocess
             try:
@@ -2183,8 +2185,6 @@ elif "상세 생성기" in menu:
                     st.rerun()
             except Exception as _e:
                 st.session_state.detail_err = "폴더 선택창을 열 수 없어요: " + str(_e)
-        path = st.text_input("path", key="dpath", label_visibility="collapsed",
-                             placeholder="/Volumes/Lazyz/.../제품폴더")
         st.markdown("**상세페이지 생성하기**")
         savebtn = st.button("저장하기", type="primary")
 
