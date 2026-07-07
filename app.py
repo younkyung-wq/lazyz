@@ -2208,6 +2208,8 @@ document.getElementById('fdir').addEventListener('change',e=>{
   addFiles(e.target.files); e.target.value='';
 });
 function clearImgs(){ imgs=[]; renderPage(); }
+// 이미지 바깥 여백 클릭 = 선택 해제(적용)
+document.querySelector('.stage').addEventListener('mousedown',e=>{ if(!e.target.closest('.imgrow')) endCrop(); });
 // ⌘/Ctrl + 휠 = 전체 확대/축소
 document.querySelector('.stage').addEventListener('wheel',e=>{
   if(e.ctrlKey||e.metaKey){ e.preventDefault(); pageZoom=Math.max(0.3,Math.min(2,+(pageZoom+(e.deltaY<0?0.06:-0.06)).toFixed(2))); applyZoom(); }
