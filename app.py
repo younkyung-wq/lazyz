@@ -52,7 +52,9 @@ def parse_size_json(s):
         j = _json.loads(s); comp = j["components"][0]
         items = comp["items"]; sizes = comp["sizes"]; vals = comp.get("vals", {})
         items_en = [SIZE_EN.get(it, it) for it in items]
-        def sname(x): return "Free" if str(x).strip().upper() == "F" else x
+        def sname(x):
+            x = str(x).strip()
+            return "Free" if x.upper() == "F" else (x + " Size")
         sv = {sname(sz): [str(vals.get(sz, {}).get(it, "")) for it in items] for sz in sizes}
         return items_en, sv
     except Exception:
@@ -2449,7 +2451,10 @@ elif "상세 생성기" in menu:
         if not items:
             items, sv = ["Total Length"], {"Free": [""]}
         name_en = p["name_en"] or p["name"] or "Product"
-        desc = p["desc"] or ""
+        desc = "\n".join(
+            ("- " + ln.strip()[1:].lstrip()) if ln.strip().startswith("·") else ln
+            for ln in (p["desc"] or "").split("\n")
+        )
         fabric = p["fabric"] or ""
     else:
         name_en, desc, fabric = "Salt and Sun Stripe Shirt", "-", "Cotton 90% Polyester 10%"
