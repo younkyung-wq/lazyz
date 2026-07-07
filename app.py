@@ -2009,6 +2009,22 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .btn-dark{background:#111;color:#fff;} .btn-line{background:#fff;border:1.5px solid #ddd;color:#555;} .btn-red{background:#ff4b4b;color:#fff;}
 .hint{font-size:11.5px;color:#aaa;line-height:1.7;}
 .divider{height:1px;background:#eee;margin:4px 0;}
+.acc{border:1px solid #eee;border-radius:9px;overflow:hidden;}
+.acc>summary{list-style:none;cursor:pointer;padding:11px 14px;font-size:13px;font-weight:700;color:#333;background:#fafafa;user-select:none;}
+.acc>summary::-webkit-details-marker{display:none;}
+.acc>summary::before{content:'▸ ';color:#999;}
+.acc[open]>summary::before{content:'▾ ';}
+.accbody{padding:12px;display:flex;flex-direction:column;gap:10px;}
+.acchint{font-size:11px;color:#aaa;line-height:1.6;}
+#presetList{display:flex;flex-direction:column;gap:8px;}
+.prow{display:flex;align-items:center;gap:8px;border:1px solid #eee;border-radius:8px;padding:6px;}
+.prow img{width:38px;height:48px;object-fit:cover;border-radius:4px;flex-shrink:0;}
+.prow .pc{flex:1;min-width:0;font-size:12px;color:#444;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.prow .puse{border:1px solid #ddd;background:#fff;color:#666;font-size:11px;font-weight:700;border-radius:6px;padding:5px 8px;cursor:pointer;flex-shrink:0;}
+.prow .puse.on{background:#111;color:#fff;border-color:#111;}
+.prow .pdel{border:none;background:none;color:#bbb;font-size:16px;cursor:pointer;flex-shrink:0;padding:0 4px;}
+.prow .pdel:hover{color:#ff4b4b;}
+.pempty{font-size:12px;color:#bbb;text-align:center;padding:8px 0;}
 #prog{font-size:12px;color:#2e9e44;font-weight:700;min-height:16px;}
 .stage{flex:1;order:1;overflow:auto;display:flex;justify-content:flex-start;flex-direction:column;align-items:center;padding:24px;}
 #page{width:1000px;background:#fff;flex-shrink:0;height:max-content;transform-origin:top center;padding-bottom:300px;}
@@ -2061,6 +2077,15 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
       <button class="btn btn-line" style="padding:8px;" onclick="zoomReset()"><span id="zlabel">100%</span></button>
       <button class="btn btn-line" style="padding:8px;" onclick="zoomIn()">＋</button>
     </div>
+    <div class="divider"></div>
+    <details class="acc">
+      <summary>👤 모델 관리</summary>
+      <div class="accbody">
+        <button class="btn btn-line" onclick="addPreset()">＋ 새 모델 저장</button>
+        <div id="presetList"></div>
+        <div class="acchint">체크한 모델이 위 Models에 순서대로 들어가요. 저장은 이 브라우저에 유지돼요.</div>
+      </div>
+    </details>
     <div class="divider"></div>
     <div class="lbl">상세페이지 생성하기</div>
     <button class="btn btn-red" onclick="save('jpg')">📥 저장하기</button>
@@ -2145,6 +2170,23 @@ function modelsHTML(){
   return '<div class="sec"><h2>Models</h2><div class="models">'+
     P.models.map((m,i)=>'<div class="m"><div class="ph">'+(m.src?'<img src="'+m.src+'">':'—')+'</div><div class="cap" data-mc="'+i+'" contenteditable>'+esc(m.cap)+'</div></div>').join('')+
   '</div></div>';
+}
+// ── 모델 프리셋(브라우저 저장) ──
+const LSKEY='lz_model_presets';
+function loadPresets(){ try{ return JSON.parse(localStorage.getItem(LSKEY)||'[]'); }catch(e){ return []; } }
+function savePresets(){ try{ localStorage.setItem(LSKEY, JSON.stringify(presets)); }catch(e){} }
+let presets=loadPresets(); let usedIdx=[];
+function addPreset(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+  inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const rd=new FileReader();
+    rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const W=500,H=Math.round(W*im.height/im.width); const c=document.createElement('canvas'); c.width=W;c.height=H; c.getContext('2d').drawImage(im,0,0,W,H); const src=c.toDataURL('image/jpeg',0.85); const cap=(prompt('모델 정보 (예: 173cm / F size)','')||'').trim(); presets.push({cap,src}); savePresets(); renderPresetList(); }; im.src=rd.result; };
+    rd.readAsDataURL(f); };
+  inp.click();
+}
+function delPreset(i){ presets.splice(i,1); savePresets(); usedIdx=usedIdx.filter(x=>x!==i).map(x=>x>i?x-1:x); syncModels(); renderPresetList(); }
+function toggleUse(i){ const p=usedIdx.indexOf(i); if(p>=0)usedIdx.splice(p,1); else usedIdx.push(i); syncModels(); renderPresetList(); }
+function syncModels(){ P.models = usedIdx.length? usedIdx.map(i=>({src:presets[i].src,cap:presets[i].cap})) : [{src:'',cap:'173cm / F size'},{src:'',cap:'172cm / F size'}]; renderPage(); }
+function renderPresetList(){ const el=document.getElementById('presetList'); if(!el)return;
+  el.innerHTML = presets.length ? presets.map((m,i)=>'<div class="prow"><img src="'+m.src+'"><div class="pc">'+esc(m.cap||'—')+'</div><button class="puse'+(usedIdx.includes(i)?' on':'')+'" onclick="toggleUse('+i+')">'+(usedIdx.includes(i)?'사용중':'사용')+'</button><button class="pdel" onclick="delPreset('+i+')">×</button></div>').join('') : '<div class="pempty">저장된 모델이 없어요</div>';
 }
 function sectionsHTML(){
   return ''
@@ -2267,6 +2309,7 @@ async function save(fmt){
   document.getElementById('prog').textContent='완료!';
 }
 loadInit();
+renderPresetList();
 </script></body></html>
 """
 
@@ -2278,66 +2321,9 @@ elif "썸네일 생성기" in menu:
     components.html(THUMB_HTML, height=820, scrolling=False)
 
 elif "상세 생성기" in menu:
-    import json, base64
-    PRESET_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_presets.json")
-    def _load_presets():
-        try:
-            with open(PRESET_FILE, encoding="utf-8") as f: return json.load(f)
-        except Exception: return []
-    def _save_presets(p):
-        try:
-            with open(PRESET_FILE, "w", encoding="utf-8") as f: json.dump(p, f, ensure_ascii=False)
-        except Exception as e: st.warning("저장 실패: " + str(e))
-    presets = _load_presets()
-
-    # 컴포넌트에 넣을 모델 = 지난 선택값(session_state)에서 계산
-    sel_idx = []
-    for s in (st.session_state.get("modelsel") or []):
-        try:
-            i = int(str(s).split(".")[0])
-            if 0 <= i < len(presets): sel_idx.append(i)
-        except Exception: pass
-    if sel_idx:
-        models = [{"src": presets[i]["src"], "cap": presets[i].get("cap","")} for i in sel_idx]
-    else:
-        models = [{"src": "", "cap": "173cm / F size"}, {"src": "", "cap": "172cm / F size"}]
-
-    # 미리보기 (전체 폭)
-    html = DETAIL_HTML.replace("__INIT_IMAGES__", "[]").replace("__MODELS__", json.dumps(models, ensure_ascii=False))
+    _default_models = '[{"src":"","cap":"173cm / F size"},{"src":"","cap":"172cm / F size"}]'
+    html = DETAIL_HTML.replace("__INIT_IMAGES__", "[]").replace("__MODELS__", _default_models)
     components.html(html, height=820, scrolling=False)
-
-    # 모델 관리 (아코디언, 미리보기 아래)
-    with st.expander("👤 모델 관리  ·  시즌 모델 저장 후 골라 쓰기", expanded=False):
-        uc1, uc2, uc3 = st.columns([2, 2, 1])
-        up = uc1.file_uploader("사진", type=["png","jpg","jpeg","webp"], label_visibility="collapsed", key="modelup")
-        cap = uc2.text_input("정보", placeholder="예: 173cm / F size", label_visibility="collapsed", key="modelcap")
-        if uc3.button("＋ 저장", use_container_width=True):
-            if up is not None:
-                try:
-                    im = Image.open(up).convert("RGB")
-                    if im.width > 600: im = im.resize((600, round(600*im.height/im.width)), Image.LANCZOS)
-                    b = io.BytesIO(); im.save(b, "JPEG", quality=85)
-                    presets.append({"cap": (cap or "").strip(), "src": "data:image/jpeg;base64,"+base64.b64encode(b.getvalue()).decode()})
-                    _save_presets(presets); st.rerun()
-                except Exception as e: st.warning("이미지 오류: " + str(e))
-            else:
-                st.warning("사진을 먼저 올려주세요.")
-
-        if presets:
-            st.markdown("<div style='font-size:12px;color:#888;'>저장된 모델</div>", unsafe_allow_html=True)
-            cols = st.columns(6)
-            for i, m in enumerate(presets):
-                with cols[i % 6]:
-                    st.image(m["src"], use_container_width=True)
-                    st.caption(m.get("cap", "") or "—")
-                    if st.button("🗑", key=f"delm{i}", use_container_width=True):
-                        presets.pop(i); _save_presets(presets); st.rerun()
-        else:
-            st.caption("아직 저장된 모델이 없어요. 위에서 사진+정보를 추가하세요.")
-
-        opts = [f"{i}. {m.get('cap','') or '(정보없음)'}" for i, m in enumerate(presets)]
-        st.multiselect("사용할 모델 (고른 순서대로 배치)", opts, key="modelsel")
-        st.caption("선택을 바꾸면 위 미리보기에 자동 반영돼요.")
 
 elif "피드 기획" in menu:
     st.markdown("""
