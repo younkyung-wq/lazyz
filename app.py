@@ -2071,13 +2071,6 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <button class="btn btn-line" onclick="clearImgs()">🗑 이미지 비우기</button>
     <div class="divider"></div>
-    <div class="lbl">전체 미리보기 확대/축소</div>
-    <div style="display:flex;gap:6px;">
-      <button class="btn btn-line" style="padding:8px;" onclick="zoomOut()">－</button>
-      <button class="btn btn-line" style="padding:8px;" onclick="zoomReset()"><span id="zlabel">100%</span></button>
-      <button class="btn btn-line" style="padding:8px;" onclick="zoomIn()">＋</button>
-    </div>
-    <div class="divider"></div>
     <details class="acc">
       <summary>👤 모델 관리</summary>
       <div class="accbody">
