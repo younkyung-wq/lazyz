@@ -2026,12 +2026,9 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .sec h2{font-size:40px;font-weight:700;letter-spacing:-0.5px;margin-bottom:34px;color:#111;}
 .sec .k{font-size:23px;font-weight:300;line-height:1.85;letter-spacing:-0.03em;color:#3a3a3a;white-space:pre-wrap;outline:none;}
 .sec .fab{font-size:23px;font-weight:300;letter-spacing:-0.03em;color:#3a3a3a;margin-bottom:34px;}
-.sizehead{display:flex;align-items:flex-end;margin-bottom:18px;}
-.sizehead h2{flex:1;margin:0;}
-.sizehead .col{font-size:40px;font-weight:700;color:#111;width:180px;}
-.szrow{display:flex;font-size:23px;font-weight:300;letter-spacing:-0.03em;color:#333;padding:15px 0;}
-.szrow .l{flex:1;} .szrow .v{width:180px;}
-.szrow .v:focus,.szrow .l:focus{outline:none;}
+.sizegrid{display:grid;column-gap:200px;align-items:baseline;justify-content:start;}
+.sizegrid .gh{font-size:40px;font-weight:700;letter-spacing:-0.5px;color:#111;padding-bottom:40px;outline:none;}
+.sizegrid .gl,.sizegrid .gv{font-size:23px;font-weight:300;letter-spacing:-0.03em;color:#333;padding:15px 0;outline:none;}
 .sznote{font-size:23px;font-weight:300;letter-spacing:-0.03em;color:#8a8a8a;margin-top:26px;}
 .models{display:flex;gap:24px;flex-wrap:wrap;}
 .models .m{width:250px;}
@@ -2131,9 +2128,14 @@ function renderPage(){
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 function sizeGuide(){
   const sizes=Object.keys(P.sizeVals);
-  let head='<div class="sizehead"><h2>Size Guide(cm)</h2>'+sizes.map(s=>'<div class="col" data-sk="'+s+'" contenteditable>'+esc(s)+'</div>').join('')+'</div>';
-  let rows=P.sizeItems.map((it,idx)=>'<div class="szrow"><div class="l" data-sl="'+idx+'" contenteditable>'+esc(it)+'</div>'+sizes.map(s=>'<div class="v" data-ss="'+s+'" data-si="'+idx+'" contenteditable>'+esc(P.sizeVals[s][idx]||'')+'</div>').join('')+'</div>').join('');
-  return head+rows+'<div class="sznote">1~2cm 의 오차가 발생할 수 있습니다.</div>';
+  let cells='<div class="gh" data-k="sizeTitle" contenteditable>Size Guide(cm)</div>';
+  sizes.forEach(s=>{ cells+='<div class="gh" data-sk="'+s+'" contenteditable>'+esc(s)+'</div>'; });
+  P.sizeItems.forEach((it,idx)=>{
+    cells+='<div class="gl" data-sl="'+idx+'" contenteditable>'+esc(it)+'</div>';
+    sizes.forEach(s=>{ cells+='<div class="gv" data-ss="'+s+'" data-si="'+idx+'" contenteditable>'+esc(P.sizeVals[s][idx]||'')+'</div>'; });
+  });
+  const cols='max-content'+sizes.map(()=>' max-content').join('');
+  return '<div class="sizegrid" style="grid-template-columns:'+cols+';">'+cells+'</div><div class="sznote">1~2cm 의 오차가 발생할 수 있습니다.</div>';
 }
 function modelsHTML(){
   return '<div class="sec"><h2>Models</h2><div class="models">'+
