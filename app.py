@@ -2165,10 +2165,26 @@ elif "상세 생성기" in menu:
     col1, col2 = st.columns([1.25, 1])
     with col2:
         st.markdown("**이미지 폴더 나스 경로 입력**")
-        pc1, pc2 = st.columns([3,1])
-        path = pc1.text_input("path", key="dpath", label_visibility="collapsed",
-                              placeholder="/Volumes/Lazyz/.../제품폴더")
-        loadbtn = pc2.button("불러오기", use_container_width=True)
+        # 폴더 찾기: 네이티브 macOS 폴더 선택창 (로컬 실행 전용)
+        bc1, bc2 = st.columns(2)
+        pickbtn = bc1.button("📁 폴더 찾기", use_container_width=True)
+        loadbtn = bc2.button("불러오기", type="primary", use_container_width=True)
+        if pickbtn:
+            import subprocess
+            try:
+                r = subprocess.run(
+                    ["osascript", "-e",
+                     'POSIX path of (choose folder with prompt "제품 이미지 폴더를 선택하세요")'],
+                    capture_output=True, text=True, timeout=180)
+                pth = (r.stdout or "").strip().rstrip("/")
+                if pth:
+                    st.session_state.dpath = pth
+                    st.session_state.detail_err = None
+                    st.rerun()
+            except Exception as _e:
+                st.session_state.detail_err = "폴더 선택창을 열 수 없어요: " + str(_e)
+        path = st.text_input("path", key="dpath", label_visibility="collapsed",
+                             placeholder="/Volumes/Lazyz/.../제품폴더")
         st.markdown("**상세페이지 생성하기**")
         savebtn = st.button("저장하기", type="primary")
 
