@@ -2041,7 +2041,7 @@ table.size th{background:#f7f7f7;font-weight:700;}
     <div class="lbl">이미지 폴더 나스 경로</div>
     <div style="display:flex;gap:6px;">
       <input id="folderpath" type="text" placeholder="폴더 선택 →" readonly style="flex:1;min-width:0;padding:9px 11px;border:1.5px solid #e2e2e2;border-radius:9px;font-size:11px;color:#555;background:#fafafa;">
-      <button class="btn btn-line" style="width:auto;padding:9px 13px;white-space:nowrap;flex-shrink:0;" onclick="document.getElementById('fdir').click()">불러오기</button>
+      <button class="btn btn-line" style="width:auto;padding:9px 13px;white-space:nowrap;flex-shrink:0;" onclick="pickFolder()">불러오기</button>
     </div>
     <input id="fdir" type="file" accept="image/*" webkitdirectory multiple style="display:none">
     <div class="lbl">또는 개별 이미지 선택</div>
@@ -2202,6 +2202,22 @@ function addFiles(fileList){
     im.onload=()=>{ imgs.push({name:f.name,img:im,url,crop:{z:1,cx:0.5,cy:0.5}}); if(--n===0){sortImgs();renderPage();} }; im.src=url; });
 }
 document.getElementById('fi').addEventListener('change',e=>{ addFiles(e.target.files); e.target.value=''; });
+// 폴더 선택 API — "업로드 하시겠습니까" 경고 없이 폴더 읽기
+async function pickFolder(){
+  if(window.showDirectoryPicker){
+    try{
+      const dir=await window.showDirectoryPicker();
+      document.getElementById('folderpath').value=dir.name;
+      const files=[];
+      for await (const ent of dir.values()){
+        if(ent.kind==='file' && /\.(jpe?g|png|webp)$/i.test(ent.name)){ files.push(await ent.getFile()); }
+      }
+      addFiles(files);
+    }catch(err){ /* 취소 */ }
+  } else {
+    document.getElementById('fdir').click();  // 폴백(구형 브라우저)
+  }
+}
 document.getElementById('fdir').addEventListener('change',e=>{
   const first=e.target.files[0];
   if(first){ const rel=first.webkitRelativePath||''; const folder=rel.split('/')[0]||''; if(folder) document.getElementById('folderpath').value=folder; }
