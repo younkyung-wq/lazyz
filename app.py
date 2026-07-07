@@ -2032,6 +2032,8 @@ table.size th{background:#f7f7f7;font-weight:700;}
   <div class="stage"><div id="page"></div></div>
   <div class="panel">
     <h3>상세 생성기</h3>
+    <div class="lbl">이미지 폴더 나스 경로</div>
+    <input id="naspath" type="text" placeholder="/Volumes/Lazyz/.../제품폴더" style="width:100%;padding:9px 11px;border:1.5px solid #e2e2e2;border-radius:9px;font-size:12px;color:#333;outline:none;">
     <div class="lbl">이미지 불러오기</div>
     <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 이미지 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
