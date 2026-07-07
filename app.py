@@ -2016,10 +2016,10 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .imgrow canvas{width:100%;display:block;cursor:zoom-in;}
 .imgrow.cropping{outline:2px solid #ff4b4b;outline-offset:-2px;}
 .imgrow.cropping canvas{cursor:grab;}
-.imgrow .badge{position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.6);color:#fff;font-size:11px;padding:2px 7px;border-radius:10px;z-index:2;}
-.imgrow .del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.6);color:#fff;width:22px;height:22px;border-radius:50%;font-size:14px;line-height:22px;text-align:center;cursor:pointer;z-index:2;}
+.imgrow .badge{position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.65);color:#fff;font-size:13px;padding:5px 11px;border-radius:12px;z-index:2;transform-origin:top left;transform:scale(var(--iz,1));font-weight:700;}
+.imgrow .del{position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.65);color:#fff;width:30px;height:30px;border-radius:50%;font-size:18px;line-height:30px;text-align:center;cursor:pointer;z-index:2;transform-origin:top right;transform:scale(var(--iz,1));}
 .imgrow .del:hover{background:#ff4b4b;}
-.imgrow .cropbar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:#111;color:#fff;font-size:12px;padding:5px 12px;border-radius:20px;z-index:3;display:none;gap:10px;}
+.imgrow .cropbar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%) scale(var(--iz,1));transform-origin:bottom center;background:#111;color:#fff;font-size:13px;padding:6px 14px;border-radius:20px;z-index:3;display:none;gap:12px;}
 .imgrow.cropping .cropbar{display:flex;}
 .imgrow .cropbar span{cursor:pointer;}
 .sec{padding:56px 70px;}
@@ -2164,7 +2164,7 @@ window.addEventListener('keydown',e=>{
 });
 // 전체 미리보기 확대/축소
 let pageZoom=0.5;
-function applyZoom(){ const pg=document.getElementById('page'); pg.style.transform='scale('+pageZoom+')'; const zl=document.getElementById('zlabel'); if(zl) zl.textContent=Math.round(pageZoom*100)+'%'; }
+function applyZoom(){ const pg=document.getElementById('page'); pg.style.transform='scale('+pageZoom+')'; document.documentElement.style.setProperty('--iz',(1/pageZoom).toFixed(3)); const zl=document.getElementById('zlabel'); if(zl) zl.textContent=Math.round(pageZoom*100)+'%'; }
 function zoomIn(){ pageZoom=Math.min(2,+(pageZoom+0.1).toFixed(2)); applyZoom(); }
 function zoomOut(){ pageZoom=Math.max(0.3,+(pageZoom-0.1).toFixed(2)); applyZoom(); }
 function zoomReset(){ pageZoom=1; applyZoom(); }
