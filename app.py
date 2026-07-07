@@ -2025,6 +2025,10 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .prow .pdel{border:none;background:none;color:#bbb;font-size:16px;cursor:pointer;flex-shrink:0;padding:0 4px;}
 .prow .pdel:hover{color:#ff4b4b;}
 .pempty{font-size:12px;color:#bbb;text-align:center;padding:8px 0;}
+.addform{display:flex;flex-direction:column;gap:7px;border:1px solid #e5e5e5;border-radius:9px;padding:10px;background:#fafafa;}
+.addform .apimg{width:64px;height:82px;object-fit:cover;border-radius:5px;align-self:flex-start;}
+.addform input{padding:8px 10px;border:1.5px solid #e2e2e2;border-radius:7px;font-size:12px;outline:none;width:100%;}
+.addform .arow{display:flex;gap:6px;}
 #prog{font-size:12px;color:#2e9e44;font-weight:700;min-height:16px;}
 .stage{flex:1;order:1;overflow:auto;display:flex;justify-content:flex-start;flex-direction:column;align-items:center;padding:24px;}
 #page{width:1000px;background:#fff;flex-shrink:0;height:max-content;transform-origin:top center;padding-bottom:300px;}
@@ -2075,6 +2079,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
       <summary>👤 모델 관리</summary>
       <div class="accbody">
         <button class="btn btn-line" onclick="addPreset()">＋ 새 모델 저장</button>
+        <div id="addForm"></div>
         <div id="presetList"></div>
         <div class="acchint">‘사용’한 모델이 위 Models에 순서대로 들어가요.</div>
         <div class="divider"></div>
@@ -2175,17 +2180,16 @@ function loadPresets(){ let a=[]; try{a=JSON.parse(localStorage.getItem(LSKEY_P)
 function loadGroups(){ try{return JSON.parse(localStorage.getItem(LSKEY_G)||'[]');}catch(e){return [];} }
 function savePresets(){ try{localStorage.setItem(LSKEY_P, JSON.stringify(presets));}catch(e){} }
 function saveGroups(){ try{localStorage.setItem(LSKEY_G, JSON.stringify(groups));}catch(e){} }
-let presets=loadPresets(); let groups=loadGroups(); let usedIds=[];
+let presets=loadPresets(); let groups=loadGroups(); let usedIds=[]; let pendingSrc=null;
 function findP(id){ return presets.find(m=>m.id===id); }
 function addPreset(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
   inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const rd=new FileReader();
-    rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const W=500,H=Math.round(W*im.height/im.width); const c=document.createElement('canvas'); c.width=W;c.height=H; c.getContext('2d').drawImage(im,0,0,W,H); const src=c.toDataURL('image/jpeg',0.85);
-      const name=(prompt('구분용 이름 (상세페이지엔 안 보임 · 예: 지은)','')||'').trim();
-      const cap=(prompt('모델 정보 (키/사이즈만 수정하세요)','173cm / F size')||'').trim();
-      presets.push({id:newId(),name,cap,src}); savePresets(); renderModelUI(); }; im.src=rd.result; };
+    rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const W=500,H=Math.round(W*im.height/im.width); const c=document.createElement('canvas'); c.width=W;c.height=H; c.getContext('2d').drawImage(im,0,0,W,H); pendingSrc=c.toDataURL('image/jpeg',0.85); renderModelUI(); }; im.src=rd.result; };
     rd.readAsDataURL(f); };
   inp.click();
 }
+function confirmAdd(){ if(!pendingSrc)return; const name=(document.getElementById('mName').value||'').trim(); const cap=(document.getElementById('mCap').value||'').trim(); presets.push({id:newId(),name,cap,src:pendingSrc}); savePresets(); pendingSrc=null; renderModelUI(); }
+function cancelAdd(){ pendingSrc=null; renderModelUI(); }
 function delPreset(id){ presets=presets.filter(m=>m.id!==id); savePresets(); groups.forEach(g=>g.members=g.members.filter(x=>x!==id)); saveGroups(); usedIds=usedIds.filter(x=>x!==id); syncModels(); renderModelUI(); }
 function toggleUse(id){ const p=usedIds.indexOf(id); if(p>=0)usedIds.splice(p,1); else usedIds.push(id); syncModels(); renderModelUI(); }
 function makeGroup(){ if(!usedIds.length){ alert('먼저 그룹으로 묶을 모델을 ‘사용’으로 켜주세요.'); return; }
@@ -2196,9 +2200,11 @@ function useGroup(gid){ const g=groups.find(x=>x.id===gid); if(!g)return; usedId
 function delGroup(gid){ groups=groups.filter(g=>g.id!==gid); saveGroups(); renderModelUI(); }
 function syncModels(){ const list=usedIds.map(id=>findP(id)).filter(Boolean); P.models = list.length? list.map(m=>({src:m.src,cap:m.cap})) : [{src:'',cap:'173cm / F size'},{src:'',cap:'172cm / F size'}]; renderPage(); }
 function renderModelUI(){
+  const af=document.getElementById('addForm');
+  if(af) af.innerHTML = pendingSrc ? '<div class="addform"><img class="apimg" src="'+pendingSrc+'"><input id="mName" placeholder="이름 (구분용 · 상세엔 안 보임)"><input id="mCap" value="173cm / F size" placeholder="키 / 사이즈"><div class="arow"><button class="btn btn-line" onclick="cancelAdd()">취소</button><button class="btn btn-dark" onclick="confirmAdd()">확인</button></div></div>' : '';
   const pl=document.getElementById('presetList');
   if(pl) pl.innerHTML = presets.length ? presets.map(m=>{ const on=usedIds.includes(m.id);
-    return '<div class="prow"><img src="'+m.src+'"><div class="pc">'+(m.name?'<b>'+esc(m.name)+'</b> ':'')+esc(m.cap||'—')+'</div><button class="puse'+(on?' on':'')+'" onclick="toggleUse(\''+m.id+'\')">'+(on?'사용중':'사용')+'</button><button class="pdel" onclick="delPreset(\''+m.id+'\')">×</button></div>';
+    return '<div class="prow"><img src="'+m.src+'"><div class="pc">'+esc(m.name||'(이름 없음)')+'</div><button class="puse'+(on?' on':'')+'" onclick="toggleUse(\''+m.id+'\')">'+(on?'사용중':'사용')+'</button><button class="pdel" onclick="delPreset(\''+m.id+'\')">×</button></div>';
   }).join('') : '<div class="pempty">저장된 모델이 없어요</div>';
   const gl=document.getElementById('groupList');
   if(gl) gl.innerHTML = groups.length ? groups.map(g=>{ const cnt=g.members.filter(id=>findP(id)).length;
