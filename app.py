@@ -75,6 +75,8 @@ st.markdown("""
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
+[data-testid="stSelectbox"]{max-width:640px;}
+[data-testid="stMain"] .stElementContainer:has(iframe){margin-top:-8px;}
 
 [data-testid="stSidebar"] > div:first-child {
     background-color: #111111 !important;
@@ -2434,9 +2436,6 @@ elif "상세 생성기" in menu:
     except Exception as e:
         st.warning("기획 API 로드 실패: " + str(e))
 
-    st.markdown("""<style>
-    [data-testid="stSelectbox"]{max-width:640px;}
-    </style>""", unsafe_allow_html=True)
     sel = None
     if prods:
         def _plabel(i):
