@@ -2147,7 +2147,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
         <div class="acchint">그룹 ‘적용’ 시 그룹 멤버가 한 번에 들어가요. 이름은 구분용이라 상세엔 안 보여요. 저장은 이 브라우저에 유지돼요.</div>
       </div>
     </details>
-    <div class="divider" style="margin-top:auto"></div>
+    <div class="divider"></div>
     <div class="lbl">상세페이지 생성하기</div>
     <button class="btn btn-red" onclick="save('jpg')">📥 저장하기</button>
     <span id="prog"></span>
