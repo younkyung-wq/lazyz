@@ -2250,7 +2250,7 @@ function setupModels(){ P.models.forEach((m,i)=>{ if(!m.src)return; if(!m.crop)m
   if(m._img){ draw(); } else { const im=new Image(); im.onload=()=>{ m._img=im; draw(); }; im.src=m.src; }
   cv.style.cursor='grab';
   cv.addEventListener('mousedown',e=>{ e.preventDefault(); e.stopPropagation(); mptr={m,cv,lx:e.clientX,ly:e.clientY}; });
-  cv.addEventListener('wheel',e=>{ if(e.ctrlKey||e.metaKey)return; e.preventDefault(); e.stopPropagation(); m.crop.z=Math.max(1,Math.min(4,m.crop.z*(e.deltaY<0?1.05:0.95))); draw(); },{passive:false});
+  cv.addEventListener('wheel',e=>{ if(e.ctrlKey||e.metaKey)return; e.preventDefault(); e.stopPropagation(); m.crop.z=Math.max(1,Math.min(8,m.crop.z*(e.deltaY<0?1.05:0.95))); draw(); },{passive:false});
 }); }
 window.addEventListener('mousemove',e=>{ if(!mptr)return; const {m,cv}=mptr; const img=m._img; if(!img)return; const rect=cv.getBoundingClientRect(); const sc=245/rect.width; const base=Math.max(245/img.width,300/img.height); const z=base*m.crop.z; const iw=img.width*z, ih=img.height*z; m.crop.cx-=((e.clientX-mptr.lx)*sc)/iw; m.crop.cy-=((e.clientY-mptr.ly)*sc)/ih; mptr.lx=e.clientX; mptr.ly=e.clientY; drawModelCanvas(cv,m); });
 window.addEventListener('mouseup',()=>{ mptr=null; });
@@ -2269,7 +2269,7 @@ window.addEventListener('mouseup',()=>{ apDrag=null; });
 function findP(id){ return presets.find(m=>m.id===id); }
 function addPreset(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
   inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const rd=new FileReader();
-    rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const W=500,H=Math.round(W*im.height/im.width); const c=document.createElement('canvas'); c.width=W;c.height=H; c.getContext('2d').drawImage(im,0,0,W,H); pendingSrc=c.toDataURL('image/jpeg',0.85); pendingImg=new Image(); pendingImg.onload=()=>{ pendingCrop={z:1,cx:0.5,cy:0.5}; renderModelUI(); }; pendingImg.src=pendingSrc; }; im.src=rd.result; };
+    rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const W=1200,H=Math.round(W*im.height/im.width); const c=document.createElement('canvas'); c.width=W;c.height=H; c.getContext('2d').imageSmoothingQuality='high'; c.getContext('2d').drawImage(im,0,0,W,H); pendingSrc=c.toDataURL('image/jpeg',0.85); pendingImg=new Image(); pendingImg.onload=()=>{ pendingCrop={z:1,cx:0.5,cy:0.5}; renderModelUI(); }; pendingImg.src=pendingSrc; }; im.src=rd.result; };
     rd.readAsDataURL(f); };
   inp.click();
 }
@@ -2287,7 +2287,7 @@ function syncModels(){ const list=usedIds.map(id=>findP(id)).filter(Boolean); P.
 function renderModelUI(){
   const af=document.getElementById('addForm');
   if(af) af.innerHTML = pendingSrc ? '<div class="addform"><canvas id="apCanvas" class="apimg"></canvas><input id="mName" placeholder="이름"><input id="mCap" value="173cm / F size" placeholder="키 / 사이즈"><div class="arow"><button class="btn btn-line" onclick="cancelAdd()">취소</button><button class="btn btn-dark" onclick="confirmAdd()">확인</button></div></div>' : '';
-  if(af && pendingSrc){ drawAp(); const _cv=document.getElementById('apCanvas'); if(_cv){ _cv.style.cursor='grab'; _cv.addEventListener('mousedown',e=>{e.preventDefault(); apDrag={x:e.clientX,y:e.clientY};}); _cv.addEventListener('wheel',e=>{e.preventDefault(); if(pendingCrop){pendingCrop.z=Math.max(1,Math.min(4,pendingCrop.z*(e.deltaY<0?1.05:0.95))); drawAp();}},{passive:false}); } }
+  if(af && pendingSrc){ drawAp(); const _cv=document.getElementById('apCanvas'); if(_cv){ _cv.style.cursor='grab'; _cv.addEventListener('mousedown',e=>{e.preventDefault(); apDrag={x:e.clientX,y:e.clientY};}); _cv.addEventListener('wheel',e=>{e.preventDefault(); if(pendingCrop){pendingCrop.z=Math.max(1,Math.min(8,pendingCrop.z*(e.deltaY<0?1.05:0.95))); drawAp();}},{passive:false}); } }
   const pl=document.getElementById('presetList');
   if(pl) pl.innerHTML = presets.length ? presets.map(m=>{ const on=usedIds.includes(m.id);
     return '<div class="prow"><img src="'+m.src+'"><div class="pc">'+esc(m.name||'(이름 없음)')+'</div><button class="puse'+(on?' on':'')+'" onclick="toggleUse(\''+m.id+'\')">'+(on?'사용중':'사용')+'</button><button class="pdel" onclick="delPreset(\''+m.id+'\')">×</button></div>';
