@@ -2067,6 +2067,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .panel>*{flex-shrink:0;}
 .panel h3{font-size:15px;font-weight:800;color:#111;}
 .panel .lbl{font-size:12px;font-weight:700;color:#888;margin-bottom:-6px;}
+.psel{width:100%;padding:9px 11px;border:1.5px solid #e2e2e2;border-radius:9px;font-size:12px;color:#333;background:#fff;cursor:pointer;}
 .btn{padding:11px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;width:100%;}
 .btn-dark{background:#111;color:#fff;} .btn-line{background:#fff;border:1.5px solid #ddd;color:#555;} .btn-red{background:#ff4b4b;color:#fff;}
 .hint{font-size:11.5px;color:#aaa;line-height:1.7;}
@@ -2127,6 +2128,9 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
   <div class="stage"><div id="page"></div></div>
   <div class="panel">
     <h3>상세 생성기</h3>
+    <div class="lbl">상품 선택</div>
+    <select id="prodsel" class="psel" onchange="selectProduct(this.value)"></select>
+    <div class="divider"></div>
     <div class="lbl">이미지 폴더 나스 경로</div>
     <div style="display:flex;gap:6px;">
       <input id="folderpath" type="text" placeholder="폴더 선택 →" readonly style="flex:1;min-width:0;padding:9px 11px;border:1.5px solid #e2e2e2;border-radius:9px;font-size:11px;color:#555;background:#fafafa;">
@@ -2159,13 +2163,15 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 </div>
 <script>
 // 시트에서 가져온 제품 정보(수정 가능)
+const PRODUCTS = __PRODUCTS__;
+const _p0 = PRODUCTS[0] || {name_en:'Product',desc:'',fabric:'',sizeItems:['Total Length'],sizeVals:{'Free':['']},sizeNote:''};
 const P={
- name_en: __NAME_EN__,
- desc: __DESC__,
- sizeItems: __SIZEITEMS__,
- sizeVals: __SIZEVALS__,
- sizeNote: __SIZENOTE__,
- fabric: __FABRIC__,
+ name_en: _p0.name_en,
+ desc: _p0.desc,
+ sizeItems: _p0.sizeItems,
+ sizeVals: _p0.sizeVals,
+ sizeNote: _p0.sizeNote,
+ fabric: _p0.fabric,
  models: __MODELS__,
  // ── 하단 공통(고정) 케어 가이드 ──
  care:'- 중성세제를 사용하여 30°C 이하의 미지근한 물에 단독 세탁해 주세요.\n- 세탁기 사용 시 약한 세탁 코스를 권장합니다.\n- 표백제 사용은 원단 손상의 원인이 될 수 있으므로 삼가해 주세요.\n- 건조기 사용은 제품 변형 및 수축의 원인이 될 수 있으므로 사용을 피해 주세요.\n- 세탁 후에는 평평한 곳에 뉘어 자연 건조해 주세요.\n\nCotton / Cotton Blend\n- 첫 세탁 시 물 빠짐이 있을 수 있으므로 단독 세탁을 권장합니다.\n- 고온 세탁 및 건조 시 수축이 발생할 수 있으니 주의해 주세요.\n\nModal / Rayon / Tencel\n- 물에 장시간 담가두지 마세요.\n- 강한 탈수 및 비틀어 짜는 행위는 원단 변형의 원인이 될 수 있습니다.\n\nWool / Wool Blend\n- 드라이클리닝을 권장합니다.\n- 물세탁 시 수축 및 변형이 발생할 수 있으므로 주의해 주세요.\n\nPolyester / Synthetic Fabric\n- 고온 세탁 및 건조기 사용 시 원단 변형이 발생할 수 있으니 주의해 주세요.\n- 다림질 시 낮은 온도를 사용해 주세요.',
@@ -2220,6 +2226,8 @@ function renderPage(){
   setupModels();
   applyZoom();
 }
+function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; renderPage(); }
+function fillProducts(){ const sel=document.getElementById('prodsel'); if(!sel)return; if(!PRODUCTS.length){sel.innerHTML='<option>상품 없음</option>';return;} sel.innerHTML=PRODUCTS.map((p,i)=>'<option value="'+i+'">'+esc(p.label||('상품 '+(i+1)))+'</option>').join(''); }
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 function sizeGuide(){
   const sizes=Object.keys(P.sizeVals);
@@ -2421,6 +2429,7 @@ async function save(fmt){
 }
 loadInit();
 renderModelUI();
+fillProducts();
 </script></body></html>
 """
 
@@ -2438,39 +2447,27 @@ elif "상세 생성기" in menu:
     except Exception as e:
         st.warning("기획 API 로드 실패: " + str(e))
 
-    sel = None
-    if prods:
-        def _plabel(i):
-            p = prods[i]; nm = p.get("제품명", {}) or {}
-            return (nm.get("ko") or nm.get("en") or "?") + (f"  ({nm.get('en')})" if nm.get("en") else "") + (f"  · {p.get('스타일넘버','')}" if p.get("스타일넘버") else "")
-        sel = st.selectbox("상품 선택", range(len(prods)),
-                            format_func=_plabel, key="prodsel", label_visibility="collapsed")
-    else:
-        st.info("기획 API에서 상품을 불러오지 못했어요. 아래는 기본값입니다.")
-
-    if prods and sel is not None:
-        p = prods[sel]
+    PRODUCTS = []
+    for p in prods:
         name_en, desc, fabric, items, sv, sizenote = planning_extract(p)
         if not items:
             items, sv = ["Total Length"], {"Free": [""]}
-        cap = f"반영 {p.get('반영일시','?')} · 측정 {p.get('사이즈',{}).get('측정상태','?')} · 총 {len(prods)}건"
-    else:
-        name_en, desc, fabric = "Salt and Sun Stripe Shirt", "-", "Cotton 90% Polyester 10%"
-        items, sv = ["Total Length","Shoulder Width","Chest","Hem","Sleeve Length","Armhole","Neck Width"], {"Free": ["72.5","55","71.5","68","57","25","17"]}
-        sizenote = "1~2cm 의 오차가 발생할 수 있습니다."
-        cap = ""
-
+        nm = p.get("제품명", {}) or {}
+        label = (nm.get("ko") or nm.get("en") or "?") + (f"  ({nm.get('en')})" if nm.get("en") else "") + (f"  · {p.get('스타일넘버','')}" if p.get("스타일넘버") else "")
+        PRODUCTS.append({"label": label, "name_en": name_en, "desc": desc, "fabric": fabric,
+                         "sizeItems": items, "sizeVals": sv, "sizeNote": sizenote})
+    if not PRODUCTS:
+        PRODUCTS = [{"label": "(기본)", "name_en": "Salt and Sun Stripe Shirt", "desc": "-",
+                     "fabric": "Cotton 90% Polyester 10%",
+                     "sizeItems": ["Total Length","Shoulder Width","Chest","Hem","Sleeve Length","Armhole","Neck Width"],
+                     "sizeVals": {"Free": ["72.5","55","71.5","68","57","25","17"]},
+                     "sizeNote": "1~2cm 의 오차가 발생할 수 있습니다."}]
 
     _default_models = '[{"src":"","cap":"173cm / F size"},{"src":"","cap":"172cm / F size"}]'
     html = (DETAIL_HTML
             .replace("__INIT_IMAGES__", "[]")
             .replace("__MODELS__", _default_models)
-            .replace("__NAME_EN__", _json.dumps(name_en, ensure_ascii=False))
-            .replace("__DESC__", _json.dumps(desc, ensure_ascii=False))
-            .replace("__FABRIC__", _json.dumps(fabric, ensure_ascii=False))
-            .replace("__SIZEITEMS__", _json.dumps(items, ensure_ascii=False))
-            .replace("__SIZEVALS__", _json.dumps(sv, ensure_ascii=False))
-            .replace("__SIZENOTE__", _json.dumps(sizenote, ensure_ascii=False)))
+            .replace("__PRODUCTS__", _json.dumps(PRODUCTS, ensure_ascii=False)))
     components.html(html, height=820, scrolling=False)
 
 elif "피드 기획" in menu:
