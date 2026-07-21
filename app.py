@@ -2434,8 +2434,7 @@ elif "상세 생성기" in menu:
     except Exception as e:
         st.warning("기획 API 로드 실패: " + str(e))
 
-    st.markdown("<div style='font-size:13px;font-weight:700;color:#888;margin-bottom:2px;'>상품 선택 (기획 확정 상품)</div>", unsafe_allow_html=True)
-    tc1, tc2 = st.columns([6, 1])
+    tc1, tc2 = st.columns([5, 2])
     sel = None
     if prods:
         def _plabel(i):
@@ -2445,19 +2444,22 @@ elif "상세 생성기" in menu:
                             format_func=_plabel, key="prodsel", label_visibility="collapsed")
     else:
         tc1.info("기획 API에서 상품을 불러오지 못했어요. 아래는 기본값입니다.")
-    if tc2.button("↻ 새로고침", use_container_width=True):
-        load_planning.clear(); st.rerun()
 
     if prods and sel is not None:
         p = prods[sel]
         name_en, desc, fabric, items, sv, sizenote = planning_extract(p)
         if not items:
             items, sv = ["Total Length"], {"Free": [""]}
-        st.caption(f"API 생성: {generated}  ·  반영일시: {p.get('반영일시','?')}  ·  측정상태: {p.get('사이즈',{}).get('측정상태','?')}  ·  총 {len(prods)}건")
+        cap = f"반영 {p.get('반영일시','?')} · 측정 {p.get('사이즈',{}).get('측정상태','?')} · 총 {len(prods)}건"
     else:
         name_en, desc, fabric = "Salt and Sun Stripe Shirt", "-", "Cotton 90% Polyester 10%"
         items, sv = ["Total Length","Shoulder Width","Chest","Hem","Sleeve Length","Armhole","Neck Width"], {"Free": ["72.5","55","71.5","68","57","25","17"]}
         sizenote = "1~2cm 의 오차가 발생할 수 있습니다."
+        cap = ""
+
+    tc2.caption(cap)
+    if tc2.button("↻ 새로고침", use_container_width=True):
+        load_planning.clear(); st.rerun()
 
     _default_models = '[{"src":"","cap":"173cm / F size"},{"src":"","cap":"172cm / F size"}]'
     html = (DETAIL_HTML
