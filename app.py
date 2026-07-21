@@ -75,10 +75,6 @@ st.markdown("""
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
-[data-testid="stSelectbox"]{max-width:640px;}
-[data-testid="stMainBlockContainer"], .block-container, [data-testid="stAppViewBlockContainer"]{padding-top:1rem !important;}
-[data-testid="stMain"] [data-testid="stVerticalBlock"]{gap:0.4rem !important;}
-[data-testid="stMain"] .stElementContainer:has(iframe){margin-top:-8px;}
 
 [data-testid="stSidebar"] > div:first-child {
     background-color: #111111 !important;
