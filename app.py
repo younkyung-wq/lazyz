@@ -2434,15 +2434,16 @@ elif "상세 생성기" in menu:
     except Exception as e:
         st.warning("기획 API 로드 실패: " + str(e))
 
+    csel, _spacer = st.columns([1, 1])
     sel = None
     if prods:
         def _plabel(i):
             p = prods[i]; nm = p.get("제품명", {}) or {}
             return (nm.get("ko") or nm.get("en") or "?") + (f"  ({nm.get('en')})" if nm.get("en") else "") + (f"  · {p.get('스타일넘버','')}" if p.get("스타일넘버") else "")
-        sel = st.selectbox("상품 선택", range(len(prods)),
+        sel = csel.selectbox("상품 선택", range(len(prods)),
                             format_func=_plabel, key="prodsel", label_visibility="collapsed")
     else:
-        st.info("기획 API에서 상품을 불러오지 못했어요. 아래는 기본값입니다.")
+        csel.info("기획 API에서 상품을 불러오지 못했어요. 아래는 기본값입니다.")
 
     if prods and sel is not None:
         p = prods[sel]
