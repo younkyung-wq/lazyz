@@ -2266,6 +2266,7 @@ let pendingImg=null, pendingCrop=null, apDrag=null;
 function drawAp(){ const cv=document.getElementById('apCanvas'); if(!cv||!pendingImg||!pendingCrop)return; const W=180,H=220,r=2; cv.width=W*r;cv.height=H*r; cv.style.width=W+'px';cv.style.height=H+'px'; const g=cv.getContext('2d'); g.setTransform(r,0,0,r,0,0); g.imageSmoothingQuality='high'; g.fillStyle='#f0f0f0'; g.fillRect(0,0,W,H); const img=pendingImg,t=pendingCrop; const base=Math.max(W/img.width,H/img.height); const z=base*t.z; const iw=img.width*z,ih=img.height*z; let dx=W/2-t.cx*iw, dy=H/2-t.cy*ih; dx=Math.min(0,Math.max(W-iw,dx)); dy=Math.min(0,Math.max(H-ih,dy)); t.cx=(W/2-dx)/iw; t.cy=(H/2-dy)/ih; g.drawImage(img,dx,dy,iw,ih); }
 window.addEventListener('mousemove',e=>{ if(!apDrag||!pendingImg||!pendingCrop)return; const cv=document.getElementById('apCanvas'); if(!cv)return; const rect=cv.getBoundingClientRect(); const sc=180/rect.width; const base=Math.max(180/pendingImg.width,220/pendingImg.height); const z=base*pendingCrop.z; const iw=pendingImg.width*z,ih=pendingImg.height*z; pendingCrop.cx-=((e.clientX-apDrag.x)*sc)/iw; pendingCrop.cy-=((e.clientY-apDrag.y)*sc)/ih; apDrag={x:e.clientX,y:e.clientY}; drawAp(); });
 window.addEventListener('mouseup',()=>{ apDrag=null; });
+function makeThumb(){ if(!pendingImg||!pendingCrop) return pendingSrc; const W=200,H=245; const cv=document.createElement('canvas'); cv.width=W;cv.height=H; const g=cv.getContext('2d'); g.imageSmoothingQuality='high'; g.fillStyle='#f0f0f0'; g.fillRect(0,0,W,H); const img=pendingImg,t=pendingCrop; const base=Math.max(W/img.width,H/img.height); const z=base*t.z; const iw=img.width*z,ih=img.height*z; let dx=W/2-t.cx*iw,dy=H/2-t.cy*ih; dx=Math.min(0,Math.max(W-iw,dx)); dy=Math.min(0,Math.max(H-ih,dy)); g.drawImage(img,dx,dy,iw,ih); return cv.toDataURL('image/jpeg',0.85); }
 function findP(id){ return presets.find(m=>m.id===id); }
 function addPreset(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
   inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const rd=new FileReader();
@@ -2273,7 +2274,7 @@ function addPreset(){ const inp=document.createElement('input'); inp.type='file'
     rd.readAsDataURL(f); };
   inp.click();
 }
-function confirmAdd(){ if(!pendingSrc)return; const name=(document.getElementById('mName').value||'').trim(); const cap=(document.getElementById('mCap').value||'').trim(); presets.push({id:newId(),name,cap,src:pendingSrc,crop:pendingCrop||{z:1,cx:0.5,cy:0.5}}); savePresets(); pendingSrc=null; pendingImg=null; pendingCrop=null; renderModelUI(); }
+function confirmAdd(){ if(!pendingSrc)return; const name=(document.getElementById('mName').value||'').trim(); const cap=(document.getElementById('mCap').value||'').trim(); const _thumb=makeThumb(); presets.push({id:newId(),name,cap,src:pendingSrc,crop:pendingCrop||{z:1,cx:0.5,cy:0.5},thumb:_thumb}); savePresets(); pendingSrc=null; pendingImg=null; pendingCrop=null; renderModelUI(); }
 function cancelAdd(){ pendingSrc=null; renderModelUI(); }
 function delPreset(id){ presets=presets.filter(m=>m.id!==id); savePresets(); groups.forEach(g=>g.members=g.members.filter(x=>x!==id)); saveGroups(); usedIds=usedIds.filter(x=>x!==id); syncModels(); renderModelUI(); }
 function toggleUse(id){ const p=usedIds.indexOf(id); if(p>=0)usedIds.splice(p,1); else usedIds.push(id); syncModels(); renderModelUI(); }
@@ -2290,7 +2291,7 @@ function renderModelUI(){
   if(af && pendingSrc){ drawAp(); const _cv=document.getElementById('apCanvas'); if(_cv){ _cv.style.cursor='grab'; _cv.addEventListener('mousedown',e=>{e.preventDefault(); apDrag={x:e.clientX,y:e.clientY};}); _cv.addEventListener('wheel',e=>{e.preventDefault(); if(pendingCrop){pendingCrop.z=Math.max(1,Math.min(8,pendingCrop.z*(e.deltaY<0?1.05:0.95))); drawAp();}},{passive:false}); } }
   const pl=document.getElementById('presetList');
   if(pl) pl.innerHTML = presets.length ? presets.map(m=>{ const on=usedIds.includes(m.id);
-    return '<div class="prow"><img src="'+m.src+'"><div class="pc">'+esc(m.name||'(이름 없음)')+'</div><button class="puse'+(on?' on':'')+'" onclick="toggleUse(\''+m.id+'\')">'+(on?'사용중':'사용')+'</button><button class="pdel" onclick="delPreset(\''+m.id+'\')">×</button></div>';
+    return '<div class="prow"><img src="'+(m.thumb||m.src)+'"><div class="pc">'+esc(m.name||'(이름 없음)')+'</div><button class="puse'+(on?' on':'')+'" onclick="toggleUse(\''+m.id+'\')">'+(on?'사용중':'사용')+'</button><button class="pdel" onclick="delPreset(\''+m.id+'\')">×</button></div>';
   }).join('') : '<div class="pempty">저장된 모델이 없어요</div>';
   const gl=document.getElementById('groupList');
   if(gl) gl.innerHTML = groups.length ? groups.map(g=>{ const cnt=g.members.filter(id=>findP(id)).length;
