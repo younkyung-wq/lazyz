@@ -2124,7 +2124,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
   <div class="stage"><div id="page"></div></div>
   <div class="panel">
     <h3>상세 생성기</h3>
-    <div class="lbl">상품 선택</div>
+    <div class="lbl">상품 선택 <span id="prodcount" style="color:#bbb;font-weight:400;"></span></div>
     <select id="prodsel" class="psel" onchange="selectProduct(this.value)"></select>
     <div class="divider"></div>
     <div class="lbl">이미지 폴더 나스 경로</div>
@@ -2222,8 +2222,8 @@ function renderPage(){
   setupModels();
   applyZoom();
 }
-function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; renderPage(); }
-function fillProducts(){ const sel=document.getElementById('prodsel'); if(!sel)return; if(!PRODUCTS.length){sel.innerHTML='<option>상품 없음</option>';return;} sel.innerHTML=PRODUCTS.map((p,i)=>'<option value="'+i+'">'+esc(p.label||('상품 '+(i+1)))+'</option>').join(''); }
+function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; const _c=document.getElementById("prodcount"); if(_c)_c.textContent=(+i+1)+" / "+PRODUCTS.length; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; renderPage(); }
+function fillProducts(){ const sel=document.getElementById('prodsel'); if(!sel)return; if(!PRODUCTS.length){sel.innerHTML='<option>상품 없음</option>';return;} sel.innerHTML=PRODUCTS.map((p,i)=>'<option value="'+i+'">'+esc(p.label||('상품 '+(i+1)))+'</option>').join(''); sel.value='0'; const _c=document.getElementById('prodcount'); if(_c)_c.textContent='1 / '+PRODUCTS.length; }
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 function sizeGuide(){
   const sizes=Object.keys(P.sizeVals);
