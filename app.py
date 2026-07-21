@@ -10,8 +10,7 @@ except Exception:
     _SSLCTX = _ssl.create_default_context()
     _SSLCTX.check_hostname = False; _SSLCTX.verify_mode = _ssl.CERT_NONE
 
-# ── STYLE_INFO 시트에서 상품 상세정보 로드 ──
-STYLE_SHEET_ID = "1825b8VnuGshIFGmySBS3prR66QjZni7pYjbkBs6m_58"
+# ── 기획 데이터 연동 API (읽기 전용) ──
 SIZE_EN = {
     '총장':'Total Length','기장':'Length','어깨너비':'Shoulder Width','가슴단면':'Chest',
     '밑단단면':'Hem','밑단둘레':'Hem','소매길이':'Sleeve Length','암홀':'Armhole','목너비':'Neck Width',
@@ -19,46 +18,50 @@ SIZE_EN = {
     '아웃심':'Outseam','밑단':'Hem','소매통':'Sleeve Width','팔통':'Sleeve Width',
 }
 
-@st.cache_data(ttl=300, show_spinner=False)
-def load_style_info():
-    url = f"https://docs.google.com/spreadsheets/d/{STYLE_SHEET_ID}/gviz/tq?tqx=out:csv&sheet=STYLE_INFO"
-    raw = _urlreq.urlopen(url, timeout=15, context=_SSLCTX).read().decode("utf-8")
-    rows = list(_csv.reader(io.StringIO(raw)))
-    if len(rows) < 2: return []
-    hdr = [h.replace("\n", " ").strip() for h in rows[1]]
-    def ci(name):
-        for i, h in enumerate(hdr):
-            if h == name: return i
-        return -1
-    def cell(r, i):
-        return r[i].strip() if 0 <= i < len(r) else ""
-    keys = {k: ci(k) for k in ["스타일넘버","상품명","영문 상품명","혼용률","제조국","제품설명","세부 사이즈(JSON)"]}
-    out = []
-    for r in rows[2:]:
-        style = cell(r, keys["스타일넘버"]); name = cell(r, keys["상품명"])
-        if not style and not name: continue
-        out.append({
-            "style": style, "name": name,
-            "name_en": cell(r, keys["영문 상품명"]),
-            "fabric": cell(r, keys["혼용률"]),
-            "country": cell(r, keys["제조국"]),
-            "desc": cell(r, keys["제품설명"]),
-            "sizejson": cell(r, keys["세부 사이즈(JSON)"]),
-        })
-    return out
-
-def parse_size_json(s):
+def _get_secret(key, default=""):
     try:
-        j = _json.loads(s); comp = j["components"][0]
-        items = comp["items"]; sizes = comp["sizes"]; vals = comp.get("vals", {})
-        items_en = [SIZE_EN.get(it, it) for it in items]
-        def sname(x):
-            x = str(x).strip()
-            return "Free" if x.upper() == "F" else (x + " Size")
-        sv = {sname(sz): [str(vals.get(sz, {}).get(it, "")) for it in items] for sz in sizes}
-        return items_en, sv
+        if key in st.secrets: return st.secrets[key]
     except Exception:
-        return None, None
+        pass
+    return os.environ.get(key, default)
+
+@st.cache_data(ttl=120, show_spinner=False)
+def load_planning():
+    base = _get_secret("PLANNING_API"); ro = _get_secret("PLANNING_RO")
+    if not base or not ro:
+        raise RuntimeError("PLANNING_API / PLANNING_RO 시크릿이 설정되지 않았어요 (.streamlit/secrets.toml).")
+    url = base + ("&" if "?" in base else "?") + "ro=" + ro
+    raw = _urlreq.urlopen(url, timeout=20, context=_SSLCTX).read().decode("utf-8")
+    data = _json.loads(raw)
+    return data.get("products", []), data.get("generated", "")
+
+def _size_name(x):
+    x = str(x).strip()
+    if x.upper() == "F": return "Free"
+    return (x + " Size") if len(x) <= 2 else x
+
+def planning_extract(p):
+    """기획 API 상품 1건 → (name_en, desc, fabric, sizeItems, sizeVals, sizeNote)"""
+    nm = p.get("제품명", {}) or {}
+    name_en = nm.get("en") or nm.get("ko") or "Product"
+    desc = "\n".join("- " + s.strip() for s in (p.get("설명") or []) if str(s).strip())
+    fabric = (p.get("소재") or "").strip()
+    sz = p.get("사이즈", {}) or {}
+    comps = sz.get("구성품") or []
+    items, sv = [], {}
+    if comps:
+        c = comps[0]
+        raw_items = c.get("항목", []) or []
+        items = [SIZE_EN.get(it, it) for it in raw_items]
+        vals = c.get("실측", {}) or {}
+        sv = {_size_name(s): [str(vals.get(s, {}).get(it, "") or "") for it in raw_items]
+              for s in (c.get("사이즈", []) or [])}
+    status = sz.get("측정상태", "")
+    if items and any(any(v for v in row) for row in sv.values()):
+        note = "1~2cm 의 오차가 발생할 수 있습니다."
+    else:
+        note = f"사이즈 실측 준비중" + (f" (측정상태: {status})" if status else "")
+    return name_en, desc, fabric, items, sv, note
 
 st.set_page_config(
     page_title="LAZYZ Dashboard",
@@ -2157,6 +2160,7 @@ const P={
  desc: __DESC__,
  sizeItems: __SIZEITEMS__,
  sizeVals: __SIZEVALS__,
+ sizeNote: __SIZENOTE__,
  fabric: __FABRIC__,
  models: __MODELS__,
  // ── 하단 공통(고정) 케어 가이드 ──
@@ -2222,7 +2226,7 @@ function sizeGuide(){
     sizes.forEach(s=>{ cells+='<div class="gv" data-ss="'+s+'" data-si="'+idx+'" contenteditable>'+esc(P.sizeVals[s][idx]||'')+'</div>'; });
   });
   const cols='max-content'+sizes.map(()=>' max-content').join('');
-  return '<div class="sizegrid" style="grid-template-columns:'+cols+';">'+cells+'</div><div class="sznote">1~2cm 의 오차가 발생할 수 있습니다.</div>';
+  return '<div class="sizegrid" style="grid-template-columns:'+cols+';">'+cells+'</div><div class="sznote">'+esc(P.sizeNote||'1~2cm 의 오차가 발생할 수 있습니다.')+'</div>';
 }
 function modelsHTML(){
   if(!P.models||!P.models.length) return '';
@@ -2424,38 +2428,36 @@ elif "썸네일 생성기" in menu:
     components.html(THUMB_HTML, height=820, scrolling=False)
 
 elif "상세 생성기" in menu:
-    prods = []
+    prods, generated = [], ""
     try:
-        prods = load_style_info()
+        prods, generated = load_planning()
     except Exception as e:
-        st.warning("STYLE_INFO 시트 로드 실패: " + str(e))
+        st.warning("기획 API 로드 실패: " + str(e))
 
-    st.markdown("<div style='font-size:13px;font-weight:700;color:#888;margin-bottom:2px;'>상품 선택 (STYLE_INFO 시트)</div>", unsafe_allow_html=True)
+    st.markdown("<div style='font-size:13px;font-weight:700;color:#888;margin-bottom:2px;'>상품 선택 (기획 확정 상품)</div>", unsafe_allow_html=True)
     tc1, tc2 = st.columns([6, 1])
     sel = None
     if prods:
-        labels = [ (p["name"] + (f"  ({p['name_en']})" if p["name_en"] else "") + (f"  · {p['style']}" if p["style"] else "")) for p in prods ]
+        def _plabel(i):
+            p = prods[i]; nm = p.get("제품명", {}) or {}
+            return (nm.get("ko") or nm.get("en") or "?") + (f"  ({nm.get('en')})" if nm.get("en") else "") + (f"  · {p.get('스타일넘버','')}" if p.get("스타일넘버") else "")
         sel = tc1.selectbox("상품 선택", range(len(prods)),
-                            format_func=lambda i: labels[i], key="prodsel", label_visibility="collapsed")
+                            format_func=_plabel, key="prodsel", label_visibility="collapsed")
     else:
-        tc1.info("시트에서 상품을 불러오지 못했어요. 아래는 기본값입니다.")
-    if tc2.button("↻ 시트 새로고침", use_container_width=True):
-        load_style_info.clear(); st.rerun()
+        tc1.info("기획 API에서 상품을 불러오지 못했어요. 아래는 기본값입니다.")
+    if tc2.button("↻ 새로고침", use_container_width=True):
+        load_planning.clear(); st.rerun()
 
     if prods and sel is not None:
         p = prods[sel]
-        items, sv = parse_size_json(p["sizejson"])
+        name_en, desc, fabric, items, sv, sizenote = planning_extract(p)
         if not items:
             items, sv = ["Total Length"], {"Free": [""]}
-        name_en = p["name_en"] or p["name"] or "Product"
-        desc = "\n".join(
-            ("- " + ln.strip()[1:].lstrip()) if ln.strip().startswith("·") else ln
-            for ln in (p["desc"] or "").split("\n")
-        )
-        fabric = p["fabric"] or ""
+        st.caption(f"API 생성: {generated}  ·  반영일시: {p.get('반영일시','?')}  ·  측정상태: {p.get('사이즈',{}).get('측정상태','?')}  ·  총 {len(prods)}건")
     else:
         name_en, desc, fabric = "Salt and Sun Stripe Shirt", "-", "Cotton 90% Polyester 10%"
         items, sv = ["Total Length","Shoulder Width","Chest","Hem","Sleeve Length","Armhole","Neck Width"], {"Free": ["72.5","55","71.5","68","57","25","17"]}
+        sizenote = "1~2cm 의 오차가 발생할 수 있습니다."
 
     _default_models = '[{"src":"","cap":"173cm / F size"},{"src":"","cap":"172cm / F size"}]'
     html = (DETAIL_HTML
@@ -2465,7 +2467,8 @@ elif "상세 생성기" in menu:
             .replace("__DESC__", _json.dumps(desc, ensure_ascii=False))
             .replace("__FABRIC__", _json.dumps(fabric, ensure_ascii=False))
             .replace("__SIZEITEMS__", _json.dumps(items, ensure_ascii=False))
-            .replace("__SIZEVALS__", _json.dumps(sv, ensure_ascii=False)))
+            .replace("__SIZEVALS__", _json.dumps(sv, ensure_ascii=False))
+            .replace("__SIZENOTE__", _json.dumps(sizenote, ensure_ascii=False)))
     components.html(html, height=820, scrolling=False)
 
 elif "피드 기획" in menu:
