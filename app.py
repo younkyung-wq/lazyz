@@ -2457,7 +2457,6 @@ elif "상세 생성기" in menu:
         sizenote = "1~2cm 의 오차가 발생할 수 있습니다."
         cap = ""
 
-    tc2.caption(cap)
     if tc2.button("↻ 새로고침", use_container_width=True):
         load_planning.clear(); st.rerun()
 
