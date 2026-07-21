@@ -2269,7 +2269,7 @@ window.addEventListener('mouseup',()=>{ apDrag=null; });
 function findP(id){ return presets.find(m=>m.id===id); }
 function addPreset(){ const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
   inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const rd=new FileReader();
-    rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const W=2000,H=Math.round(W*im.height/im.width); const c=document.createElement('canvas'); c.width=W;c.height=H; c.getContext('2d').imageSmoothingQuality='high'; c.getContext('2d').drawImage(im,0,0,W,H); pendingSrc=c.toDataURL('image/jpeg',0.85); pendingImg=new Image(); pendingImg.onload=()=>{ pendingCrop={z:1,cx:0.5,cy:0.5}; renderModelUI(); }; pendingImg.src=pendingSrc; }; im.src=rd.result; };
+    rd.onload=()=>{ const im=new Image(); im.onload=()=>{ const W=1500,H=Math.round(W*im.height/im.width); const c=document.createElement('canvas'); c.width=W;c.height=H; c.getContext('2d').imageSmoothingQuality='high'; c.getContext('2d').drawImage(im,0,0,W,H); pendingSrc=c.toDataURL('image/jpeg',0.85); pendingImg=new Image(); pendingImg.onload=()=>{ pendingCrop={z:1,cx:0.5,cy:0.5}; renderModelUI(); }; pendingImg.src=pendingSrc; }; im.src=rd.result; };
     rd.readAsDataURL(f); };
   inp.click();
 }
