@@ -2063,7 +2063,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .panel>*{flex-shrink:0;}
 .panel h3{font-size:15px;font-weight:800;color:#111;}
 .panel .lbl{font-size:12px;font-weight:700;color:#888;margin-bottom:-6px;}
-.psel{width:100%;padding:9px 11px;border:1.5px solid #e2e2e2;border-radius:9px;font-size:12px;color:#333;background:#fff;cursor:pointer;}
+.psel{width:100%;padding:9px 34px 9px 11px;border:1.5px solid #e2e2e2;border-radius:9px;font-size:12px;color:#333;cursor:pointer;appearance:none;-webkit-appearance:none;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 12px center;}
 .btn{padding:11px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;width:100%;}
 .btn-dark{background:#111;color:#fff;} .btn-line{background:#fff;border:1.5px solid #ddd;color:#555;} .btn-red{background:#ff4b4b;color:#fff;}
 .hint{font-size:11.5px;color:#aaa;line-height:1.7;}
