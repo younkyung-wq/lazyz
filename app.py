@@ -2124,7 +2124,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
   <div class="stage"><div id="page"></div></div>
   <div class="panel">
     <h3>상세 생성기</h3>
-    <div class="lbl">상품 선택 <span id="prodcount" style="color:#bbb;font-weight:400;"></span></div>
+    <div class="lbl">상품 선택 <span id="prodcount" style="color:#bbb;font-weight:400;margin-left:8px;"></span></div>
     <select id="prodsel" class="psel" onchange="selectProduct(this.value)"></select>
     <div class="divider"></div>
     <div class="lbl">이미지 폴더 나스 경로</div>
