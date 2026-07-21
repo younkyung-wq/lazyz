@@ -2057,9 +2057,9 @@ DETAIL_HTML = r"""
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:'Pretendard',-apple-system,sans-serif;}
-body{background:#eee;height:812px;overflow:hidden;color:#222;}
-.wrap{display:flex;flex-direction:row;height:812px;}
-.panel{width:300px;flex-shrink:0;height:812px;min-height:0;background:#fff;border-left:1px solid #e5e5e5;order:2;padding:22px 20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;}
+body{background:#eee;height:100vh;overflow:hidden;color:#222;}
+.wrap{display:flex;flex-direction:row;height:100vh;}
+.panel{width:300px;flex-shrink:0;height:100vh;min-height:0;background:#fff;border-left:1px solid #e5e5e5;order:2;padding:22px 20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;}
 .panel>*{flex-shrink:0;}
 .panel h3{font-size:15px;font-weight:800;color:#111;}
 .panel .lbl{font-size:12px;font-weight:700;color:#888;margin-bottom:-6px;}
@@ -2434,16 +2434,19 @@ elif "상세 생성기" in menu:
     except Exception as e:
         st.warning("기획 API 로드 실패: " + str(e))
 
-    csel, _spacer = st.columns([1, 1])
+    st.markdown("""<style>
+    [data-testid="stSelectbox"]{max-width:640px;}
+    [data-testid="stMain"] iframe, [data-testid="stAppViewContainer"] iframe{height:calc(100vh - 150px) !important; min-height:620px;}
+    </style>""", unsafe_allow_html=True)
     sel = None
     if prods:
         def _plabel(i):
             p = prods[i]; nm = p.get("제품명", {}) or {}
             return (nm.get("ko") or nm.get("en") or "?") + (f"  ({nm.get('en')})" if nm.get("en") else "") + (f"  · {p.get('스타일넘버','')}" if p.get("스타일넘버") else "")
-        sel = csel.selectbox("상품 선택", range(len(prods)),
+        sel = st.selectbox("상품 선택", range(len(prods)),
                             format_func=_plabel, key="prodsel", label_visibility="collapsed")
     else:
-        csel.info("기획 API에서 상품을 불러오지 못했어요. 아래는 기본값입니다.")
+        st.info("기획 API에서 상품을 불러오지 못했어요. 아래는 기본값입니다.")
 
     if prods and sel is not None:
         p = prods[sel]
