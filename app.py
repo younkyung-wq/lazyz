@@ -2090,7 +2090,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .addform .arow{display:flex;gap:6px;}
 #prog{font-size:12px;color:#2e9e44;font-weight:700;min-height:16px;}
 .stage{flex:1;order:1;overflow:auto;display:flex;justify-content:flex-start;flex-direction:column;align-items:center;padding:24px;}
-#page{width:1000px;background:#fff;flex-shrink:0;height:max-content;transform-origin:top center;padding-bottom:300px;}
+#page{width:1000px;background:#fff;flex-shrink:0;height:max-content;transform-origin:top center;padding-top:250px;padding-bottom:300px;}
 .imgrow{position:relative;display:block;font-size:0;margin-bottom:10px;}
 .imgrow canvas{width:100%;display:block;cursor:default;}
 .imgrow.cropping{outline:2px solid #ff4b4b;outline-offset:-2px;}
