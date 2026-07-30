@@ -11,6 +11,7 @@ except Exception:
     _SSLCTX.check_hostname = False; _SSLCTX.verify_mode = _ssl.CERT_NONE
 
 # ── 기획 데이터 연동 API (읽기 전용) ──
+PLANNING_SEASON = "26FW"   # 이 시즌 상품만 불러옴 (시즌 바뀌면 이 값만 수정)
 SIZE_EN = {
     '총장':'Total Length','기장':'Length','어깨너비':'Shoulder Width','가슴단면':'Chest',
     '밑단단면':'Hem','밑단둘레':'Hem','소매길이':'Sleeve Length','암홀':'Armhole','목너비':'Neck Width',
@@ -30,7 +31,7 @@ def load_planning():
     base = _get_secret("PLANNING_API"); ro = _get_secret("PLANNING_RO")
     if not base or not ro:
         raise RuntimeError("PLANNING_API / PLANNING_RO 시크릿이 설정되지 않았어요 (.streamlit/secrets.toml).")
-    url = base + ("&" if "?" in base else "?") + "ro=" + ro
+    url = base + ("&" if "?" in base else "?") + "ro=" + ro + (("&season=" + PLANNING_SEASON) if PLANNING_SEASON else "")
     raw = _urlreq.urlopen(url, timeout=20, context=_SSLCTX).read().decode("utf-8")
     data = _json.loads(raw)
     return data.get("products", []), data.get("generated", "")
