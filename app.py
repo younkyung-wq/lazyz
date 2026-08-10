@@ -2076,6 +2076,9 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .btn-dark{background:#111;color:#fff;} .btn-line{background:#fff;border:1.5px solid #ddd;color:#555;} .btn-red{background:#ff4b4b;color:#fff;}
 .hint{font-size:11.5px;color:#aaa;line-height:1.7;}
 .divider{height:1px;background:#eee;margin:4px 0;}
+.optrow{display:flex;gap:16px;font-size:12.5px;color:#444;font-weight:600;padding:2px 2px;}
+.optrow label{display:flex;align-items:center;gap:5px;cursor:pointer;}
+.optrow input{width:15px;height:15px;cursor:pointer;}
 .acc{border:1px solid #eee;border-radius:9px;overflow:hidden;}
 .acc>summary{list-style:none;cursor:pointer;padding:11px 14px;font-size:13px;font-weight:700;color:#333;background:#fafafa;user-select:none;display:flex;align-items:center;justify-content:space-between;}
 .acc>summary::-webkit-details-marker{display:none;}
@@ -2164,6 +2167,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
     </details>
     <div class="divider"></div>
     <div class="lbl">상세페이지 생성하기</div>
+    <div class="optrow"><label><input type="checkbox" id="optWhole" checked>한통</label><label><input type="checkbox" id="optCrop" checked>크롭</label><label><input type="checkbox" id="optKream">크림</label></div>
     <button class="btn btn-line" onclick="pickBaseDir()"><span id="basedirlabel">📁 저장 폴더 지정</span></button>
     <button class="btn btn-red" onclick="save('jpg')">📥 저장하기</button>
     <span id="prog"></span>
@@ -2460,61 +2464,70 @@ function _toBlob(cv,q){ return new Promise(res=>cv.toBlob(res,'image/jpeg',q||0.
 async function _writeFile(dir,name,blob){ const fh=await dir.getFileHandle(name,{create:true}); const w=await fh.createWritable(); await w.write(blob); await w.close(); }
 function _downscale(big,tw){ const c=document.createElement('canvas'); c.width=tw; c.height=Math.max(1,Math.round(big.height*tw/big.width)); const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(big,0,0,c.width,c.height); return c; }
 function _dl(blob,fname){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
+function _capColor(x){ x=(x||'').toString(); return x.charAt(0).toUpperCase()+x.slice(1).toLowerCase(); }
+function colorNameForCode(code){ const cols=(typeof P!=='undefined'&&P.colors)?P.colors:[]; for(const c of cols){ if(sameColor(codeOfColor(c),code)) return c.en||CODE_NAME[code]||code; } return CODE_NAME[code]||code; }
+async function _renderBig(pg){ const oz=pg.style.transform; pg.style.transform='none'; pg.classList.add('saving'); const big=await html2canvas(pg,{scale:2,backgroundColor:'#ffffff',useCORS:true}); pg.style.transform=oz; pg.classList.remove('saving'); return big; }
 async function save(fmt){
   const prog=document.getElementById('prog');
-  // 폴더 선택은 클릭 제스처 안에서 먼저 (없으면 다운로드 폴백)
-  let dir=null;
-  let _base=await ensureBaseDir();
+  const gv=id=>{ const e=document.getElementById(id); return e?e.checked:false; };
+  const doWhole=gv('optWhole'), doCrop=gv('optCrop'), doKream=gv('optKream');
+  if(!doWhole && !doCrop && !doKream){ alert('저장할 버전을 하나 이상 선택하세요 (한통/크롭/크림).'); return; }
+  let dir=null; let _base=await ensureBaseDir();
   if(!_base && window.showDirectoryPicker){ alert('저장할 상위 폴더(02_상세_썸네일)를 한 번만 선택해주세요.\n이후엔 상품별 폴더에 자동 저장돼요.'); try{ _base=await window.showDirectoryPicker({mode:'readwrite'}); baseDir=_base; try{ await _idbSet('baseDir',_base); }catch(e){} _baseLabel(); }catch(e){ _base=null; } }
   if(_base){ const _fn=(P.name_en||'상세페이지').replace(/\//g,'-'); try{ dir=await _base.getDirectoryHandle(_fn,{create:true}); }catch(e){ dir=null; } }
   endCrop();
   const pg=document.getElementById('page');
-  const oz=pg.style.transform; pg.style.transform='none'; pg.classList.add('saving');
-  prog.textContent='렌더링 중…';
-  const big=await html2canvas(pg,{scale:2,backgroundColor:'#ffffff',useCORS:true});
-  pg.style.transform=oz; pg.classList.remove('saving');
   const name=(P.name_en||'상세페이지').replace(/[\\/:*?"<>|]/g,'_');
-  // 한통(가로 1000px)
-  const whole=_downscale(big,1000);
-  const wholeBlob=await _toBlob(whole,0.95);
-  // 자른버전(가로 그대로 2000px, 세로 3000px씩)
-  const bw=big.width, bh=big.height;
-  const pageRect=pg.getBoundingClientRect(); const SC=bw/pageRect.width;
-  const topY=el=>Math.round((el.getBoundingClientRect().top-pageRect.top)*SC);
-  const botY=el=>Math.round((el.getBoundingClientRect().bottom-pageRect.top)*SC);
-  // ── 규칙별 그룹 (모델컷 2개씩 · 누끼 색묶음별 · 앞뒤 함께 · 상품명+사이즈+모델 · 케어~끝) ──
-  const groups=[];
-  const mc=imgs.filter(o=>grp(o.name)===0 && o.el);
-  for(let i=0;i<mc.length;i+=2){ const seg=mc.slice(i,i+2); groups.push([seg[0].el, seg[seg.length-1].el]); }
-  const nk=imgs.filter(o=>grp(o.name)===1 && o.el);
-  { const colorGroups=[]; let gi=0; while(gi<nk.length){ const bc=baseCode(nk[gi].name); let gj=gi; while(gj<nk.length && baseCode(nk[gj].name)===bc) gj++; colorGroups.push(nk.slice(gi,gj)); gi=gj; }
-    let _sg=[]; const _flush=()=>{ if(_sg.length){ groups.push([_sg[0].el, _sg[_sg.length-1].el]); _sg=[]; } };
-    for(const cg of colorGroups){ if(cg.length>1){ _flush(); groups.push([cg[0].el, cg[cg.length-1].el]); } else { _sg.push(cg[0]); } }
-    _flush(); }
-  const bkk=imgs.filter(o=>grp(o.name)===2 && o.el);
-  if(bkk.length) groups.push([bkk[0].el, bkk[bkk.length-1].el]);
-  const secs=[...pg.querySelectorAll('.sec')];
-  if(secs.length>=3) groups.push([secs[0], secs[2]]);
-  if(secs.length>=5) groups.push([secs[3], secs[secs.length-1]]);
-  else if(secs.length>3) groups.push([secs[3], secs[secs.length-1]]);
-  // ── 컷 위치 = 그룹 사이 여백 중앙 ──
-  const cuts=[0];
-  for(let k=1;k<groups.length;k++){ let mid=Math.round((botY(groups[k-1][1])+topY(groups[k][0]))/2); mid=Math.max(cuts[cuts.length-1]+1, Math.min(mid,bh)); cuts.push(mid); }
-  cuts.push(bh);
-  const slices=[]; const OUTW=1000, _sf=OUTW/bw;
-  for(let k=0;k<cuts.length-1;k++){ const y=cuts[k], h=cuts[k+1]-y; if(h<=0) continue; const oh=Math.max(1,Math.round(h*_sf)); const sc2=document.createElement('canvas'); sc2.width=OUTW; sc2.height=oh; const g2=sc2.getContext('2d'); g2.imageSmoothingEnabled=true; g2.imageSmoothingQuality='high'; g2.drawImage(big,0,y,bw,h,0,0,OUTW,oh); slices.push({idx:k+1, blob:await _toBlob(sc2,0.95)}); }
-  if(dir){
-    prog.textContent='저장 중…';
-    await _writeFile(dir, name+'.jpg', wholeBlob);
-    const imgDir=await dir.getDirectoryHandle('images',{create:true});
-    for(const s of slices){ await _writeFile(imgDir, name+'_'+String(s.idx).padStart(2,'0')+'.jpg', s.blob); }
-    prog.textContent='완료! (한통 + images 폴더 '+slices.length+'컷)';
-  } else {
-    // 폴백: 브라우저 다운로드 (폴더 지정 안 함)
-    _dl(wholeBlob, name+'.jpg');
-    for(const s of slices){ _dl(s.blob, name+'_'+String(s.idx).padStart(2,'0')+'.jpg'); }
-    prog.textContent='완료! (다운로드 '+(slices.length+1)+'개)';
+  const put=async(folder,fname,blob)=>{ if(folder) await _writeFile(folder,fname,blob); else _dl(blob,fname); };
+  let done=0;
+  if(doWhole || doCrop){
+    prog.textContent='렌더링 중…';
+    const big=await _renderBig(pg); const bw=big.width, bh=big.height;
+    if(doWhole){ const whole=_downscale(big,1000); await put(dir, name+'.jpg', await _toBlob(whole,0.95)); done++; }
+    if(doCrop){
+      const pageRect=pg.getBoundingClientRect(); const SC=bw/pageRect.width;
+      const topY=el=>Math.round((el.getBoundingClientRect().top-pageRect.top)*SC);
+      const botY=el=>Math.round((el.getBoundingClientRect().bottom-pageRect.top)*SC);
+      const groups=[];
+      const mc=imgs.filter(o=>grp(o.name)===0 && o.el);
+      for(let i=0;i<mc.length;i+=2){ const seg=mc.slice(i,i+2); groups.push([seg[0].el, seg[seg.length-1].el]); }
+      const nk=imgs.filter(o=>grp(o.name)===1 && o.el);
+      { const cgs=[]; let gi=0; while(gi<nk.length){ const bc=baseCode(nk[gi].name); let gj=gi; while(gj<nk.length && baseCode(nk[gj].name)===bc) gj++; cgs.push(nk.slice(gi,gj)); gi=gj; }
+        let _sg=[]; const _fl=()=>{ if(_sg.length){ groups.push([_sg[0].el,_sg[_sg.length-1].el]); _sg=[]; } };
+        for(const cg of cgs){ if(cg.length>1){ _fl(); groups.push([cg[0].el,cg[cg.length-1].el]); } else _sg.push(cg[0]); } _fl(); }
+      const bkk=imgs.filter(o=>grp(o.name)===2 && o.el);
+      if(bkk.length) groups.push([bkk[0].el, bkk[bkk.length-1].el]);
+      const secs=[...pg.querySelectorAll('.sec')];
+      if(secs.length>=3) groups.push([secs[0], secs[2]]);
+      if(secs.length>=5) groups.push([secs[3], secs[secs.length-1]]);
+      else if(secs.length>3) groups.push([secs[3], secs[secs.length-1]]);
+      const cuts=[0];
+      for(let k=1;k<groups.length;k++){ let mid=Math.round((botY(groups[k-1][1])+topY(groups[k][0]))/2); mid=Math.max(cuts[cuts.length-1]+1, Math.min(mid,bh)); cuts.push(mid); }
+      cuts.push(bh);
+      const OUTW=1000, _sf=OUTW/bw; const imgDir = dir? await dir.getDirectoryHandle('images',{create:true}) : null;
+      let ci=1;
+      for(let k=0;k<cuts.length-1;k++){ const y=cuts[k], h=cuts[k+1]-y; if(h<=0) continue; const oh=Math.max(1,Math.round(h*_sf)); const sc2=document.createElement('canvas'); sc2.width=OUTW; sc2.height=oh; const g2=sc2.getContext('2d'); g2.imageSmoothingEnabled=true; g2.imageSmoothingQuality='high'; g2.drawImage(big,0,y,bw,h,0,0,OUTW,oh); await put(imgDir, name+'_'+String(ci).padStart(2,'0')+'.jpg', await _toBlob(sc2,0.95)); ci++; }
+      done++;
+    }
   }
+  if(doKream){
+    const codes=[]; imgs.forEach(o=>{ const c=colorCodeOf(o.name); if(c && !codes.some(x=>sameColor(x,c))) codes.push(c); });
+    if(!codes.length){ alert('크림용: 파일명에 색상코드(BK/BR/WH 등)가 있는 이미지가 없어요.'); }
+    else{
+      const kDir = dir? await dir.getDirectoryHandle('크림상세',{create:true}) : null; let ki=0;
+      for(const code of codes){ ki++; prog.textContent='크림 렌더링 '+ki+'/'+codes.length+'…';
+        const hidden=[];
+        imgs.forEach(o=>{ if(!o.el) return; const oc=colorCodeOf(o.name); if(oc && !sameColor(oc,code)){ o.el.style.display='none'; hidden.push(o.el); } });
+        const kbig=await _renderBig(pg);
+        hidden.forEach(el=>el.style.display='');
+        const kw=_downscale(kbig,1000);
+        const cn=_capColor(colorNameForCode(code)).replace(/[\\/:*?"<>|]/g,'_');
+        await put(kDir, name+'_'+cn+'.jpg', await _toBlob(kw,0.95));
+      }
+      done++;
+    }
+  }
+  prog.textContent = dir ? ('완료! ('+[doWhole?'한통':'',doCrop?'크롭':'',doKream?'크림':''].filter(Boolean).join('+')+')') : '완료! (다운로드)';
 }
 loadInit();
 renderModelUI();
