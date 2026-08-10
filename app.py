@@ -2466,8 +2466,19 @@ async function save(fmt){
   const whole=_downscale(big,1000);
   const wholeBlob=await _toBlob(whole,0.95);
   // 자른버전(가로 그대로 2000px, 세로 3000px씩)
-  const SLICE=3000, bw=big.width; const slices=[];
-  for(let y=0,idx=1; y<big.height; y+=SLICE,idx++){ const h=Math.min(SLICE,big.height-y); const sc=document.createElement('canvas'); sc.width=bw; sc.height=h; sc.getContext('2d').drawImage(big,0,y,bw,h,0,0,bw,h); slices.push({idx,blob:await _toBlob(sc,0.95)}); }
+  const bw=big.width, bh=big.height, bctx=big.getContext('2d');
+  const TARGET=3000, WIN=1600;
+  function _blankRow(y){ if(y<0||y>=bh) return true; const d=bctx.getImageData(0,y,bw,1).data; for(let x=0;x<bw;x+=8){ const i=x*4; if(d[i+3]>10 && !(d[i]>247&&d[i+1]>247&&d[i+2]>247)) return false; } return true; }
+  function _blankBand(y){ return _blankRow(y) && _blankRow(y-8) && _blankRow(y+8); }
+  const slices=[];
+  { let y=0, idx=1;
+    while(y<bh){
+      let end=Math.min(y+TARGET, bh);
+      if(end<bh){ let best=-1; for(let dd=0; dd<=WIN; dd++){ if(end-dd>y+600 && _blankBand(end-dd)){ best=end-dd; break; } if(end+dd<bh && _blankBand(end+dd)){ best=end+dd; break; } } if(best>0) end=best; }
+      const h=end-y; const sc=document.createElement('canvas'); sc.width=bw; sc.height=h; sc.getContext('2d').drawImage(big,0,y,bw,h,0,0,bw,h); slices.push({idx,blob:await _toBlob(sc,0.95)});
+      y=end; idx++;
+    }
+  }
   if(dir){
     prog.textContent='저장 중…';
     await _writeFile(dir, name+'.jpg', wholeBlob);
