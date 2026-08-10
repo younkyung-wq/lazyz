@@ -2199,12 +2199,8 @@ function loadInit(){
 function colorRank(n){n=n.toUpperCase(); if(n.includes('WH')||n.includes('화이트'))return 0; if(n.includes('BR')||n.includes('브라운'))return 1; if(n.includes('BK')||n.includes('블랙'))return 2; return 9;}
 function grp(n){ if(n.includes('누끼'))return 1; if(/-F-/i.test(n))return 0; return 2; }
 function numOf(n){const m=n.match(/(\d+)(?=\.\w+$)/); return m?parseInt(m[1]):0;}
-function normColor(s){ return (s||'').toLowerCase().replace(/[\s\-_.]/g,''); }
-const CODE2EN={wh:'white',bk:'black',br:'brown',iv:'ivory',gr:'gray',ch:'charcoal',pk:'pink',be:'beige',nv:'navy',bl:'blue',rd:'red',gn:'green',sk:'sky',lv:'lavender',lg:'lightgray',co:'cocoa',mt:'mint',cr:'cream'};
-function matchColorName(fname, colors){ if(!colors||!colors.length) return ''; const f=normColor(fname);
-  for(const c of colors){ const ko=normColor(c.ko), en=normColor(c.en); if((ko&&f.includes(ko))||(en&&f.includes(en))) return (c.en||c.ko); }
-  for(const c of colors){ const en=normColor(c.en); for(const code in CODE2EN){ if(f.includes(code) && en && en.includes(CODE2EN[code])) return (c.en||c.ko); } }
-  return ''; }
+const CODE_NAME={BK:'BLACK',BR:'BROWN',WH:'WHITE',IV:'IVORY',GR:'GRAY',CH:'CHARCOAL',PK:'PINK',BE:'BEIGE',NV:'NAVY',BL:'BLUE',RD:'RED',GN:'GREEN',SK:'SKY',LV:'LAVENDER',LG:'LIGHT GRAY',CO:'COCOA',MT:'MINT',CR:'CREAM',LB:'LEMON BUTTER'};
+function niColorName(fname){ const m=(fname||'').match(/누끼[\-_ ]*([A-Za-z]+)/); if(!m) return ''; const code=m[1].toUpperCase(); return CODE_NAME[code] || code; }
 function sortImgs(){ imgs.sort((a,b)=> grp(a.name)-grp(b.name) || colorRank(a.name)-colorRank(b.name) || numOf(a.name)-numOf(b.name) || a.name.localeCompare(b.name)); }
 function drawRow(o){
   const cv=o.canvas, img=o.img, t=o.crop;
@@ -2233,7 +2229,7 @@ function renderPage(){
     bd.addEventListener('mousedown',ev=>{ ev.preventDefault(); ev.stopPropagation(); endCrop(); pointer={o:o,row:row,sx:ev.clientX,sy:ev.clientY,lx:ev.clientX,ly:ev.clientY,moved:true,mode:'reorder'}; row.style.opacity='0.4'; document.body.style.userSelect='none'; });
     cv.addEventListener('mousedown',e=>{ e.preventDefault(); const md=(cropRow===row?'pan':'pending'); if(md==='pending') startCrop(row,o); pointer={o:o,row:row,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,moved:false,mode:md}; });
     cv.addEventListener('wheel',e=>{ if(cropRow!==row)return; e.preventDefault(); o.crop.z*=(e.deltaY<0?1.04:0.96); o.crop.z=Math.max(1,Math.min(4,o.crop.z)); drawRow(o); },{passive:false});
-    pg.appendChild(row); o.el=row; drawRow(o); if(/누끼/.test(o.name)){ const cn=matchColorName(o.name,P.colors); if(cn){ const cd=document.createElement('div'); cd.className='colorcap'; cd.textContent=cn.toUpperCase(); row.appendChild(cd); } }
+    pg.appendChild(row); o.el=row; drawRow(o); if(/누끼/.test(o.name)){ const cn=niColorName(o.name); if(cn){ const cd=document.createElement('div'); cd.className='colorcap'; cd.textContent=cn.toUpperCase(); row.appendChild(cd); } }
   });
   // 텍스트 섹션들
   pg.insertAdjacentHTML('beforeend', sectionsHTML());
