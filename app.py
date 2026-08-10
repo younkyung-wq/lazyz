@@ -2466,19 +2466,28 @@ async function save(fmt){
   const whole=_downscale(big,1000);
   const wholeBlob=await _toBlob(whole,0.95);
   // 자른버전(가로 그대로 2000px, 세로 3000px씩)
-  const bw=big.width, bh=big.height, bctx=big.getContext('2d');
-  const TARGET=3000, WIN=1600;
-  function _blankRow(y){ if(y<0||y>=bh) return true; const d=bctx.getImageData(0,y,bw,1).data; for(let x=0;x<bw;x+=8){ const i=x*4; if(d[i+3]>10 && !(d[i]>247&&d[i+1]>247&&d[i+2]>247)) return false; } return true; }
-  function _blankBand(y){ return _blankRow(y) && _blankRow(y-8) && _blankRow(y+8); }
+  const bw=big.width, bh=big.height;
+  const pageRect=pg.getBoundingClientRect(); const SC=bw/pageRect.width;
+  const topY=el=>Math.round((el.getBoundingClientRect().top-pageRect.top)*SC);
+  const botY=el=>Math.round((el.getBoundingClientRect().bottom-pageRect.top)*SC);
+  // ── 규칙별 그룹 (모델컷 2개씩 · 누끼 색묶음별 · 앞뒤 함께 · 상품명+사이즈+모델 · 케어~끝) ──
+  const groups=[];
+  const mc=imgs.filter(o=>grp(o.name)===0 && o.el);
+  for(let i=0;i<mc.length;i+=2){ const seg=mc.slice(i,i+2); groups.push([seg[0].el, seg[seg.length-1].el]); }
+  const nk=imgs.filter(o=>grp(o.name)===1 && o.el);
+  { let gi=0; while(gi<nk.length){ const bc=baseCode(nk[gi].name); let gj=gi; while(gj<nk.length && baseCode(nk[gj].name)===bc) gj++; groups.push([nk[gi].el, nk[gj-1].el]); gi=gj; } }
+  const bkk=imgs.filter(o=>grp(o.name)===2 && o.el);
+  if(bkk.length) groups.push([bkk[0].el, bkk[bkk.length-1].el]);
+  const secs=[...pg.querySelectorAll('.sec')];
+  if(secs.length>=3) groups.push([secs[0], secs[2]]);
+  if(secs.length>=5) groups.push([secs[3], secs[secs.length-1]]);
+  else if(secs.length>3) groups.push([secs[3], secs[secs.length-1]]);
+  // ── 컷 위치 = 그룹 사이 여백 중앙 ──
+  const cuts=[0];
+  for(let k=1;k<groups.length;k++){ let mid=Math.round((botY(groups[k-1][1])+topY(groups[k][0]))/2); mid=Math.max(cuts[cuts.length-1]+1, Math.min(mid,bh)); cuts.push(mid); }
+  cuts.push(bh);
   const slices=[];
-  { let y=0, idx=1;
-    while(y<bh){
-      let end=Math.min(y+TARGET, bh);
-      if(end<bh){ let best=-1; for(let dd=0; dd<=WIN; dd++){ if(end-dd>y+600 && _blankBand(end-dd)){ best=end-dd; break; } if(end+dd<bh && _blankBand(end+dd)){ best=end+dd; break; } } if(best>0) end=best; }
-      const h=end-y; const sc=document.createElement('canvas'); sc.width=bw; sc.height=h; sc.getContext('2d').drawImage(big,0,y,bw,h,0,0,bw,h); slices.push({idx,blob:await _toBlob(sc,0.95)});
-      y=end; idx++;
-    }
-  }
+  for(let k=0;k<cuts.length-1;k++){ const y=cuts[k], h=cuts[k+1]-y; if(h<=0) continue; const sc2=document.createElement('canvas'); sc2.width=bw; sc2.height=h; sc2.getContext('2d').drawImage(big,0,y,bw,h,0,0,bw,h); slices.push({idx:k+1, blob:await _toBlob(sc2,0.95)}); }
   if(dir){
     prog.textContent='저장 중…';
     await _writeFile(dir, name+'.jpg', wholeBlob);
