@@ -2446,20 +2446,40 @@ window.addEventListener('keydown',e=>{
 // 미리보기 클릭 시 iframe에 포커스(키 입력 받도록)
 document.querySelector('.stage').setAttribute('tabindex','0');
 document.querySelector('.stage').addEventListener('mousedown',()=>{ window.focus(); });
+function _toBlob(cv,q){ return new Promise(res=>cv.toBlob(res,'image/jpeg',q||0.95)); }
+async function _writeFile(dir,name,blob){ const fh=await dir.getFileHandle(name,{create:true}); const w=await fh.createWritable(); await w.write(blob); await w.close(); }
+function _downscale(big,tw){ const c=document.createElement('canvas'); c.width=tw; c.height=Math.max(1,Math.round(big.height*tw/big.width)); const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(big,0,0,c.width,c.height); return c; }
+function _dl(blob,fname){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
 async function save(fmt){
+  const prog=document.getElementById('prog');
+  // 폴더 선택은 클릭 제스처 안에서 먼저 (없으면 다운로드 폴백)
+  let dir=null;
+  if(window.showDirectoryPicker){ try{ dir=await window.showDirectoryPicker({mode:'readwrite'}); }catch(e){ dir=null; } }
   endCrop();
   const pg=document.getElementById('page');
-  const oz=pg.style.transform; pg.style.transform='none'; pg.classList.add('saving');   // 저장 시 실제 크기+오버레이 숨김
-  document.getElementById('prog').textContent='저장 중…';
+  const oz=pg.style.transform; pg.style.transform='none'; pg.classList.add('saving');
+  prog.textContent='렌더링 중…';
   const big=await html2canvas(pg,{scale:2,backgroundColor:'#ffffff',useCORS:true});
   pg.style.transform=oz; pg.classList.remove('saving');
-  const canvas=document.createElement('canvas'); canvas.width=1000; canvas.height=Math.max(1,Math.round(big.height*1000/big.width));
-  const cg=canvas.getContext('2d'); cg.imageSmoothingEnabled=true; cg.imageSmoothingQuality='high'; cg.drawImage(big,0,0,canvas.width,canvas.height);
-  const mime=fmt==='png'?'image/png':'image/jpeg';
-  const blob=await new Promise(res=>canvas.toBlob(res,mime,fmt==='png'?undefined:0.95));
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(P.name_en||'상세페이지')+'.'+fmt; a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1500);
-  document.getElementById('prog').textContent='완료!';
+  const name=(P.name_en||'상세페이지').replace(/[\\/:*?"<>|]/g,'_');
+  // 한통(가로 1000px)
+  const whole=_downscale(big,1000);
+  const wholeBlob=await _toBlob(whole,0.95);
+  // 자른버전(가로 그대로 2000px, 세로 3000px씩)
+  const SLICE=3000, bw=big.width; const slices=[];
+  for(let y=0,idx=1; y<big.height; y+=SLICE,idx++){ const h=Math.min(SLICE,big.height-y); const sc=document.createElement('canvas'); sc.width=bw; sc.height=h; sc.getContext('2d').drawImage(big,0,y,bw,h,0,0,bw,h); slices.push({idx,blob:await _toBlob(sc,0.95)}); }
+  if(dir){
+    prog.textContent='저장 중…';
+    await _writeFile(dir, name+'.jpg', wholeBlob);
+    const imgDir=await dir.getDirectoryHandle('images',{create:true});
+    for(const s of slices){ await _writeFile(imgDir, name+'_'+String(s.idx).padStart(2,'0')+'.jpg', s.blob); }
+    prog.textContent='완료! (한통 + images 폴더 '+slices.length+'컷)';
+  } else {
+    // 폴백: 브라우저 다운로드 (폴더 지정 안 함)
+    _dl(wholeBlob, name+'.jpg');
+    for(const s of slices){ _dl(s.blob, name+'_'+String(s.idx).padStart(2,'0')+'.jpg'); }
+    prog.textContent='완료! (다운로드 '+(slices.length+1)+'개)';
+  }
 }
 loadInit();
 renderModelUI();
