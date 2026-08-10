@@ -2164,6 +2164,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
     </details>
     <div class="divider"></div>
     <div class="lbl">상세페이지 생성하기</div>
+    <button class="btn btn-line" onclick="pickBaseDir()"><span id="basedirlabel">📁 저장 폴더 지정</span></button>
     <button class="btn btn-red" onclick="save('jpg')">📥 저장하기</button>
     <span id="prog"></span>
   </div>
@@ -2446,6 +2447,15 @@ window.addEventListener('keydown',e=>{
 // 미리보기 클릭 시 iframe에 포커스(키 입력 받도록)
 document.querySelector('.stage').setAttribute('tabindex','0');
 document.querySelector('.stage').addEventListener('mousedown',()=>{ window.focus(); });
+function _idb(){ return new Promise((res,rej)=>{ const r=indexedDB.open('lzfs',1); r.onupgradeneeded=()=>r.result.createObjectStore('h'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function _idbSet(k,v){ const db=await _idb(); return new Promise((res,rej)=>{ const t=db.transaction('h','readwrite'); t.objectStore('h').put(v,k); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
+async function _idbGet(k){ const db=await _idb(); return new Promise((res,rej)=>{ const t=db.transaction('h','readonly'); const q=t.objectStore('h').get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); }
+let baseDir=null;
+async function _verifyPerm(h){ try{ let p=await h.queryPermission({mode:'readwrite'}); if(p==='granted')return true; p=await h.requestPermission({mode:'readwrite'}); return p==='granted'; }catch(e){ return false; } }
+function _baseLabel(){ const el=document.getElementById('basedirlabel'); if(el) el.textContent = baseDir ? ('📁 '+baseDir.name+' (변경)') : '📁 저장 폴더 지정'; }
+async function pickBaseDir(){ if(!window.showDirectoryPicker){ alert('이 브라우저는 폴더 지정을 지원 안 해요 (Chrome/Edge 권장)'); return; } try{ baseDir=await window.showDirectoryPicker({mode:'readwrite'}); try{ await _idbSet('baseDir',baseDir); }catch(e){} _baseLabel(); }catch(e){} }
+async function ensureBaseDir(){ if(baseDir && await _verifyPerm(baseDir)) return baseDir; try{ const h=await _idbGet('baseDir'); if(h && await _verifyPerm(h)){ baseDir=h; _baseLabel(); return h; } }catch(e){} return null; }
+async function restoreBaseDir(){ try{ const h=await _idbGet('baseDir'); if(h){ baseDir=h; _baseLabel(); } }catch(e){} }
 function _toBlob(cv,q){ return new Promise(res=>cv.toBlob(res,'image/jpeg',q||0.95)); }
 async function _writeFile(dir,name,blob){ const fh=await dir.getFileHandle(name,{create:true}); const w=await fh.createWritable(); await w.write(blob); await w.close(); }
 function _downscale(big,tw){ const c=document.createElement('canvas'); c.width=tw; c.height=Math.max(1,Math.round(big.height*tw/big.width)); const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(big,0,0,c.width,c.height); return c; }
@@ -2454,7 +2464,9 @@ async function save(fmt){
   const prog=document.getElementById('prog');
   // 폴더 선택은 클릭 제스처 안에서 먼저 (없으면 다운로드 폴백)
   let dir=null;
-  if(window.showDirectoryPicker){ try{ dir=await window.showDirectoryPicker({mode:'readwrite'}); }catch(e){ dir=null; } }
+  const _base=await ensureBaseDir();
+  if(_base){ const _fn=(P.name_en||'상세페이지').replace(/\//g,'-'); try{ dir=await _base.getDirectoryHandle(_fn,{create:true}); }catch(e){ dir=null; } }
+  if(!dir && window.showDirectoryPicker){ try{ dir=await window.showDirectoryPicker({mode:'readwrite'}); }catch(e){ dir=null; } }
   endCrop();
   const pg=document.getElementById('page');
   const oz=pg.style.transform; pg.style.transform='none'; pg.classList.add('saving');
@@ -2505,6 +2517,7 @@ loadInit();
 renderModelUI();
 fillProducts();
 applyDefaultGroup();
+restoreBaseDir();
 </script></body></html>
 """
 
