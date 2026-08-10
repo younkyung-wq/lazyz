@@ -2464,9 +2464,9 @@ async function save(fmt){
   const prog=document.getElementById('prog');
   // 폴더 선택은 클릭 제스처 안에서 먼저 (없으면 다운로드 폴백)
   let dir=null;
-  const _base=await ensureBaseDir();
+  let _base=await ensureBaseDir();
+  if(!_base && window.showDirectoryPicker){ alert('저장할 상위 폴더(02_상세_썸네일)를 한 번만 선택해주세요.\n이후엔 상품별 폴더에 자동 저장돼요.'); try{ _base=await window.showDirectoryPicker({mode:'readwrite'}); baseDir=_base; try{ await _idbSet('baseDir',_base); }catch(e){} _baseLabel(); }catch(e){ _base=null; } }
   if(_base){ const _fn=(P.name_en||'상세페이지').replace(/\//g,'-'); try{ dir=await _base.getDirectoryHandle(_fn,{create:true}); }catch(e){ dir=null; } }
-  if(!dir && window.showDirectoryPicker){ try{ dir=await window.showDirectoryPicker({mode:'readwrite'}); }catch(e){ dir=null; } }
   endCrop();
   const pg=document.getElementById('page');
   const oz=pg.style.transform; pg.style.transform='none'; pg.classList.add('saving');
