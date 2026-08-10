@@ -2108,6 +2108,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .imgrow .del:hover{background:#ff4b4b;}
 .imgrow .cropbar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%) scale(var(--iz,1));transform-origin:bottom center;background:#111;color:#fff;font-size:13px;padding:6px 14px;border-radius:20px;z-index:3;display:none;gap:12px;}
 .imgrow.cropping .cropbar{display:flex;}
+#page.saving .badge,#page.saving .del,#page.saving .cropbar{display:none !important;}
 .imgrow .cropbar span{cursor:pointer;}
 .sec{padding:0 110px;margin-top:190px;}
 .sec h2{font-size:40px;font-weight:700;letter-spacing:-0.5px;line-height:1;margin-bottom:52px;color:#111;}
@@ -2437,10 +2438,10 @@ document.querySelector('.stage').addEventListener('mousedown',()=>{ window.focus
 async function save(fmt){
   endCrop();
   const pg=document.getElementById('page');
-  const oz=pg.style.transform; pg.style.transform='none';   // 저장 시 실제 크기로
+  const oz=pg.style.transform; pg.style.transform='none'; pg.classList.add('saving');   // 저장 시 실제 크기+오버레이 숨김
   document.getElementById('prog').textContent='저장 중…';
-  const canvas=await html2canvas(pg,{scale:2,backgroundColor:'#ffffff',useCORS:true});
-  pg.style.transform=oz;
+  const canvas=await html2canvas(pg,{scale:1,backgroundColor:'#ffffff',useCORS:true});
+  pg.style.transform=oz; pg.classList.remove('saving');
   const mime=fmt==='png'?'image/png':'image/jpeg';
   const blob=await new Promise(res=>canvas.toBlob(res,mime,fmt==='png'?undefined:0.95));
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(P.name_en||'상세페이지')+'.'+fmt; a.click();
