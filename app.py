@@ -2321,7 +2321,7 @@ function sectionsHTML(){
   +'<div class="sec"><h2 data-k="name_en" contenteditable>'+esc(P.name_en)+'</h2><div class="k" data-k="desc" contenteditable>'+esc(P.desc)+'</div></div>'
   +'<div class="sec">'+sizeGuide()+'</div>'
   +modelsHTML()
-  +'<div class="sec"><h2>Care</h2><div class="fab">Fabric : <span data-k="fabric" contenteditable>'+esc(P.fabric)+'</span><br>Made in <span data-k="made" contenteditable>'+esc(P.made||'Korea')+'</span></div><div class="k" data-k="care" contenteditable>'+esc(P.care)+'</div></div>'
+  +'<div class="sec"><h2>Care</h2><div class="fab">Fabric : <span data-k="fabric" contenteditable>'+esc(P.fabric)+'</span><div style="margin-top:14px;">Made in <span data-k="made" contenteditable>'+esc(P.made||'Korea')+'</span></div></div><div class="k" data-k="care" contenteditable>'+esc(P.care)+'</div></div>'
   +'<div class="sec"><h2>Exchange / Refund</h2><div class="k" data-k="refund" contenteditable>'+esc(P.refund)+'</div></div>';
 }
 function bindEditable(){
