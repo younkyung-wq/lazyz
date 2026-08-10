@@ -2200,10 +2200,12 @@ function colorRank(n){n=n.toUpperCase(); if(n.includes('WH')||n.includes('화이
 function grp(n){ if(n.includes('누끼'))return 1; if(/-F-/i.test(n))return 0; return 2; }
 function numOf(n){const m=n.match(/(\d+)(?=\.\w+$)/); return m?parseInt(m[1]):0;}
 const CODE_NAME={BK:'BLACK',BR:'BROWN',WH:'WHITE',IV:'IVORY',GR:'GRAY',CH:'CHARCOAL',PK:'PINK',BE:'BEIGE',NV:'NAVY',BL:'BLUE',RD:'RED',GN:'GREEN',SK:'SKY',LV:'LAVENDER',LG:'LIGHT GRAY',CO:'COCOA',MT:'MINT',CR:'CREAM',LB:'LEMON BUTTER'};
-function niColorName(fname){ const m=(fname||'').match(/누끼[\-_ ]*([A-Za-z]+)/); if(!m) return ''; const code=m[1].toUpperCase(); return CODE_NAME[code] || code; }
+const CODE_ALIAS=[['WH','IV','CR'],['GR','GY','LG'],['CO','BR']];
+function sameColor(a,b){ if(!a||!b)return false; if(a===b)return true; for(const g of CODE_ALIAS){ if(g.indexOf(a)>=0&&g.indexOf(b)>=0)return true; } return false; }
+function niColorName(fname){ const m=(fname||'').match(/누끼[\-_ ]*([A-Za-z]+)/); if(!m) return ''; const code=m[1].toUpperCase(); const cols=(typeof P!=='undefined'&&P.colors)?P.colors:[]; for(const c of cols){ if(sameColor(codeOfColor(c),code)) return (c.en||'').toUpperCase(); } return CODE_NAME[code] || code; }
 function codeOfColor(c){ const en=(c.en||'').toString().toUpperCase().trim(); for(const code in CODE_NAME){ if(CODE_NAME[code]===en) return code; } return ''; }
 function colorCodeOf(fname){ const f=(fname||'').toUpperCase(); for(const code in CODE_NAME){ if(new RegExp('[\\-_]'+code+'(?=[0-9\\-_.]|$)').test(f)) return code; } return ''; }
-function colorRankAPI(fname){ const cols=(typeof P!=='undefined'&&P.colors)?P.colors:[]; if(cols.length){ const code=colorCodeOf(fname); if(code){ for(let i=0;i<cols.length;i++){ if(codeOfColor(cols[i])===code) return i; } } return 99; } return colorRank(fname); }
+function colorRankAPI(fname){ const cols=(typeof P!=='undefined'&&P.colors)?P.colors:[]; if(cols.length){ const code=colorCodeOf(fname); if(code){ for(let i=0;i<cols.length;i++){ if(sameColor(codeOfColor(cols[i]),code)) return i; } } return 99; } return colorRank(fname); }
 function sortImgs(){ imgs.sort((a,b)=> grp(a.name)-grp(b.name) || colorRankAPI(a.name)-colorRankAPI(b.name) || numOf(a.name)-numOf(b.name) || a.name.localeCompare(b.name)); }
 function drawRow(o){
   const cv=o.canvas, img=o.img, t=o.crop;
