@@ -2487,7 +2487,10 @@ async function save(fmt){
   const mc=imgs.filter(o=>grp(o.name)===0 && o.el);
   for(let i=0;i<mc.length;i+=2){ const seg=mc.slice(i,i+2); groups.push([seg[0].el, seg[seg.length-1].el]); }
   const nk=imgs.filter(o=>grp(o.name)===1 && o.el);
-  { let gi=0; while(gi<nk.length){ const bc=baseCode(nk[gi].name); let gj=gi; while(gj<nk.length && baseCode(nk[gj].name)===bc) gj++; groups.push([nk[gi].el, nk[gj-1].el]); gi=gj; } }
+  { const colorGroups=[]; let gi=0; while(gi<nk.length){ const bc=baseCode(nk[gi].name); let gj=gi; while(gj<nk.length && baseCode(nk[gj].name)===bc) gj++; colorGroups.push(nk.slice(gi,gj)); gi=gj; }
+    let _sg=[]; const _flush=()=>{ if(_sg.length){ groups.push([_sg[0].el, _sg[_sg.length-1].el]); _sg=[]; } };
+    for(const cg of colorGroups){ if(cg.length>1){ _flush(); groups.push([cg[0].el, cg[cg.length-1].el]); } else { _sg.push(cg[0]); } }
+    _flush(); }
   const bkk=imgs.filter(o=>grp(o.name)===2 && o.el);
   if(bkk.length) groups.push([bkk[0].el, bkk[bkk.length-1].el]);
   const secs=[...pg.querySelectorAll('.sec')];
