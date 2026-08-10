@@ -2458,7 +2458,7 @@ elif "상세 생성기" in menu:
         if not items:
             items, sv = ["Total Length"], {"Free": [""]}
         nm = p.get("제품명", {}) or {}
-        label = nm.get("ko") or nm.get("en") or "?"
+        label = nm.get("en") or nm.get("ko") or "?"
         PRODUCTS.append({"label": label, "name_en": name_en, "desc": desc, "fabric": fabric,
                          "sizeItems": items, "sizeVals": sv, "sizeNote": sizenote})
     if not PRODUCTS:
