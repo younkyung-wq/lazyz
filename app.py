@@ -2108,7 +2108,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .imgrow .del:hover{background:#ff4b4b;}
 .imgrow .cropbar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%) scale(var(--iz,1));transform-origin:bottom center;background:#111;color:#fff;font-size:13px;padding:6px 14px;border-radius:20px;z-index:3;display:none;gap:12px;}
 .imgrow.cropping .cropbar{display:flex;}
-.imgrow .colorcap{text-align:center;font-size:26px;font-weight:400;letter-spacing:0.08em;color:#222;padding:24px 0 40px;}
+.imgrow .colorcap{text-align:center;font-size:26px;font-weight:400;letter-spacing:0.08em;color:#222;padding:24px 0 40px;font-family:'Pretendard',-apple-system,sans-serif;}
 #page.saving .badge,#page.saving .del,#page.saving .cropbar{display:none !important;}
 .imgrow .cropbar span{cursor:pointer;}
 .sec{padding:0 110px;margin-top:190px;}
@@ -2235,7 +2235,7 @@ function renderPage(){
     bd.addEventListener('mousedown',ev=>{ ev.preventDefault(); ev.stopPropagation(); endCrop(); pointer={o:o,row:row,sx:ev.clientX,sy:ev.clientY,lx:ev.clientX,ly:ev.clientY,moved:true,mode:'reorder'}; row.style.opacity='0.4'; document.body.style.userSelect='none'; });
     cv.addEventListener('mousedown',e=>{ e.preventDefault(); const md=(cropRow===row?'pan':'pending'); if(md==='pending') startCrop(row,o); pointer={o:o,row:row,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,moved:false,mode:md}; });
     cv.addEventListener('wheel',e=>{ if(cropRow!==row)return; e.preventDefault(); o.crop.z*=(e.deltaY<0?1.04:0.96); o.crop.z=Math.max(1,Math.min(4,o.crop.z)); drawRow(o); },{passive:false});
-    pg.appendChild(row); o.el=row; drawRow(o); if(/누끼/.test(o.name)){ const cn=niColorName(o.name); if(cn){ const cd=document.createElement('div'); cd.className='colorcap'; cd.textContent=cn.toUpperCase(); row.appendChild(cd); } }
+    pg.appendChild(row); o.el=row; drawRow(o); if(/누끼/.test(o.name) && !/누끼[\-_ ]*[A-Za-z]+\d/.test(o.name)){ const cn=niColorName(o.name); if(cn){ const cd=document.createElement('div'); cd.className='colorcap'; cd.textContent=cn.toUpperCase(); row.appendChild(cd); } }
   });
   // 텍스트 섹션들
   pg.insertAdjacentHTML('beforeend', sectionsHTML());
