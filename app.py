@@ -2206,7 +2206,8 @@ function niColorName(fname){ const m=(fname||'').match(/누끼[\-_ ]*([A-Za-z]+)
 function codeOfColor(c){ const en=(c.en||'').toString().toUpperCase().trim(); for(const code in CODE_NAME){ if(CODE_NAME[code]===en) return code; } return ''; }
 function colorCodeOf(fname){ const f=(fname||'').toUpperCase(); for(const code in CODE_NAME){ if(new RegExp('[\\-_]'+code+'(?=[0-9\\-_.]|$)').test(f)) return code; } return ''; }
 function colorRankAPI(fname){ const cols=(typeof P!=='undefined'&&P.colors)?P.colors:[]; if(cols.length){ const code=colorCodeOf(fname); if(code){ for(let i=0;i<cols.length;i++){ if(sameColor(codeOfColor(cols[i]),code)) return i; } } return 99; } return colorRank(fname); }
-function sortImgs(){ imgs.sort((a,b)=> grp(a.name)-grp(b.name) || colorRankAPI(a.name)-colorRankAPI(b.name) || numOf(a.name)-numOf(b.name) || a.name.localeCompare(b.name)); }
+function apbk(n){ if(/앞/.test(n))return 0; if(/뒤/.test(n))return 1; return 2; }
+function sortImgs(){ imgs.sort((a,b)=> grp(a.name)-grp(b.name) || colorRankAPI(a.name)-colorRankAPI(b.name) || apbk(a.name)-apbk(b.name) || numOf(a.name)-numOf(b.name) || a.name.localeCompare(b.name)); }
 function drawRow(o){
   const cv=o.canvas, img=o.img, t=o.crop;
   const W=1000, H=Math.round(W*img.height/img.width);
