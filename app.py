@@ -12,6 +12,8 @@ except Exception:
 
 # ── 기획 데이터 연동 API (읽기 전용) ──
 PLANNING_SEASON = "26FW"   # 이 시즌 상품만 불러옴 (시즌 바뀌면 이 값만 수정)
+# 촬영차수 F(가을) 수동 분류 — 여기 스타일넘버는 F, 나머지는 W
+F_STYLES = {"26FWB34","26FWB33","26FWA37","26FWA18","26FWT12","26FWT14","26FWB07","26FWT11","26FWT08","26FWB06","26FWT05","26FWT04","26FWT03","26FWT02","26FWT01","26FWT30","26FWB35","26FWB31","26FWB10"}
 SIZE_EN = {
     '총장':'Total Length','기장':'Length','어깨너비':'Shoulder Width','가슴단면':'Chest',
     '밑단단면':'Hem','밑단둘레':'Hem','소매길이':'Sleeve Length','암홀':'Armhole','목너비':'Neck Width',
@@ -2064,6 +2066,9 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .panel>*{flex-shrink:0;}
 .panel h3{font-size:15px;font-weight:800;color:#111;}
 .panel .lbl{font-size:12px;font-weight:700;color:#888;margin-bottom:-6px;}
+.ftabs{display:flex;gap:6px;}
+.ftab{flex:1;padding:7px 0;border:1.5px solid #e2e2e2;border-radius:8px;background:#fff;font-size:12px;font-weight:700;color:#888;cursor:pointer;}
+.ftab.on{background:#111;color:#fff;border-color:#111;}
 .psel{width:100%;padding:9px 34px 9px 11px;border:1.5px solid #e2e2e2;border-radius:9px;font-size:12px;color:#333;cursor:pointer;appearance:none;-webkit-appearance:none;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 12px center;}
 .btn{padding:11px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;width:100%;}
 .btn-dark{background:#111;color:#fff;} .btn-line{background:#fff;border:1.5px solid #ddd;color:#555;} .btn-red{background:#ff4b4b;color:#fff;}
@@ -2125,6 +2130,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
   <div class="stage"><div id="page"></div></div>
   <div class="panel">
     <h3>상세 생성기</h3>
+    <div class="ftabs"><button class="ftab on" data-f="ALL" onclick="setFilter('ALL')">전체</button><button class="ftab" data-f="F" onclick="setFilter('F')">F 가을</button><button class="ftab" data-f="W" onclick="setFilter('W')">W 겨울</button></div>
     <div class="lbl">상품 선택 <span id="prodcount" style="color:#bbb;font-weight:400;margin-left:8px;"></span></div>
     <select id="prodsel" class="psel" onchange="selectProduct(this.value)"></select>
     <div class="divider"></div>
@@ -2223,8 +2229,10 @@ function renderPage(){
   setupModels();
   applyZoom();
 }
-function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; const _c=document.getElementById("prodcount"); if(_c)_c.textContent=(+i+1)+" / "+PRODUCTS.length; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; renderPage(); }
-function fillProducts(){ const sel=document.getElementById('prodsel'); if(!sel)return; if(!PRODUCTS.length){sel.innerHTML='<option>상품 없음</option>';return;} sel.innerHTML=PRODUCTS.map((p,i)=>'<option value="'+i+'">'+esc(p.label||('상품 '+(i+1)))+'</option>').join(''); sel.value='0'; const _c=document.getElementById('prodcount'); if(_c)_c.textContent='1 / '+PRODUCTS.length; }
+function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; const filt=PRODUCTS.map((x,j)=>({x,j})).filter(o=>prodFilter==='ALL'||o.x.shoot===prodFilter); const pos=filt.findIndex(o=>o.j===+i); const _c=document.getElementById('prodcount'); if(_c)_c.textContent=(pos+1)+' / '+filt.length; renderPage(); }
+let prodFilter='ALL';
+function setFilter(f){ prodFilter=f; document.querySelectorAll('.ftab').forEach(b=>b.classList.toggle('on', b.dataset.f===f)); fillProducts(); }
+function fillProducts(){ const sel=document.getElementById('prodsel'); if(!sel)return; if(!PRODUCTS.length){sel.innerHTML='<option>상품 없음</option>'; const _c0=document.getElementById('prodcount'); if(_c0)_c0.textContent=''; return;} const filt=PRODUCTS.map((p,i)=>({p,i})).filter(o=>prodFilter==='ALL'||o.p.shoot===prodFilter); sel.innerHTML=filt.map(o=>'<option value="'+o.i+'">'+esc(o.p.label||('상품 '+(o.i+1)))+'</option>').join(''); if(filt.length){ sel.value=String(filt[0].i); selectProduct(filt[0].i); } else { const _c=document.getElementById('prodcount'); if(_c)_c.textContent='0 / 0'; } }
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 function sizeGuide(){
   const sizes=Object.keys(P.sizeVals);
@@ -2460,7 +2468,8 @@ elif "상세 생성기" in menu:
         nm = p.get("제품명", {}) or {}
         label = nm.get("en") or nm.get("ko") or "?"
         PRODUCTS.append({"label": label, "name_en": name_en, "desc": desc, "fabric": fabric,
-                         "sizeItems": items, "sizeVals": sv, "sizeNote": sizenote})
+                         "sizeItems": items, "sizeVals": sv, "sizeNote": sizenote,
+                         "shoot": ("F" if p.get("스타일넘버","") in F_STYLES else "W")})
     if not PRODUCTS:
         PRODUCTS = [{"label": "(기본)", "name_en": "Salt and Sun Stripe Shirt", "desc": "-",
                      "fabric": "Cotton 90% Polyester 10%",
