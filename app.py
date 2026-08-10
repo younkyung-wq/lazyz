@@ -65,7 +65,7 @@ def planning_extract(p):
         note = "1~2cm 의 오차가 발생할 수 있습니다."
     else:
         note = f"사이즈 실측 준비중" + (f" (측정상태: {status})" if status else "")
-    made = MADE_EN.get((p.get('제조국') or '').strip(), (p.get('제조국') or '').strip())
+    made = (p.get('제조국') or '').strip()
     return name_en, desc, fabric, items, sv, note, made
 
 st.set_page_config(
@@ -2169,7 +2169,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 <script>
 // 시트에서 가져온 제품 정보(수정 가능)
 const PRODUCTS = __PRODUCTS__;
-const _p0 = PRODUCTS[0] || {name_en:'Product',desc:'',fabric:'',sizeItems:['Total Length'],sizeVals:{'Free':['']},sizeNote:'',made:'Korea'};
+const _p0 = PRODUCTS[0] || {name_en:'Product',desc:'',fabric:'',sizeItems:['Total Length'],sizeVals:{'Free':['']},sizeNote:'',made:'국내'};
 const P={
  name_en: _p0.name_en,
  desc: _p0.desc,
@@ -2321,7 +2321,7 @@ function sectionsHTML(){
   +'<div class="sec"><h2 data-k="name_en" contenteditable>'+esc(P.name_en)+'</h2><div class="k" data-k="desc" contenteditable>'+esc(P.desc)+'</div></div>'
   +'<div class="sec">'+sizeGuide()+'</div>'
   +modelsHTML()
-  +'<div class="sec"><h2>Care</h2><div class="fab">Fabric : <span data-k="fabric" contenteditable>'+esc(P.fabric)+'</span><div style="margin-top:14px;">Made in <span data-k="made" contenteditable>'+esc(P.made||'Korea')+'</span></div></div><div class="k" data-k="care" contenteditable>'+esc(P.care)+'</div></div>'
+  +'<div class="sec"><h2>Care</h2><div class="fab">Fabric : <span data-k="fabric" contenteditable>'+esc(P.fabric)+'</span><div style="margin-top:14px;">- 제조국 : <span data-k="made" contenteditable>'+esc(P.made||'국내')+'</span></div></div><div class="k" data-k="care" contenteditable>'+esc(P.care)+'</div></div>'
   +'<div class="sec"><h2>Exchange / Refund</h2><div class="k" data-k="refund" contenteditable>'+esc(P.refund)+'</div></div>';
 }
 function bindEditable(){
