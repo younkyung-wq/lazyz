@@ -2461,6 +2461,7 @@ async function pickBaseDir(){ if(!window.showDirectoryPicker){ alert('이 브라
 async function ensureBaseDir(){ if(baseDir && await _verifyPerm(baseDir)) return baseDir; try{ const h=await _idbGet('baseDir'); if(h && await _verifyPerm(h)){ baseDir=h; _baseLabel(); return h; } }catch(e){} return null; }
 async function restoreBaseDir(){ try{ const h=await _idbGet('baseDir'); if(h){ baseDir=h; _baseLabel(); } }catch(e){} }
 function _toBlob(cv,q){ return new Promise(res=>cv.toBlob(res,'image/jpeg',q||0.95)); }
+async function _blobUnder(cv,maxB){ let q=0.92, blob=await _toBlob(cv,q); while(blob.size>maxB && q>0.4){ q-=0.08; blob=await _toBlob(cv,q); } return blob; }
 async function _writeFile(dir,name,blob){ const fh=await dir.getFileHandle(name,{create:true}); const w=await fh.createWritable(); await w.write(blob); await w.close(); }
 function _downscale(big,tw){ const c=document.createElement('canvas'); c.width=tw; c.height=Math.max(1,Math.round(big.height*tw/big.width)); const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(big,0,0,c.width,c.height); return c; }
 function _dl(blob,fname){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
@@ -2522,7 +2523,13 @@ async function save(fmt){
         hidden.forEach(el=>el.style.display='');
         const kw=_downscale(kbig,1000);
         const cn=_capColor(colorNameForCode(code)).replace(/[\\/:*?"<>|]/g,'_');
-        await put(kDir, name+'_'+cn+'.jpg', await _toBlob(kw,0.95));
+        const KMAX=10000, MAXB=3000000, kctx=kw.getContext('2d'), KW=kw.width, KH=kw.height;
+        const blankK=(y)=>{ if(y<=0||y>=KH) return true; const d=kctx.getImageData(0,y,KW,1).data; for(let x=0;x<KW;x+=6){ const i=x*4; if(d[i+3]>10 && !(d[i]>247&&d[i+1]>247&&d[i+2]>247)) return false; } return true; };
+        const kcuts=[0]; let kcur=0;
+        while(KH-kcur > KMAX){ let target=kcur+KMAX, best=-1; for(let dd=0; dd<=2500; dd++){ if(target-dd>kcur+800 && blankK(target-dd)){ best=target-dd; break; } } if(best<0) best=target; kcuts.push(best); kcur=best; }
+        kcuts.push(KH);
+        const kmulti = kcuts.length-1 > 1;
+        for(let ci=0; ci<kcuts.length-1; ci++){ const y=kcuts[ci], h=kcuts[ci+1]-y; if(h<=0) continue; const cc=document.createElement('canvas'); cc.width=KW; cc.height=h; cc.getContext('2d').drawImage(kw,0,y,KW,h,0,0,KW,h); const fn = kmulti ? (name+'_'+cn+'_'+String(ci+1).padStart(2,'0')+'.jpg') : (name+'_'+cn+'.jpg'); await put(kDir, fn, await _blobUnder(cc, MAXB)); }
       }
       done++;
     }
