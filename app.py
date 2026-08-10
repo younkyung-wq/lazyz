@@ -2498,8 +2498,8 @@ async function save(fmt){
   const cuts=[0];
   for(let k=1;k<groups.length;k++){ let mid=Math.round((botY(groups[k-1][1])+topY(groups[k][0]))/2); mid=Math.max(cuts[cuts.length-1]+1, Math.min(mid,bh)); cuts.push(mid); }
   cuts.push(bh);
-  const slices=[];
-  for(let k=0;k<cuts.length-1;k++){ const y=cuts[k], h=cuts[k+1]-y; if(h<=0) continue; const sc2=document.createElement('canvas'); sc2.width=bw; sc2.height=h; sc2.getContext('2d').drawImage(big,0,y,bw,h,0,0,bw,h); slices.push({idx:k+1, blob:await _toBlob(sc2,0.95)}); }
+  const slices=[]; const OUTW=1000, _sf=OUTW/bw;
+  for(let k=0;k<cuts.length-1;k++){ const y=cuts[k], h=cuts[k+1]-y; if(h<=0) continue; const oh=Math.max(1,Math.round(h*_sf)); const sc2=document.createElement('canvas'); sc2.width=OUTW; sc2.height=oh; const g2=sc2.getContext('2d'); g2.imageSmoothingEnabled=true; g2.imageSmoothingQuality='high'; g2.drawImage(big,0,y,bw,h,0,0,OUTW,oh); slices.push({idx:k+1, blob:await _toBlob(sc2,0.95)}); }
   if(dir){
     prog.textContent='저장 중…';
     await _writeFile(dir, name+'.jpg', wholeBlob);
