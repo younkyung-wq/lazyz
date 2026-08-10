@@ -2125,9 +2125,6 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
   <div class="stage"><div id="page"></div></div>
   <div class="panel">
     <h3>상세 생성기</h3>
-    <div class="lbl">기획 링크로 찾기</div>
-    <input id="pidlink" class="psel" type="text" placeholder="workspace 링크 붙여넣기" oninput="applyLink(this.value)" style="background:#fff;">
-    <span id="pidmsg" style="font-size:11px;color:#bbb;"></span>
     <div class="lbl">상품 선택 <span id="prodcount" style="color:#bbb;font-weight:400;margin-left:8px;"></span></div>
     <select id="prodsel" class="psel" onchange="selectProduct(this.value)"></select>
     <div class="divider"></div>
@@ -2227,7 +2224,6 @@ function renderPage(){
   applyZoom();
 }
 function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; const _c=document.getElementById("prodcount"); if(_c)_c.textContent=(+i+1)+" / "+PRODUCTS.length; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; renderPage(); }
-function applyLink(u){ const msg=document.getElementById('pidmsg'); if(!u||!u.trim()){ if(msg)msg.textContent=''; return; } const m=u.match(/pid(?:=|%3D)([0-9a-fA-F-]{36})/); if(!m){ if(msg){msg.style.color='#bbb'; msg.textContent='링크에서 상품ID를 못 찾음';} return; } const id=m[1].toLowerCase(); const idx=PRODUCTS.findIndex(p=>(p.pid||'').toLowerCase()===id); if(idx>=0){ const sel=document.getElementById('prodsel'); if(sel)sel.value=String(idx); selectProduct(idx); if(msg){msg.style.color='#2e9e44'; msg.textContent='\u2713 상품 선택됨';} } else { if(msg){msg.style.color='#e0554b'; msg.textContent='이 시즌 목록에 없는 상품이에요';} } }
 function fillProducts(){ const sel=document.getElementById('prodsel'); if(!sel)return; if(!PRODUCTS.length){sel.innerHTML='<option>상품 없음</option>';return;} sel.innerHTML=PRODUCTS.map((p,i)=>'<option value="'+i+'">'+esc(p.label||('상품 '+(i+1)))+'</option>').join(''); sel.value='0'; const _c=document.getElementById('prodcount'); if(_c)_c.textContent='1 / '+PRODUCTS.length; }
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 function sizeGuide(){
@@ -2464,8 +2460,7 @@ elif "상세 생성기" in menu:
         nm = p.get("제품명", {}) or {}
         label = nm.get("ko") or nm.get("en") or "?"
         PRODUCTS.append({"label": label, "name_en": name_en, "desc": desc, "fabric": fabric,
-                         "sizeItems": items, "sizeVals": sv, "sizeNote": sizenote,
-                         "pid": p.get("기획ID","")})
+                         "sizeItems": items, "sizeVals": sv, "sizeNote": sizenote})
     if not PRODUCTS:
         PRODUCTS = [{"label": "(기본)", "name_en": "Salt and Sun Stripe Shirt", "desc": "-",
                      "fabric": "Cotton 90% Polyester 10%",
