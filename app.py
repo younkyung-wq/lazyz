@@ -2193,7 +2193,7 @@ function loadInit(){
   if(!INIT_IMAGES||!INIT_IMAGES.length){ renderPage(); return; }
   let n=INIT_IMAGES.length;
   INIT_IMAGES.forEach(it=>{ const im=new Image();
-    im.onload=()=>{ imgs.push({name:it.name,img:im,url:it.src,crop:{z:1,cx:0.5,cy:0.5}}); if(--n===0){sortImgs();renderPage();} };
+    im.onload=()=>{ imgs.push({name:(it.name||'').normalize('NFC'),img:im,url:it.src,crop:{z:1,cx:0.5,cy:0.5}}); if(--n===0){sortImgs();renderPage();} };
     im.src=it.src; });
 }
 function colorRank(n){n=n.toUpperCase(); if(n.includes('WH')||n.includes('화이트'))return 0; if(n.includes('BR')||n.includes('브라운'))return 1; if(n.includes('BK')||n.includes('블랙'))return 2; return 9;}
@@ -2403,7 +2403,7 @@ function addFiles(fileList){
   const files=[...fileList].filter(f=>f.type.startsWith('image/'));
   let n=files.length; if(!n)return;
   files.forEach(f=>{ const url=URL.createObjectURL(f); const im=new Image();
-    im.onload=()=>{ imgs.push({name:f.name,img:im,url,crop:{z:1,cx:0.5,cy:0.5}}); if(--n===0){sortImgs();renderPage();} }; im.src=url; });
+    im.onload=()=>{ imgs.push({name:(f.name||'').normalize('NFC'),img:im,url,crop:{z:1,cx:0.5,cy:0.5}}); if(--n===0){sortImgs();renderPage();} }; im.src=url; });
 }
 document.getElementById('fi').addEventListener('change',e=>{ addFiles(e.target.files); e.target.value=''; });
 // 폴더 선택 API — "업로드 하시겠습니까" 경고 없이 폴더 읽기
