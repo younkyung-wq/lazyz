@@ -2440,8 +2440,10 @@ async function save(fmt){
   const pg=document.getElementById('page');
   const oz=pg.style.transform; pg.style.transform='none'; pg.classList.add('saving');   // 저장 시 실제 크기+오버레이 숨김
   document.getElementById('prog').textContent='저장 중…';
-  const canvas=await html2canvas(pg,{scale:1,backgroundColor:'#ffffff',useCORS:true});
+  const big=await html2canvas(pg,{scale:2,backgroundColor:'#ffffff',useCORS:true});
   pg.style.transform=oz; pg.classList.remove('saving');
+  const canvas=document.createElement('canvas'); canvas.width=1000; canvas.height=Math.max(1,Math.round(big.height*1000/big.width));
+  const cg=canvas.getContext('2d'); cg.imageSmoothingEnabled=true; cg.imageSmoothingQuality='high'; cg.drawImage(big,0,0,canvas.width,canvas.height);
   const mime=fmt==='png'?'image/png':'image/jpeg';
   const blob=await new Promise(res=>canvas.toBlob(res,mime,fmt==='png'?undefined:0.95));
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(P.name_en||'상세페이지')+'.'+fmt; a.click();
