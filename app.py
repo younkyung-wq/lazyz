@@ -2108,6 +2108,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .imgrow .del:hover{background:#ff4b4b;}
 .imgrow .cropbar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%) scale(var(--iz,1));transform-origin:bottom center;background:#111;color:#fff;font-size:13px;padding:6px 14px;border-radius:20px;z-index:3;display:none;gap:12px;}
 .imgrow.cropping .cropbar{display:flex;}
+.imgrow .colorcap{text-align:center;font-size:26px;font-weight:400;letter-spacing:0.08em;color:#222;padding:24px 0 40px;}
 #page.saving .badge,#page.saving .del,#page.saving .cropbar{display:none !important;}
 .imgrow .cropbar span{cursor:pointer;}
 .sec{padding:0 110px;margin-top:190px;}
@@ -2179,6 +2180,7 @@ const P={
  sizeNote: _p0.sizeNote,
  fabric: _p0.fabric,
  made: _p0.made,
+ colors: (_p0.colors||[]),
  models: __MODELS__,
  // ── 하단 공통(고정) 케어 가이드 ──
  care:'- 중성세제를 사용하여 30°C 이하의 미지근한 물에 단독 세탁해 주세요.\n- 세탁기 사용 시 약한 세탁 코스를 권장합니다.\n- 표백제 사용은 원단 손상의 원인이 될 수 있으므로 삼가해 주세요.\n- 건조기 사용은 제품 변형 및 수축의 원인이 될 수 있으므로 사용을 피해 주세요.\n- 세탁 후에는 평평한 곳에 뉘어 자연 건조해 주세요.\n\nCotton / Cotton Blend\n- 첫 세탁 시 물 빠짐이 있을 수 있으므로 단독 세탁을 권장합니다.\n- 고온 세탁 및 건조 시 수축이 발생할 수 있으니 주의해 주세요.\n\nModal / Rayon / Tencel\n- 물에 장시간 담가두지 마세요.\n- 강한 탈수 및 비틀어 짜는 행위는 원단 변형의 원인이 될 수 있습니다.\n\nWool / Wool Blend\n- 드라이클리닝을 권장합니다.\n- 물세탁 시 수축 및 변형이 발생할 수 있으므로 주의해 주세요.\n\nPolyester / Synthetic Fabric\n- 고온 세탁 및 건조기 사용 시 원단 변형이 발생할 수 있으니 주의해 주세요.\n- 다림질 시 낮은 온도를 사용해 주세요.',
@@ -2197,6 +2199,12 @@ function loadInit(){
 function colorRank(n){n=n.toUpperCase(); if(n.includes('WH')||n.includes('화이트'))return 0; if(n.includes('BR')||n.includes('브라운'))return 1; if(n.includes('BK')||n.includes('블랙'))return 2; return 9;}
 function grp(n){ if(n.includes('누끼'))return 1; if(/-F-/i.test(n))return 0; return 2; }
 function numOf(n){const m=n.match(/(\d+)(?=\.\w+$)/); return m?parseInt(m[1]):0;}
+function normColor(s){ return (s||'').toLowerCase().replace(/[\s\-_.]/g,''); }
+const CODE2EN={wh:'white',bk:'black',br:'brown',iv:'ivory',gr:'gray',ch:'charcoal',pk:'pink',be:'beige',nv:'navy',bl:'blue',rd:'red',gn:'green',sk:'sky',lv:'lavender',lg:'lightgray',co:'cocoa',mt:'mint',cr:'cream'};
+function matchColorName(fname, colors){ if(!colors||!colors.length) return ''; const f=normColor(fname);
+  for(const c of colors){ const ko=normColor(c.ko), en=normColor(c.en); if((ko&&f.includes(ko))||(en&&f.includes(en))) return (c.en||c.ko); }
+  for(const c of colors){ const en=normColor(c.en); for(const code in CODE2EN){ if(f.includes(code) && en && en.includes(CODE2EN[code])) return (c.en||c.ko); } }
+  return ''; }
 function sortImgs(){ imgs.sort((a,b)=> grp(a.name)-grp(b.name) || colorRank(a.name)-colorRank(b.name) || numOf(a.name)-numOf(b.name) || a.name.localeCompare(b.name)); }
 function drawRow(o){
   const cv=o.canvas, img=o.img, t=o.crop;
@@ -2225,7 +2233,7 @@ function renderPage(){
     bd.addEventListener('mousedown',ev=>{ ev.preventDefault(); ev.stopPropagation(); endCrop(); pointer={o:o,row:row,sx:ev.clientX,sy:ev.clientY,lx:ev.clientX,ly:ev.clientY,moved:true,mode:'reorder'}; row.style.opacity='0.4'; document.body.style.userSelect='none'; });
     cv.addEventListener('mousedown',e=>{ e.preventDefault(); const md=(cropRow===row?'pan':'pending'); if(md==='pending') startCrop(row,o); pointer={o:o,row:row,sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,moved:false,mode:md}; });
     cv.addEventListener('wheel',e=>{ if(cropRow!==row)return; e.preventDefault(); o.crop.z*=(e.deltaY<0?1.04:0.96); o.crop.z=Math.max(1,Math.min(4,o.crop.z)); drawRow(o); },{passive:false});
-    pg.appendChild(row); o.el=row; drawRow(o);
+    pg.appendChild(row); o.el=row; drawRow(o); if(/누끼/.test(o.name)){ const cn=matchColorName(o.name,P.colors); if(cn){ const cd=document.createElement('div'); cd.className='colorcap'; cd.textContent=cn.toUpperCase(); row.appendChild(cd); } }
   });
   // 텍스트 섹션들
   pg.insertAdjacentHTML('beforeend', sectionsHTML());
@@ -2233,7 +2241,7 @@ function renderPage(){
   setupModels();
   applyZoom();
 }
-function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; P.made=p.made; const filt=PRODUCTS.map((x,j)=>({x,j})).filter(o=>prodFilter==='ALL'||o.x.shoot===prodFilter); const pos=filt.findIndex(o=>o.j===+i); const _c=document.getElementById('prodcount'); if(_c)_c.textContent=(pos+1)+' / '+filt.length; renderPage(); }
+function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; P.made=p.made; P.colors=(p.colors||[]); const filt=PRODUCTS.map((x,j)=>({x,j})).filter(o=>prodFilter==='ALL'||o.x.shoot===prodFilter); const pos=filt.findIndex(o=>o.j===+i); const _c=document.getElementById('prodcount'); if(_c)_c.textContent=(pos+1)+' / '+filt.length; renderPage(); }
 let prodFilter='ALL';
 function setFilter(f){ prodFilter=f; document.querySelectorAll('.ftab').forEach(b=>b.classList.toggle('on', b.dataset.f===f)); fillProducts(); }
 function fillProducts(){ const sel=document.getElementById('prodsel'); if(!sel)return; if(!PRODUCTS.length){sel.innerHTML='<option>상품 없음</option>'; const _c0=document.getElementById('prodcount'); if(_c0)_c0.textContent=''; return;} const filt=PRODUCTS.map((p,i)=>({p,i})).filter(o=>prodFilter==='ALL'||o.p.shoot===prodFilter); sel.innerHTML=filt.map(o=>'<option value="'+o.i+'">'+esc(o.p.label||('상품 '+(o.i+1)))+'</option>').join(''); if(filt.length){ sel.value=String(filt[0].i); selectProduct(filt[0].i); } else { const _c=document.getElementById('prodcount'); if(_c)_c.textContent='0 / 0'; } }
@@ -2479,6 +2487,7 @@ elif "상세 생성기" in menu:
         nm = p.get("제품명", {}) or {}
         label = nm.get("ko") or nm.get("en") or "?"
         PRODUCTS.append({"label": label, "name_en": name_en, "desc": desc, "fabric": fabric,
+                         "colors": [{"ko": (c.get("ko") or ""), "en": (c.get("en") or "")} for c in sorted((p.get("컬러") or []), key=lambda c: c.get("순위",99))],
                          "sizeItems": items, "sizeVals": sv, "sizeNote": sizenote,
                          "made": made,
                          "shoot": ("F" if p.get("스타일넘버","") in F_STYLES else "W")})
