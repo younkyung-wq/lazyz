@@ -2271,6 +2271,8 @@ function loadGroups(){ try{return JSON.parse(localStorage.getItem(LSKEY_G)||'[]'
 function savePresets(){ try{localStorage.setItem(LSKEY_P, JSON.stringify(presets));}catch(e){} }
 function saveGroups(){ try{localStorage.setItem(LSKEY_G, JSON.stringify(groups));}catch(e){} }
 let presets=loadPresets(); let groups=loadGroups(); let usedIds=[]; let pendingSrc=null;
+const LSKEY_DEF='lz_default_group';
+let defGroup=(function(){ try{ return localStorage.getItem(LSKEY_DEF)||''; }catch(e){ return ''; } })();
 let pendingImg=null, pendingCrop=null, apDrag=null;
 function drawAp(){ const cv=document.getElementById('apCanvas'); if(!cv||!pendingImg||!pendingCrop)return; const W=180,H=220,r=2; cv.width=W*r;cv.height=H*r; cv.style.width=W+'px';cv.style.height=H+'px'; const g=cv.getContext('2d'); g.setTransform(r,0,0,r,0,0); g.imageSmoothingQuality='high'; g.fillStyle='#f0f0f0'; g.fillRect(0,0,W,H); const img=pendingImg,t=pendingCrop; const base=Math.max(W/img.width,H/img.height); const z=base*t.z; const iw=img.width*z,ih=img.height*z; let dx=W/2-t.cx*iw, dy=H/2-t.cy*ih; dx=Math.min(0,Math.max(W-iw,dx)); dy=Math.min(0,Math.max(H-ih,dy)); t.cx=(W/2-dx)/iw; t.cy=(H/2-dy)/ih; g.drawImage(img,dx,dy,iw,ih); drawGuide(g,W,H); }
 window.addEventListener('mousemove',e=>{ if(!apDrag||!pendingImg||!pendingCrop)return; const cv=document.getElementById('apCanvas'); if(!cv)return; const rect=cv.getBoundingClientRect(); const sc=180/rect.width; const base=Math.max(180/pendingImg.width,220/pendingImg.height); const z=base*pendingCrop.z; const iw=pendingImg.width*z,ih=pendingImg.height*z; pendingCrop.cx-=((e.clientX-apDrag.x)*sc)/iw; pendingCrop.cy-=((e.clientY-apDrag.y)*sc)/ih; apDrag={x:e.clientX,y:e.clientY}; drawAp(); });
@@ -2294,6 +2296,8 @@ function makeGroup(){ if(!usedIds.length){ alert('먼저 그룹으로 묶을 모
   groups.push({id:newId(),name:name||('그룹 '+(groups.length+1)),members:[...usedIds]}); saveGroups(); renderModelUI();
 }
 function useGroup(gid){ const g=groups.find(x=>x.id===gid); if(!g)return; usedIds=g.members.filter(id=>findP(id)); syncModels(); renderModelUI(); }
+function setDefaultGroup(gid){ defGroup=(defGroup===gid?'':gid); try{ if(defGroup)localStorage.setItem(LSKEY_DEF,defGroup); else localStorage.removeItem(LSKEY_DEF); }catch(e){} if(defGroup){ useGroup(defGroup); } else { renderModelUI(); } }
+function applyDefaultGroup(){ if(defGroup && groups.find(g=>g.id===defGroup)){ useGroup(defGroup); } }
 function delGroup(gid){ groups=groups.filter(g=>g.id!==gid); saveGroups(); renderModelUI(); }
 function syncModels(){ const list=usedIds.map(id=>findP(id)).filter(Boolean); P.models = list.length? list.map(m=>({src:m.src,cap:m.cap,crop:m.crop?{z:m.crop.z,cx:m.crop.cx,cy:m.crop.cy}:{z:1,cx:0.5,cy:0.5}})) : [{src:'',cap:'173cm / F size'},{src:'',cap:'172cm / F size'}]; renderPage(); }
 function renderModelUI(){
@@ -2306,7 +2310,7 @@ function renderModelUI(){
   }).join('') : '<div class="pempty">저장된 모델이 없어요</div>';
   const gl=document.getElementById('groupList');
   if(gl) gl.innerHTML = groups.length ? groups.map(g=>{ const cnt=g.members.filter(id=>findP(id)).length;
-    return '<div class="prow"><div class="pc">⧉ <b>'+esc(g.name)+'</b> <span style="color:#aaa">('+cnt+'명)</span></div><button class="puse" onclick="useGroup(\''+g.id+'\')">적용</button><button class="pdel" onclick="delGroup(\''+g.id+'\')">×</button></div>';
+    return '<div class="prow"><div class="pc">⧉ <b>'+esc(g.name)+'</b> <span style="color:#aaa">('+cnt+'명)</span>'+(g.id===defGroup?' <span style="color:#2e9e44;font-size:11px;font-weight:700">· 기본</span>':'')+'</div><button class="puse'+(g.id===defGroup?' on':'')+'" title="모든 상세에 자동 적용" onclick="setDefaultGroup(\''+g.id+'\')">기본</button><button class="puse" onclick="useGroup(\''+g.id+'\')">적용</button><button class="pdel" onclick="delGroup(\''+g.id+'\')">×</button></div>';
   }).join('') : '';
 }
 function sectionsHTML(){
@@ -2443,6 +2447,7 @@ async function save(fmt){
 loadInit();
 renderModelUI();
 fillProducts();
+applyDefaultGroup();
 </script></body></html>
 """
 
