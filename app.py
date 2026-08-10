@@ -2399,28 +2399,11 @@ window.addEventListener('mouseup',()=>{
   document.body.style.userSelect='';
   pointer=null;
 });
-function trimNuki(img){
-  const w=img.width,h=img.height; if(!w||!h) return img;
-  const c=document.createElement('canvas'); c.width=w;c.height=h; const g=c.getContext('2d'); g.drawImage(img,0,0);
-  let data; try{ data=g.getImageData(0,0,w,h).data; }catch(e){ return img; }
-  let hasAlpha=false; for(let i=3;i<data.length;i+=388){ if(data[i]<250){hasAlpha=true;break;} }
-  let minX=w,minY=h,maxX=0,maxY=0,found=false;
-  const step=Math.max(1,Math.floor(Math.min(w,h)/500));
-  for(let y=0;y<h;y+=step){ for(let x=0;x<w;x+=step){ const i=(y*w+x)*4; const a=data[i+3],r=data[i],gg=data[i+1],b=data[i+2];
-    const isObj = hasAlpha ? (a>25) : !(r>244&&gg>244&&b>244);
-    if(isObj){ if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; found=true; } } }
-  if(!found) return img;
-  const bw=maxX-minX,bh=maxY-minY, pad=Math.round(Math.max(bw,bh)*0.05);
-  minX=Math.max(0,minX-pad);minY=Math.max(0,minY-pad);maxX=Math.min(w,maxX+pad);maxY=Math.min(h,maxY+pad);
-  const tw=Math.max(1,maxX-minX),th=Math.max(1,maxY-minY);
-  const out=document.createElement('canvas'); out.width=tw;out.height=th; out.getContext('2d').drawImage(img,minX,minY,tw,th,0,0,tw,th);
-  return out;
-}
 function addFiles(fileList){
   const files=[...fileList].filter(f=>f.type.startsWith('image/'));
   let n=files.length; if(!n)return;
   files.forEach(f=>{ const url=URL.createObjectURL(f); const im=new Image();
-    im.onload=()=>{ const nm=(f.name||'').normalize('NFC'); let src=im; if(/누끼/.test(nm)){ try{ src=trimNuki(im); }catch(e){} } imgs.push({name:nm,img:src,url,crop:{z:1,cx:0.5,cy:0.5}}); if(--n===0){sortImgs();renderPage();} }; im.src=url; });
+    im.onload=()=>{ imgs.push({name:(f.name||'').normalize('NFC'),img:im,url,crop:{z:1,cx:0.5,cy:0.5}}); if(--n===0){sortImgs();renderPage();} }; im.src=url; });
 }
 document.getElementById('fi').addEventListener('change',e=>{ addFiles(e.target.files); e.target.value=''; });
 // 폴더 선택 API — "업로드 하시겠습니까" 경고 없이 폴더 읽기
