@@ -2108,7 +2108,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .imgrow .del:hover{background:#ff4b4b;}
 .imgrow .cropbar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%) scale(var(--iz,1));transform-origin:bottom center;background:#111;color:#fff;font-size:13px;padding:6px 14px;border-radius:20px;z-index:3;display:none;gap:12px;}
 .imgrow.cropping .cropbar{display:flex;}
-.imgrow .colorcap{text-align:center;font-size:30px;font-weight:400;letter-spacing:0.02em;color:#222;padding:130px 0 40px;font-family:'Pretendard',-apple-system,sans-serif;}
+.imgrow .colorcap{text-align:center;font-size:30px;font-weight:400;letter-spacing:0.02em;color:#222;padding:20px 0 40px;font-family:'Pretendard',-apple-system,sans-serif;}
 #page.saving .badge,#page.saving .del,#page.saving .cropbar{display:none !important;}
 .imgrow .cropbar span{cursor:pointer;}
 .sec{padding:0 110px;margin-top:190px;}
