@@ -14,6 +14,7 @@ except Exception:
 PLANNING_SEASON = "26FW"   # 이 시즌 상품만 불러옴 (시즌 바뀌면 이 값만 수정)
 # 촬영차수 F(가을) 수동 분류 — 여기 스타일넘버는 F, 나머지는 W
 F_STYLES = {"26FWB34","26FWB33","26FWA37","26FWA18","26FWT12","26FWT14","26FWB07","26FWT11","26FWT08","26FWB06","26FWT05","26FWT04","26FWT03","26FWT02","26FWT01","26FWT30","26FWB35","26FWB31","26FWB10"}
+MADE_EN = {'국내':'Korea','한국':'Korea','대한민국':'Korea','중국':'China','베트남':'Vietnam','인도':'India','방글라데시':'Bangladesh','미얀마':'Myanmar','캄보디아':'Cambodia','인도네시아':'Indonesia','튀르키예':'Turkey','터키':'Turkey'}
 SIZE_EN = {
     '총장':'Total Length','기장':'Length','어깨너비':'Shoulder Width','가슴단면':'Chest',
     '밑단단면':'Hem','밑단둘레':'Hem','소매길이':'Sleeve Length','암홀':'Armhole','목너비':'Neck Width',
@@ -64,7 +65,8 @@ def planning_extract(p):
         note = "1~2cm 의 오차가 발생할 수 있습니다."
     else:
         note = f"사이즈 실측 준비중" + (f" (측정상태: {status})" if status else "")
-    return name_en, desc, fabric, items, sv, note
+    made = MADE_EN.get((p.get('제조국') or '').strip(), (p.get('제조국') or '').strip())
+    return name_en, desc, fabric, items, sv, note, made
 
 st.set_page_config(
     page_title="LAZYZ Dashboard",
@@ -2167,7 +2169,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 <script>
 // 시트에서 가져온 제품 정보(수정 가능)
 const PRODUCTS = __PRODUCTS__;
-const _p0 = PRODUCTS[0] || {name_en:'Product',desc:'',fabric:'',sizeItems:['Total Length'],sizeVals:{'Free':['']},sizeNote:''};
+const _p0 = PRODUCTS[0] || {name_en:'Product',desc:'',fabric:'',sizeItems:['Total Length'],sizeVals:{'Free':['']},sizeNote:'',made:'Korea'};
 const P={
  name_en: _p0.name_en,
  desc: _p0.desc,
@@ -2175,6 +2177,7 @@ const P={
  sizeVals: _p0.sizeVals,
  sizeNote: _p0.sizeNote,
  fabric: _p0.fabric,
+ made: _p0.made,
  models: __MODELS__,
  // ── 하단 공통(고정) 케어 가이드 ──
  care:'- 중성세제를 사용하여 30°C 이하의 미지근한 물에 단독 세탁해 주세요.\n- 세탁기 사용 시 약한 세탁 코스를 권장합니다.\n- 표백제 사용은 원단 손상의 원인이 될 수 있으므로 삼가해 주세요.\n- 건조기 사용은 제품 변형 및 수축의 원인이 될 수 있으므로 사용을 피해 주세요.\n- 세탁 후에는 평평한 곳에 뉘어 자연 건조해 주세요.\n\nCotton / Cotton Blend\n- 첫 세탁 시 물 빠짐이 있을 수 있으므로 단독 세탁을 권장합니다.\n- 고온 세탁 및 건조 시 수축이 발생할 수 있으니 주의해 주세요.\n\nModal / Rayon / Tencel\n- 물에 장시간 담가두지 마세요.\n- 강한 탈수 및 비틀어 짜는 행위는 원단 변형의 원인이 될 수 있습니다.\n\nWool / Wool Blend\n- 드라이클리닝을 권장합니다.\n- 물세탁 시 수축 및 변형이 발생할 수 있으므로 주의해 주세요.\n\nPolyester / Synthetic Fabric\n- 고온 세탁 및 건조기 사용 시 원단 변형이 발생할 수 있으니 주의해 주세요.\n- 다림질 시 낮은 온도를 사용해 주세요.',
@@ -2229,7 +2232,7 @@ function renderPage(){
   setupModels();
   applyZoom();
 }
-function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; const filt=PRODUCTS.map((x,j)=>({x,j})).filter(o=>prodFilter==='ALL'||o.x.shoot===prodFilter); const pos=filt.findIndex(o=>o.j===+i); const _c=document.getElementById('prodcount'); if(_c)_c.textContent=(pos+1)+' / '+filt.length; renderPage(); }
+function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; P.made=p.made; const filt=PRODUCTS.map((x,j)=>({x,j})).filter(o=>prodFilter==='ALL'||o.x.shoot===prodFilter); const pos=filt.findIndex(o=>o.j===+i); const _c=document.getElementById('prodcount'); if(_c)_c.textContent=(pos+1)+' / '+filt.length; renderPage(); }
 let prodFilter='ALL';
 function setFilter(f){ prodFilter=f; document.querySelectorAll('.ftab').forEach(b=>b.classList.toggle('on', b.dataset.f===f)); fillProducts(); }
 function fillProducts(){ const sel=document.getElementById('prodsel'); if(!sel)return; if(!PRODUCTS.length){sel.innerHTML='<option>상품 없음</option>'; const _c0=document.getElementById('prodcount'); if(_c0)_c0.textContent=''; return;} const filt=PRODUCTS.map((p,i)=>({p,i})).filter(o=>prodFilter==='ALL'||o.p.shoot===prodFilter); sel.innerHTML=filt.map(o=>'<option value="'+o.i+'">'+esc(o.p.label||('상품 '+(o.i+1)))+'</option>').join(''); if(filt.length){ sel.value=String(filt[0].i); selectProduct(filt[0].i); } else { const _c=document.getElementById('prodcount'); if(_c)_c.textContent='0 / 0'; } }
@@ -2318,7 +2321,7 @@ function sectionsHTML(){
   +'<div class="sec"><h2 data-k="name_en" contenteditable>'+esc(P.name_en)+'</h2><div class="k" data-k="desc" contenteditable>'+esc(P.desc)+'</div></div>'
   +'<div class="sec">'+sizeGuide()+'</div>'
   +modelsHTML()
-  +'<div class="sec"><h2>Care</h2><div class="fab">Fabric : <span data-k="fabric" contenteditable>'+esc(P.fabric)+'</span></div><div class="k" data-k="care" contenteditable>'+esc(P.care)+'</div></div>'
+  +'<div class="sec"><h2>Care</h2><div class="fab">Fabric : <span data-k="fabric" contenteditable>'+esc(P.fabric)+'</span><br>Made in <span data-k="made" contenteditable>'+esc(P.made||'Korea')+'</span></div><div class="k" data-k="care" contenteditable>'+esc(P.care)+'</div></div>'
   +'<div class="sec"><h2>Exchange / Refund</h2><div class="k" data-k="refund" contenteditable>'+esc(P.refund)+'</div></div>';
 }
 function bindEditable(){
@@ -2467,13 +2470,14 @@ elif "상세 생성기" in menu:
 
     PRODUCTS = []
     for p in prods:
-        name_en, desc, fabric, items, sv, sizenote = planning_extract(p)
+        name_en, desc, fabric, items, sv, sizenote, made = planning_extract(p)
         if not items:
             items, sv = ["Total Length"], {"Free": [""]}
         nm = p.get("제품명", {}) or {}
         label = nm.get("ko") or nm.get("en") or "?"
         PRODUCTS.append({"label": label, "name_en": name_en, "desc": desc, "fabric": fabric,
                          "sizeItems": items, "sizeVals": sv, "sizeNote": sizenote,
+                         "made": made,
                          "shoot": ("F" if p.get("스타일넘버","") in F_STYLES else "W")})
     if not PRODUCTS:
         PRODUCTS = [{"label": "(기본)", "name_en": "Salt and Sun Stripe Shirt", "desc": "-",
