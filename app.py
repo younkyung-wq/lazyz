@@ -2168,9 +2168,13 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
     <div class="divider"></div>
     <div class="lbl">상세페이지 생성하기</div>
     <div class="optrow"><label><input type="checkbox" id="optWhole" checked>한통</label><label><input type="checkbox" id="optCrop" checked>크롭</label><label><input type="checkbox" id="optKream" checked>크림</label></div>
+    <div class="lbl">디스크엔 시즌</div>
+    <input id="seasonInp" class="psel" type="text" value="26F" placeholder="예: 26F" style="background:#fff;">
     <button class="btn btn-line" onclick="pickBaseDir()"><span id="basedirlabel">📁 저장 폴더 지정</span></button>
     <button class="btn btn-red" onclick="save('jpg')">📥 저장하기</button>
     <span id="prog"></span>
+    <textarea id="codeOut" readonly placeholder="크롭 저장하면 디스크엔 코드가 여기 생성돼요" style="width:100%;height:120px;font-size:11px;font-family:monospace;border:1.5px solid #e2e2e2;border-radius:8px;padding:8px;resize:vertical;box-sizing:border-box;"></textarea>
+    <button class="btn btn-line" onclick="_copyCode()">📋 코드 복사</button>
   </div>
 </div>
 <script>
@@ -2463,6 +2467,8 @@ async function ensureBaseDir(){ if(baseDir && await _verifyPerm(baseDir)) return
 async function restoreBaseDir(){ try{ const h=await _idbGet('baseDir'); if(h){ baseDir=h; _baseLabel(); } }catch(e){} }
 function _toBlob(cv,q){ return new Promise(res=>cv.toBlob(res,'image/jpeg',q||0.95)); }
 async function _blobUnder(cv,maxB){ let q=0.92, blob=await _toBlob(cv,q); while(blob.size>maxB && q>0.4){ q-=0.08; blob=await _toBlob(cv,q); } return blob; }
+function buildDisknCode(name,count){ const season=((document.getElementById('seasonInp')||{}).value||'26F').trim(); let ln=[]; for(let i=1;i<=count;i++){ const nn=String(i).padStart(2,'0'); ln.push('<img src="https://lazyz.diskn.com/product/'+season+'/'+name+'/'+name+'_'+nn+'.jpg" />'); } return '<center>\n'+ln.join('<br>\n')+'\n</center>'; }
+function _copyCode(){ const co=document.getElementById('codeOut'); if(!co||!co.value){ alert('먼저 크롭으로 저장하면 코드가 생성돼요.'); return; } co.select(); try{ document.execCommand('copy'); }catch(e){} try{ navigator.clipboard.writeText(co.value); }catch(e){} const b=window.event&&window.event.target; if(b&&b.textContent!==undefined){ const t=b.textContent; b.textContent='\u2713 복사됨'; setTimeout(()=>b.textContent=t,1200); } }
 async function _writeFile(dir,name,blob){ const fh=await dir.getFileHandle(name,{create:true}); const w=await fh.createWritable(); await w.write(blob); await w.close(); }
 function _downscale(big,tw){ const c=document.createElement('canvas'); c.width=tw; c.height=Math.max(1,Math.round(big.height*tw/big.width)); const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(big,0,0,c.width,c.height); return c; }
 function _dl(blob,fname){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=fname; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1500); }
@@ -2509,6 +2515,7 @@ async function save(fmt){
       const OUTW=1000, _sf=OUTW/bw; const imgDir = dir? await dir.getDirectoryHandle('images',{create:true}) : null;
       let ci=1;
       for(let k=0;k<cuts.length-1;k++){ const y=cuts[k], h=cuts[k+1]-y; if(h<=0) continue; const oh=Math.max(1,Math.round(h*_sf)); const sc2=document.createElement('canvas'); sc2.width=OUTW; sc2.height=oh; const g2=sc2.getContext('2d'); g2.imageSmoothingEnabled=true; g2.imageSmoothingQuality='high'; g2.drawImage(big,0,y,bw,h,0,0,OUTW,oh); await put(imgDir, name+'_'+String(ci).padStart(2,'0')+'.jpg', await _toBlob(sc2,0.95)); ci++; }
+      const _cnt=ci-1; if(_cnt>0){ const _code=buildDisknCode(name,_cnt); const _co=document.getElementById('codeOut'); if(_co)_co.value=_code; try{ await put(dir, name+'_code.txt', new Blob([_code],{type:'text/plain'})); }catch(e){} }
       done++;
     }
   }
