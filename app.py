@@ -1980,23 +1980,25 @@ cvs.addEventListener('wheel',e=>{
   draw();
 },{passive:false});
 
-// 저장 폴더 기억 (한 번 지정하면 이후 바로 저장)
+// 저장 폴더 기억 (상세 생성기와 같은 IndexedDB 'baseDir' 공유 → 한 번 지정하면 둘 다 기억)
 let savedDir=null;
+function _idb(){ return new Promise((res,rej)=>{ const r=indexedDB.open('lzfs',1); r.onupgradeneeded=()=>r.result.createObjectStore('h'); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+async function _idbSet(k,v){ const db=await _idb(); return new Promise((res,rej)=>{ const t=db.transaction('h','readwrite'); t.objectStore('h').put(v,k); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); }); }
+async function _idbGet(k){ const db=await _idb(); return new Promise((res,rej)=>{ const t=db.transaction('h','readonly'); const q=t.objectStore('h').get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); }
+async function _verifyPerm(h){ try{ let p=await h.queryPermission({mode:'readwrite'}); if(p==='granted')return true; p=await h.requestPermission({mode:'readwrite'}); return p==='granted'; }catch(e){ return false; } }
 function updateDirLabel(){
   const el=document.getElementById('dirlabel');
-  el.textContent=savedDir?('📁 '+savedDir.name+' (변경)'):'📁 저장폴더 지정';
+  if(el) el.textContent=savedDir?('📁 '+savedDir.name+' (변경)'):'📁 저장폴더 지정';
 }
 async function ensureDir(){
-  if(savedDir){
-    try{ let p=await savedDir.queryPermission({mode:'readwrite'});
-      if(p!=='granted') p=await savedDir.requestPermission({mode:'readwrite'});
-      if(p==='granted') return savedDir; }catch(e){}
-    savedDir=null;
-  }
+  if(savedDir && await _verifyPerm(savedDir)) return savedDir;
+  try{ const h=await _idbGet('baseDir'); if(h && await _verifyPerm(h)){ savedDir=h; updateDirLabel(); return h; } }catch(e){}
+  if(!window.showDirectoryPicker) throw new Error('no picker');
   const dir=await window.showDirectoryPicker({mode:'readwrite'});
-  savedDir=dir; updateDirLabel(); return dir;
+  savedDir=dir; try{ await _idbSet('baseDir',dir); }catch(e){} updateDirLabel(); return dir;
 }
-async function pickDir(){ try{ savedDir=null; await ensureDir(); }catch(e){} }
+async function pickDir(){ try{ if(!window.showDirectoryPicker){ alert('이 브라우저는 폴더 지정을 지원 안 해요 (Chrome/Edge 권장)'); return; } const dir=await window.showDirectoryPicker({mode:'readwrite'}); savedDir=dir; try{ await _idbSet('baseDir',dir); }catch(e){} updateDirLabel(); }catch(e){} }
+async function restoreDir(){ try{ const h=await _idbGet('baseDir'); if(h){ savedDir=h; updateDirLabel(); } }catch(e){} }
 function saveAll(){ makeZip(CH); }
 function saveOne(){ makeZip(TABS[ac].chans); }
 async function makeZip(chanList){
@@ -2124,6 +2126,7 @@ document.addEventListener('keydown',e=>{
 });
 renderTabs();
 updateDirLabel();
+restoreDir();
 try{ fillTSeasons(); fillProdSel(); }catch(e){}
 </script></body></html>
 """
