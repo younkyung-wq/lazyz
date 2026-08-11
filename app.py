@@ -1693,6 +1693,7 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
     <button class="btn btn-line" onclick="clearAll()">🗑 비우기</button>
     <select id="tseasonsel" onchange="fillProdSel()" title="시즌 선택" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;max-width:150px;"></select>
     <select id="prodsel" onchange="onProdSel()" title="상품 선택 → 상품명 자동입력" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;max-width:210px;"></select>
+    <span id="tprodcount" style="font-size:12px;color:#999;white-space:nowrap;"></span>
     <input id="pname" type="hidden">
     <input id="tseason" value="26F" placeholder="시즌" title="시트 탭 이름 (예: 26F)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:60px;">
     <button class="btn btn-line" onclick="saveOne()">↓ 이 채널만</button>
@@ -1725,8 +1726,10 @@ function _tslabel(k){ const a=k.split('|'); return a[0]+(a[1]?(' · '+a[1]+'촬�
 function _tsrank(s){ if(!s||s.length<4)return 0; const y=parseInt(s.slice(0,2),10)||0; const h=s[2]==='S'?0:(s[2]==='F'?1:2); return y*2+h; }
 const _TSEASON_MIN=_tsrank('26FW');
 function fillTSeasons(){ const sel=document.getElementById('tseasonsel'); if(!sel)return; let keys=[...new Set(THUMB_PRODUCTS.map(_tskey))].filter(k=>{ const s=k.split('|')[0]; return s && _tsrank(s)>=_TSEASON_MIN; }); keys.sort((a,b)=>{ const A=a.split('|'),B=b.split('|'); const ra=_tsrank(A[0]),rb=_tsrank(B[0]); if(ra!==rb)return ra-rb; const o={F:0,W:1}; return (o[A[1]]!=null?o[A[1]]:2)-(o[B[1]]!=null?o[B[1]]:2); }); sel.innerHTML=keys.map(k=>'<option value="'+k+'">'+_tslabel(k)+'</option>').join(''); sel.value = keys.indexOf('26FW|F')>=0 ? '26FW|F' : (keys[0]||''); }
-function fillProdSel(){ const s=document.getElementById('prodsel'); if(!s)return; const sk=(document.getElementById('tseasonsel')||{}).value||''; const arr=THUMB_PRODUCTS.filter(p=>_tskey(p)===sk); if(!arr.length){ s.innerHTML='<option value="">상품 없음</option>'; return; } s.innerHTML='<option value="">상품 선택…</option>'+arr.map(p=>'<option value="'+String(p.name_en).replace(/"/g,'&quot;')+'">'+String(p.label).replace(/</g,'&lt;')+'</option>').join(''); }
-function onProdSel(){ const s=document.getElementById('prodsel'), pn=document.getElementById('pname'); if(s&&pn&&s.value)pn.value=s.value; }
+function _curArr(){ const sk=(document.getElementById('tseasonsel')||{}).value||''; return THUMB_PRODUCTS.filter(p=>_tskey(p)===sk); }
+function _updCount(){ const c=document.getElementById('tprodcount'); if(!c)return; const arr=_curArr(); const s=document.getElementById('prodsel'); const v=s?s.value:''; if(!v){ c.textContent='총 '+arr.length+'개'; return; } const pos=arr.findIndex(p=>p.name_en===v); c.textContent=(pos+1)+' / '+arr.length; }
+function fillProdSel(){ const s=document.getElementById('prodsel'); if(!s)return; const arr=_curArr(); if(!arr.length){ s.innerHTML='<option value="">상품 없음</option>'; _updCount(); return; } s.innerHTML='<option value="">상품 선택…</option>'+arr.map(p=>'<option value="'+String(p.name_en).replace(/"/g,'&quot;')+'">'+String(p.label).replace(/</g,'&lt;')+'</option>').join(''); _updCount(); }
+function onProdSel(){ const s=document.getElementById('prodsel'), pn=document.getElementById('pname'); if(s&&pn&&s.value)pn.value=s.value; _updCount(); }
 const CH=[
  {k:'EQL',w:1500,h:2000,bg:'#ffffff',grp:'g_eqlw'},
  {k:'무신사',w:1500,h:1800,bg:'#ffffff',grp:'g_musinsa'},
