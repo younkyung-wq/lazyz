@@ -1662,9 +1662,9 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
 <script>
 // ── 시트 자동 기록 (제품폴더/썸네일 저장 시 해당 채널 열에 O) ──
 const WRITE_API='__WRITE_API__', WRITE_TOKEN='__WRITE_TOKEN__';
-const CHAN_COL={'EQL':4,'무신사':5,'W컨셉':6,'29CM':7,'크림':8,'공홈':9,'컬리':10,'조조타운':11};
-function sheetWrite(items){ try{ if(!WRITE_API||!WRITE_TOKEN||!items||!items.length)return; const tab=((document.getElementById('tseason')||{}).value||'26F').trim(); fetch(WRITE_API,{method:'POST',mode:'no-cors',body:JSON.stringify({token:WRITE_TOKEN,sheet:tab,action:'cells',headerRow:2,nameCol:0,items:items})}); }catch(e){} }
-function markThumbs(pname,entries){ if(!pname)return; const chans=[...new Set(entries.map(e=>e.chan))]; const items=chans.map(k=>({name:pname,col:CHAN_COL[k],value:'O'})).filter(x=>x.col); sheetWrite(items); }
+const CHAN_HDR={'EQL':'EQL','무신사':'무신사','W컨셉':'w','29CM':'29','크림':'크림썸넬','공홈':'공홈','컬리':'컬리','조조타운':'조조타운'};
+function sheetCol(header,items){ try{ if(!WRITE_API||!WRITE_TOKEN||!header||!items||!items.length)return; const tab=((document.getElementById('tseason')||{}).value||'26F').trim(); fetch(WRITE_API,{method:'POST',mode:'no-cors',body:JSON.stringify({token:WRITE_TOKEN,sheet:tab,action:'setColumn',headerRow:2,nameCol:0,header:header,items:items})}); }catch(e){} }
+function markThumbs(pname,entries){ if(!pname)return; const chans=[...new Set(entries.map(e=>e.chan))]; chans.forEach(k=>{ const h=CHAN_HDR[k]; if(h) sheetCol(h,[{name:pname,value:'O'}]); }); }
 const CH=[
  {k:'EQL',w:1500,h:2000,bg:'#ffffff',grp:'g_eqlw'},
  {k:'무신사',w:1500,h:1800,bg:'#ffffff',grp:'g_musinsa'},
@@ -2190,7 +2190,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 const PRODUCTS = __PRODUCTS__;
 // ── 시트 자동 기록 (코드→B열, 크림상세→C열) ──
 const WRITE_API='__WRITE_API__', WRITE_TOKEN='__WRITE_TOKEN__';
-function sheetWrite(items){ try{ if(!WRITE_API||!WRITE_TOKEN||!items||!items.length)return; const tab=((document.getElementById('seasonInp')||{}).value||'26F').trim(); fetch(WRITE_API,{method:'POST',mode:'no-cors',body:JSON.stringify({token:WRITE_TOKEN,sheet:tab,action:'cells',headerRow:2,nameCol:0,items:items})}); }catch(e){} }
+function sheetCol(header,items){ try{ if(!WRITE_API||!WRITE_TOKEN||!header||!items||!items.length)return; const tab=((document.getElementById('seasonInp')||{}).value||'26F').trim(); fetch(WRITE_API,{method:'POST',mode:'no-cors',body:JSON.stringify({token:WRITE_TOKEN,sheet:tab,action:'setColumn',headerRow:2,nameCol:0,header:header,items:items})}); }catch(e){} }
 const _p0 = PRODUCTS[0] || {name_en:'Product',desc:'',fabric:'',sizeItems:['Total Length'],sizeVals:{'Free':['']},sizeNote:'',made:'국내'};
 const P={
  name_en: _p0.name_en,
@@ -2526,7 +2526,7 @@ async function save(fmt){
       const OUTW=1000, _sf=OUTW/bw; const imgDir = dir? await dir.getDirectoryHandle('images',{create:true}) : null;
       let ci=1;
       for(let k=0;k<cuts.length-1;k++){ const y=cuts[k], h=cuts[k+1]-y; if(h<=0) continue; const oh=Math.max(1,Math.round(h*_sf)); const sc2=document.createElement('canvas'); sc2.width=OUTW; sc2.height=oh; const g2=sc2.getContext('2d'); g2.imageSmoothingEnabled=true; g2.imageSmoothingQuality='high'; g2.drawImage(big,0,y,bw,h,0,0,OUTW,oh); await put(imgDir, name+'_'+String(ci).padStart(2,'0')+'.jpg', await _toBlob(sc2,0.95)); ci++; }
-      const _cnt=ci-1; if(_cnt>0){ const _code=buildDisknCode(name,_cnt); const _co=document.getElementById('codeOut'); if(_co)_co.value=_code; try{ await put(dir, name+'_code.txt', new Blob([_code],{type:'text/plain'})); }catch(e){} sheetWrite([{name:P.name_en,col:2,value:_code}]); }
+      const _cnt=ci-1; if(_cnt>0){ const _code=buildDisknCode(name,_cnt); const _co=document.getElementById('codeOut'); if(_co)_co.value=_code; try{ await put(dir, name+'_code.txt', new Blob([_code],{type:'text/plain'})); }catch(e){} sheetCol('코드',[{name:P.name_en,value:_code}]); }
       done++;
     }
   }
@@ -2550,7 +2550,7 @@ async function save(fmt){
         const kmulti = kcuts.length-1 > 1;
         for(let ci=0; ci<kcuts.length-1; ci++){ const y=kcuts[ci], h=kcuts[ci+1]-y; if(h<=0) continue; const cc=document.createElement('canvas'); cc.width=KW; cc.height=h; cc.getContext('2d').drawImage(kw,0,y,KW,h,0,0,KW,h); const fn = kmulti ? (name+'_'+cn+'_'+String(ci+1).padStart(2,'0')+'.jpg') : (name+'_'+cn+'.jpg'); await put(kDir, fn, await _blobUnder(cc, MAXB)); }
       }
-      sheetWrite([{name:P.name_en,col:3,value:'O'}]);
+      sheetCol('크림',[{name:P.name_en,value:'O'}]);
       done++;
     }
   }
