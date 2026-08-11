@@ -2249,7 +2249,8 @@ function renderPage(){
   setupModels();
   applyZoom();
 }
-function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; P.made=p.made; P.colors=(p.colors||[]); const filt=PRODUCTS.map((x,j)=>({x,j})).filter(o=>prodFilter==='ALL'||o.x.shoot===prodFilter); const pos=filt.findIndex(o=>o.j===+i); const _c=document.getElementById('prodcount'); if(_c)_c.textContent=(pos+1)+' / '+filt.length; renderPage(); }
+let curProdIdx=-1;
+function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; if(curProdIdx!==-1 && +i!==curProdIdx){ imgs.length=0; const _fp=document.getElementById('folderpath'); if(_fp)_fp.value=''; } curProdIdx=+i; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; P.made=p.made; P.colors=(p.colors||[]); const filt=PRODUCTS.map((x,j)=>({x,j})).filter(o=>prodFilter==='ALL'||o.x.shoot===prodFilter); const pos=filt.findIndex(o=>o.j===+i); const _c=document.getElementById('prodcount'); if(_c)_c.textContent=(pos+1)+' / '+filt.length; renderPage(); }
 let prodFilter='ALL';
 function setFilter(f){ prodFilter=f; document.querySelectorAll('.ftab').forEach(b=>b.classList.toggle('on', b.dataset.f===f)); fillProducts(); }
 function fillProducts(){ const sel=document.getElementById('prodsel'); if(!sel)return; if(!PRODUCTS.length){sel.innerHTML='<option>상품 없음</option>'; const _c0=document.getElementById('prodcount'); if(_c0)_c0.textContent=''; return;} const filt=PRODUCTS.map((p,i)=>({p,i})).filter(o=>prodFilter==='ALL'||o.p.shoot===prodFilter); sel.innerHTML=filt.map(o=>'<option value="'+o.i+'">'+esc(o.p.label||('상품 '+(o.i+1)))+'</option>').join(''); if(filt.length){ sel.value=String(filt[0].i); selectProduct(filt[0].i); } else { const _c=document.getElementById('prodcount'); if(_c)_c.textContent='0 / 0'; } }
