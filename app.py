@@ -1988,7 +1988,7 @@ async function _idbGet(k){ const db=await _idb(); return new Promise((res,rej)=>
 async function _verifyPerm(h){ try{ let p=await h.queryPermission({mode:'readwrite'}); if(p==='granted')return true; p=await h.requestPermission({mode:'readwrite'}); return p==='granted'; }catch(e){ return false; } }
 function updateDirLabel(){
   const el=document.getElementById('dirlabel');
-  if(el) el.textContent=savedDir?('📁 '+savedDir.name+' (변경)'):'📁 저장폴더 지정';
+  if(el) el.textContent=savedDir?('📁 나스폴더 지정 · '+savedDir.name+' (변경)'):'📁 나스폴더 지정';
 }
 async function ensureDir(){
   if(savedDir && await _verifyPerm(savedDir)) return savedDir;
@@ -2248,7 +2248,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
     <div class="divider"></div>
     <div class="lbl">상세페이지 생성하기</div>
     <div class="optrow"><label><input type="checkbox" id="optWhole" checked>한통</label><label><input type="checkbox" id="optCrop" checked>크롭</label><label><input type="checkbox" id="optKream" checked>크림</label></div>
-    <button class="btn btn-line" onclick="pickBaseDir()"><span id="basedirlabel">📁 저장 폴더 지정</span></button>
+    <button class="btn btn-line" onclick="pickBaseDir()"><span id="basedirlabel">📁 나스폴더 지정</span></button>
     <button class="btn btn-red" onclick="save('jpg')">📥 저장하기</button>
     <span id="prog"></span>
     <textarea id="codeOut" readonly placeholder="크롭 저장하면 디스크엔 코드가 여기 생성돼요" style="width:100%;height:120px;font-size:11px;font-family:monospace;border:1.5px solid #e2e2e2;border-radius:8px;padding:8px;resize:vertical;box-sizing:border-box;"></textarea>
@@ -2549,7 +2549,7 @@ async function _idbSet(k,v){ const db=await _idb(); return new Promise((res,rej)
 async function _idbGet(k){ const db=await _idb(); return new Promise((res,rej)=>{ const t=db.transaction('h','readonly'); const q=t.objectStore('h').get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); }
 let baseDir=null;
 async function _verifyPerm(h){ try{ let p=await h.queryPermission({mode:'readwrite'}); if(p==='granted')return true; p=await h.requestPermission({mode:'readwrite'}); return p==='granted'; }catch(e){ return false; } }
-function _baseLabel(){ const el=document.getElementById('basedirlabel'); if(el) el.textContent = baseDir ? ('📁 '+baseDir.name+' (변경)') : '📁 저장 폴더 지정'; }
+function _baseLabel(){ const el=document.getElementById('basedirlabel'); if(el) el.textContent = baseDir ? ('📁 나스폴더 지정 · '+baseDir.name+' (변경)') : '📁 나스폴더 지정'; }
 async function pickBaseDir(){ if(!window.showDirectoryPicker){ alert('이 브라우저는 폴더 지정을 지원 안 해요 (Chrome/Edge 권장)'); return; } try{ baseDir=await window.showDirectoryPicker({mode:'readwrite'}); try{ await _idbSet('baseDir',baseDir); }catch(e){} _baseLabel(); }catch(e){} }
 async function ensureBaseDir(){ if(baseDir && await _verifyPerm(baseDir)) return baseDir; try{ const h=await _idbGet('baseDir'); if(h && await _verifyPerm(h)){ baseDir=h; _baseLabel(); return h; } }catch(e){} return null; }
 async function restoreBaseDir(){ try{ const h=await _idbGet('baseDir'); if(h){ baseDir=h; _baseLabel(); } }catch(e){} }
