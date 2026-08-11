@@ -1978,7 +1978,7 @@ async function makeZip(chanList){
     try{
       let dir=await ensureDir();  // 기억된 폴더 재사용, 없으면 선택
       if(!dir){pr.textContent='취소됨';return;}
-      const root=await dir.getDirectoryHandle(pname||'썸네일',{create:true}); // 항상 상위폴더 생성
+      const _prodF=await dir.getDirectoryHandle(pname||'상품',{create:true}); const root=await _prodF.getDirectoryHandle('썸네일',{create:true}); // 제품폴더/썸네일 하위에 저장(상세와 같은 폴더)
       let i=0;
       for(const e of entries){
         const cd=await root.getDirectoryHandle(e.chan,{create:true});
@@ -1997,7 +1997,7 @@ async function makeZip(chanList){
   }
   // 3) 폴백: ZIP 다운로드
   pr.textContent='압축 중…';
-  const zip=new JSZip(); const rootF=zip.folder(pname||'썸네일');
+  const zip=new JSZip(); const rootF=zip.folder(pname||'상품').folder('썸네일');
   entries.forEach(e=>rootF.folder(e.chan).file(e.name,e.blob));
   const out=await zip.generateAsync({type:'blob'});
   const suffix=(chanList.length===1)?('_'+chanList[0].k):'';
