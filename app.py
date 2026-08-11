@@ -2526,7 +2526,7 @@ async function save(fmt){
       const OUTW=1000, _sf=OUTW/bw; const imgDir = dir? await dir.getDirectoryHandle('images',{create:true}) : null;
       let ci=1;
       for(let k=0;k<cuts.length-1;k++){ const y=cuts[k], h=cuts[k+1]-y; if(h<=0) continue; const oh=Math.max(1,Math.round(h*_sf)); const sc2=document.createElement('canvas'); sc2.width=OUTW; sc2.height=oh; const g2=sc2.getContext('2d'); g2.imageSmoothingEnabled=true; g2.imageSmoothingQuality='high'; g2.drawImage(big,0,y,bw,h,0,0,OUTW,oh); await put(imgDir, name+'_'+String(ci).padStart(2,'0')+'.jpg', await _toBlob(sc2,0.95)); ci++; }
-      const _cnt=ci-1; if(_cnt>0){ const _code=buildDisknCode(name,_cnt); const _co=document.getElementById('codeOut'); if(_co)_co.value=_code; try{ await put(dir, name+'_code.txt', new Blob([_code],{type:'text/plain'})); }catch(e){} sheetCol('코드',[{name:P.name_en,value:_code}]); }
+      const _cnt=ci-1; if(_cnt>0){ const _code=buildDisknCode(name,_cnt); const _co=document.getElementById('codeOut'); if(_co)_co.value=_code; sheetCol('코드',[{name:P.name_en,value:_code}]); }
       done++;
     }
   }
