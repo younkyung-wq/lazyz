@@ -1640,6 +1640,7 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
     <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 파일 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <button class="btn btn-line" onclick="clearAll()">🗑 비우기</button>
+    <select id="prodsel" onchange="onProdSel()" title="상품 선택 → 상품명 자동입력" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;max-width:210px;"></select>
     <input id="pname" placeholder="상품명 (폴더명)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:170px;">
     <input id="tseason" value="26F" placeholder="시즌" title="시트 탭 이름 (예: 26F)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:60px;">
     <button class="btn btn-line" onclick="saveOne()">↓ 이 채널만</button>
@@ -1665,6 +1666,11 @@ const WRITE_API='__WRITE_API__', WRITE_TOKEN='__WRITE_TOKEN__';
 const CHAN_HDR={'EQL':'EQL','무신사':'무신사','W컨셉':'w','29CM':'29','크림':'크림썸넬','공홈':'공홈','컬리':'컬리','조조타운':'조조타운'};
 function sheetCol(header,items){ try{ if(!WRITE_API||!WRITE_TOKEN||!header||!items||!items.length)return; const tab=((document.getElementById('tseason')||{}).value||'26F').trim(); fetch(WRITE_API,{method:'POST',mode:'no-cors',body:JSON.stringify({token:WRITE_TOKEN,sheet:tab,action:'setColumn',headerRow:2,nameCol:0,header:header,items:items})}); }catch(e){} }
 function markThumbs(pname,entries){ if(!pname)return; const chans=[...new Set(entries.map(e=>e.chan))]; chans.forEach(k=>{ const h=CHAN_HDR[k]; if(h) sheetCol(h,[{name:pname,value:'O'}]); }); }
+// ── 상품 선택 드롭다운 (기획 API F/W 상품, 고르면 상품명칸 자동입력) ──
+const THUMB_PRODUCTS=__THUMB_PRODUCTS__;
+function _opts(arr){ return arr.map(p=>'<option value="'+String(p.name_en).replace(/"/g,'&quot;')+'">'+String(p.label).replace(/</g,'&lt;')+'</option>').join(''); }
+function fillProdSel(){ const s=document.getElementById('prodsel'); if(!s)return; if(!THUMB_PRODUCTS.length){ s.innerHTML='<option value="">상품 없음</option>'; return; } const F=THUMB_PRODUCTS.filter(p=>p.shoot==='F'), W=THUMB_PRODUCTS.filter(p=>p.shoot!=='F'); let h='<option value="">상품 선택…</option>'; if(F.length)h+='<optgroup label="F 촬영">'+_opts(F)+'</optgroup>'; if(W.length)h+='<optgroup label="W 촬영">'+_opts(W)+'</optgroup>'; s.innerHTML=h; }
+function onProdSel(){ const s=document.getElementById('prodsel'), pn=document.getElementById('pname'); if(s&&pn&&s.value)pn.value=s.value; }
 const CH=[
  {k:'EQL',w:1500,h:2000,bg:'#ffffff',grp:'g_eqlw'},
  {k:'무신사',w:1500,h:1800,bg:'#ffffff',grp:'g_musinsa'},
@@ -2059,6 +2065,7 @@ document.addEventListener('keydown',e=>{
 });
 renderTabs();
 updateDirLabel();
+try{ fillProdSel(); }catch(e){}
 </script></body></html>
 """
 
@@ -2571,7 +2578,21 @@ if "스토리 모듈" in menu:
 elif "썸네일 생성기" in menu:
     _wr_api = _get_secret("PLANNING_WRITE_API", "")
     _wr_tok = _get_secret("PLANNING_WRITE_TOKEN", "")
-    components.html(THUMB_HTML.replace("__WRITE_API__", _wr_api).replace("__WRITE_TOKEN__", _wr_tok), height=820, scrolling=False)
+    _tprods = []
+    try:
+        _tp, _ = load_planning()
+        for p in _tp:
+            nm = p.get("제품명", {}) or {}
+            _tprods.append({"label": nm.get("ko") or nm.get("en") or "?",
+                            "name_en": nm.get("en") or nm.get("ko") or "Product",
+                            "shoot": ("F" if p.get("스타일넘버", "") in F_STYLES else "W")})
+    except Exception as e:
+        st.warning("기획 API 로드 실패: " + str(e))
+    components.html(THUMB_HTML
+                    .replace("__WRITE_API__", _wr_api)
+                    .replace("__WRITE_TOKEN__", _wr_tok)
+                    .replace("__THUMB_PRODUCTS__", _json.dumps(_tprods, ensure_ascii=False)),
+                    height=820, scrolling=False)
 
 elif "상세 생성기" in menu:
     prods, generated = [], ""
