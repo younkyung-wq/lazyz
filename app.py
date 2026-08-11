@@ -2078,7 +2078,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .divider{height:1px;background:#eee;margin:4px 0;}
 .optrow{display:flex;gap:16px;font-size:12.5px;color:#444;font-weight:600;padding:2px 2px;}
 .optrow label{display:flex;align-items:center;gap:5px;cursor:pointer;}
-.optrow input{width:15px;height:15px;cursor:pointer;}
+.optrow input{width:15px;height:15px;cursor:pointer;accent-color:#111;}
 .acc{border:1px solid #eee;border-radius:9px;overflow:hidden;}
 .acc>summary{list-style:none;cursor:pointer;padding:11px 14px;font-size:13px;font-weight:700;color:#333;background:#fafafa;user-select:none;display:flex;align-items:center;justify-content:space-between;}
 .acc>summary::-webkit-details-marker{display:none;}
@@ -2167,7 +2167,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
     </details>
     <div class="divider"></div>
     <div class="lbl">상세페이지 생성하기</div>
-    <div class="optrow"><label><input type="checkbox" id="optWhole" checked>한통</label><label><input type="checkbox" id="optCrop" checked>크롭</label><label><input type="checkbox" id="optKream">크림</label></div>
+    <div class="optrow"><label><input type="checkbox" id="optWhole" checked>한통</label><label><input type="checkbox" id="optCrop" checked>크롭</label><label><input type="checkbox" id="optKream" checked>크림</label></div>
     <button class="btn btn-line" onclick="pickBaseDir()"><span id="basedirlabel">📁 저장 폴더 지정</span></button>
     <button class="btn btn-red" onclick="save('jpg')">📥 저장하기</button>
     <span id="prog"></span>
