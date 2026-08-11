@@ -34,10 +34,30 @@ def load_planning():
     base = _get_secret("PLANNING_API"); ro = _get_secret("PLANNING_RO")
     if not base or not ro:
         raise RuntimeError("PLANNING_API / PLANNING_RO 시크릿이 설정되지 않았어요 (.streamlit/secrets.toml).")
-    url = base + ("&" if "?" in base else "?") + "ro=" + ro + (("&season=" + PLANNING_SEASON) if PLANNING_SEASON else "")
+    url = base + ("&" if "?" in base else "?") + "ro=" + ro
     raw = _urlreq.urlopen(url, timeout=20, context=_SSLCTX).read().decode("utf-8")
     data = _json.loads(raw)
     return data.get("products", []), data.get("generated", "")
+
+def season_of(sn):
+    """스타일넘버 앞 4자리를 시즌으로 (예: 26FWT14 -> 26FW). 형식 안 맞으면 ''."""
+    sn = (sn or "").strip()
+    if len(sn) >= 4 and sn[:2].isdigit() and sn[2:4].isalpha():
+        return sn[:4].upper()
+    return ""
+
+def list_seasons(prods):
+    """상품들에서 시즌 목록 추출, 최신순 정렬."""
+    ss = sorted({season_of(p.get("스타일넘버","")) for p in prods} - {""}, reverse=True)
+    return ss
+
+def pick_season(prods, key):
+    """시즌 선택 셀렉트박스. 기본값은 PLANNING_SEASON(있으면)."""
+    seasons = list_seasons(prods)
+    if not seasons:
+        return None
+    idx = seasons.index(PLANNING_SEASON) if PLANNING_SEASON in seasons else 0
+    return st.selectbox("시즌 선택", seasons, index=idx, key=key)
 
 @st.cache_data(ttl=300, show_spinner=False)
 def load_shoot():
@@ -2612,6 +2632,9 @@ elif "썸네일 생성기" in menu:
     _tprods = []
     try:
         _tp, _ = load_planning()
+        _tseason = pick_season(_tp, "thumb_season")
+        if _tseason:
+            _tp = [p for p in _tp if season_of(p.get("스타일넘버","")) == _tseason]
         try:
             _tshoot = load_shoot()
         except Exception:
@@ -2635,6 +2658,10 @@ elif "상세 생성기" in menu:
         prods, generated = load_planning()
     except Exception as e:
         st.warning("기획 API 로드 실패: " + str(e))
+
+    _season = pick_season(prods, "detail_season")
+    if _season:
+        prods = [p for p in prods if season_of(p.get("스타일넘버","")) == _season]
 
     try:
         _shoot_map = load_shoot()
