@@ -1691,6 +1691,7 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
     <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 파일 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <button class="btn btn-line" onclick="clearAll()">🗑 비우기</button>
+    <select id="tseasonsel" onchange="fillProdSel()" title="시즌 선택" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;max-width:150px;"></select>
     <select id="prodsel" onchange="onProdSel()" title="상품 선택 → 상품명 자동입력" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;max-width:210px;"></select>
     <input id="pname" placeholder="상품명 (폴더명)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:170px;">
     <input id="tseason" value="26F" placeholder="시즌" title="시트 탭 이름 (예: 26F)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:60px;">
@@ -1719,8 +1720,10 @@ function sheetCol(header,items){ try{ if(!WRITE_API||!WRITE_TOKEN||!header||!ite
 function markThumbs(pname,entries){ if(!pname)return; const chans=[...new Set(entries.map(e=>e.chan))]; chans.forEach(k=>{ const h=CHAN_HDR[k]; if(h) sheetCol(h,[{name:pname,value:'O'}]); }); }
 // ── 상품 선택 드롭다운 (기획 API F/W 상품, 고르면 상품명칸 자동입력) ──
 const THUMB_PRODUCTS=__THUMB_PRODUCTS__;
-function _opts(arr){ return arr.map(p=>'<option value="'+String(p.name_en).replace(/"/g,'&quot;')+'">'+String(p.label).replace(/</g,'&lt;')+'</option>').join(''); }
-function fillProdSel(){ const s=document.getElementById('prodsel'); if(!s)return; if(!THUMB_PRODUCTS.length){ s.innerHTML='<option value="">상품 없음</option>'; return; } const F=THUMB_PRODUCTS.filter(p=>p.shoot==='F'), W=THUMB_PRODUCTS.filter(p=>p.shoot!=='F'); let h='<option value="">상품 선택…</option>'; if(F.length)h+='<optgroup label="F 촬영">'+_opts(F)+'</optgroup>'; if(W.length)h+='<optgroup label="W 촬영">'+_opts(W)+'</optgroup>'; s.innerHTML=h; }
+function _tskey(p){ return (p.season||'')+'|'+(p.shoot||''); }
+function _tslabel(k){ const a=k.split('|'); return a[0]+(a[1]?(' · '+a[1]+'촬영'):''); }
+function fillTSeasons(){ const sel=document.getElementById('tseasonsel'); if(!sel)return; let keys=[...new Set(THUMB_PRODUCTS.map(_tskey))].filter(k=>k[0]!=='|'&&k!=='|'); keys.sort((a,b)=>{ const A=a.split('|'),B=b.split('|'); if(A[0]!==B[0])return B[0].localeCompare(A[0]); const o={F:0,W:1}; return (o[A[1]]!=null?o[A[1]]:2)-(o[B[1]]!=null?o[B[1]]:2); }); sel.innerHTML=keys.map(k=>'<option value="'+k+'">'+_tslabel(k)+'</option>').join(''); sel.value = keys.indexOf('26FW|F')>=0 ? '26FW|F' : (keys[0]||''); }
+function fillProdSel(){ const s=document.getElementById('prodsel'); if(!s)return; const sk=(document.getElementById('tseasonsel')||{}).value||''; const arr=THUMB_PRODUCTS.filter(p=>_tskey(p)===sk); if(!arr.length){ s.innerHTML='<option value="">상품 없음</option>'; return; } s.innerHTML='<option value="">상품 선택…</option>'+arr.map(p=>'<option value="'+String(p.name_en).replace(/"/g,'&quot;')+'">'+String(p.label).replace(/</g,'&lt;')+'</option>').join(''); }
 function onProdSel(){ const s=document.getElementById('prodsel'), pn=document.getElementById('pname'); if(s&&pn&&s.value)pn.value=s.value; }
 const CH=[
  {k:'EQL',w:1500,h:2000,bg:'#ffffff',grp:'g_eqlw'},
@@ -2116,7 +2119,7 @@ document.addEventListener('keydown',e=>{
 });
 renderTabs();
 updateDirLabel();
-try{ fillProdSel(); }catch(e){}
+try{ fillTSeasons(); fillProdSel(); }catch(e){}
 </script></body></html>
 """
 
@@ -2203,8 +2206,9 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
   <div class="stage"><div id="page"></div></div>
   <div class="panel">
     <h3>상세 생성기</h3>
-    <div class="ftabs"><button class="ftab on" data-f="ALL" onclick="setFilter('ALL')">전체</button><button class="ftab" data-f="F" onclick="setFilter('F')">F 가을</button><button class="ftab" data-f="W" onclick="setFilter('W')">W 겨울</button></div>
-    <div class="lbl">상품 선택 <span id="prodcount" style="color:#bbb;font-weight:400;margin-left:8px;"></span></div>
+    <div class="lbl">시즌</div>
+    <select id="seasonsel" class="psel" onchange="onSeasonSel(this.value)"></select>
+    <div class="lbl" style="margin-top:10px;">상품 선택 <span id="prodcount" style="color:#bbb;font-weight:400;margin-left:8px;"></span></div>
     <select id="prodsel" class="psel" onchange="selectProduct(this.value)"></select>
     <div class="divider"></div>
     <div class="lbl">이미지 폴더 나스 경로</div>
@@ -2323,10 +2327,13 @@ function renderPage(){
   applyZoom();
 }
 let curProdIdx=-1; const prodImgs={}, prodFolder={};
-function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; if(curProdIdx!==-1 && +i!==curProdIdx){ prodImgs[curProdIdx]=imgs.slice(); const _fp=document.getElementById('folderpath'); if(_fp) prodFolder[curProdIdx]=_fp.value; imgs.length=0; const _rest=prodImgs[+i]||[]; for(const _o of _rest) imgs.push(_o); if(_fp) _fp.value=prodFolder[+i]||''; delete prodImgs[+i]; delete prodFolder[+i]; for(const _k in prodImgs){ if(_k!==String(curProdIdx)){ const _arr=prodImgs[_k]; if(_arr){ for(const _o2 of _arr){ if(_o2 && _o2.url){ try{URL.revokeObjectURL(_o2.url);}catch(e){} } } } delete prodImgs[_k]; delete prodFolder[_k]; } } } curProdIdx=+i; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; P.made=p.made; P.colors=(p.colors||[]); const filt=PRODUCTS.map((x,j)=>({x,j})).filter(o=>prodFilter==='ALL'||o.x.shoot===prodFilter); const pos=filt.findIndex(o=>o.j===+i); const _c=document.getElementById('prodcount'); if(_c)_c.textContent=(pos+1)+' / '+filt.length; renderPage(); }
-let prodFilter='ALL';
-function setFilter(f){ prodFilter=f; document.querySelectorAll('.ftab').forEach(b=>b.classList.toggle('on', b.dataset.f===f)); fillProducts(); }
-function fillProducts(){ const sel=document.getElementById('prodsel'); if(!sel)return; if(!PRODUCTS.length){sel.innerHTML='<option>상품 없음</option>'; const _c0=document.getElementById('prodcount'); if(_c0)_c0.textContent=''; return;} const filt=PRODUCTS.map((p,i)=>({p,i})).filter(o=>prodFilter==='ALL'||o.p.shoot===prodFilter); sel.innerHTML=filt.map(o=>'<option value="'+o.i+'">'+esc(o.p.label||('상품 '+(o.i+1)))+'</option>').join(''); if(filt.length){ sel.value=String(filt[0].i); selectProduct(filt[0].i); } else { const _c=document.getElementById('prodcount'); if(_c)_c.textContent='0 / 0'; } }
+function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; if(curProdIdx!==-1 && +i!==curProdIdx){ prodImgs[curProdIdx]=imgs.slice(); const _fp=document.getElementById('folderpath'); if(_fp) prodFolder[curProdIdx]=_fp.value; imgs.length=0; const _rest=prodImgs[+i]||[]; for(const _o of _rest) imgs.push(_o); if(_fp) _fp.value=prodFolder[+i]||''; delete prodImgs[+i]; delete prodFolder[+i]; for(const _k in prodImgs){ if(_k!==String(curProdIdx)){ const _arr=prodImgs[_k]; if(_arr){ for(const _o2 of _arr){ if(_o2 && _o2.url){ try{URL.revokeObjectURL(_o2.url);}catch(e){} } } } delete prodImgs[_k]; delete prodFolder[_k]; } } } curProdIdx=+i; P.name_en=p.name_en; P.desc=p.desc; P.sizeItems=p.sizeItems; P.sizeVals=p.sizeVals; P.sizeNote=p.sizeNote; P.fabric=p.fabric; P.made=p.made; P.colors=(p.colors||[]); const filt=PRODUCTS.map((x,j)=>({x,j})).filter(o=>_skey(o.x)===curSeasonKey); const pos=filt.findIndex(o=>o.j===+i); const _c=document.getElementById('prodcount'); if(_c)_c.textContent=(pos+1)+' / '+filt.length; renderPage(); }
+let curSeasonKey='';
+function _skey(p){ return (p.season||'')+'|'+(p.shoot||''); }
+function _slabel(k){ const a=k.split('|'); return a[0]+(a[1]?(' · '+a[1]+'촬영'):''); }
+function fillSeasons(){ const sel=document.getElementById('seasonsel'); if(!sel)return; let keys=[...new Set(PRODUCTS.map(_skey))].filter(k=>k[0]!=='|'&&k!=='|'); keys.sort((a,b)=>{ const A=a.split('|'),B=b.split('|'); if(A[0]!==B[0])return B[0].localeCompare(A[0]); const o={F:0,W:1}; return (o[A[1]]!=null?o[A[1]]:2)-(o[B[1]]!=null?o[B[1]]:2); }); sel.innerHTML=keys.map(k=>'<option value="'+k+'">'+esc(_slabel(k))+'</option>').join(''); curSeasonKey = keys.indexOf('26FW|F')>=0 ? '26FW|F' : (keys[0]||''); sel.value=curSeasonKey; }
+function onSeasonSel(v){ curSeasonKey=v; fillProducts(); }
+function fillProducts(){ const sel=document.getElementById('prodsel'); if(!sel)return; if(!PRODUCTS.length){sel.innerHTML='<option>상품 없음</option>'; const _c0=document.getElementById('prodcount'); if(_c0)_c0.textContent=''; return;} const filt=PRODUCTS.map((p,i)=>({p,i})).filter(o=>_skey(o.p)===curSeasonKey); sel.innerHTML=filt.map(o=>'<option value="'+o.i+'">'+esc(o.p.label||('상품 '+(o.i+1)))+'</option>').join(''); if(filt.length){ sel.value=String(filt[0].i); selectProduct(filt[0].i); } else { const _c=document.getElementById('prodcount'); if(_c)_c.textContent='0 / 0'; } }
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 function sizeGuide(){
   const sizes=Object.keys(P.sizeVals);
@@ -2616,6 +2623,7 @@ async function save(fmt){
 }
 loadInit();
 renderModelUI();
+fillSeasons();
 fillProducts();
 applyDefaultGroup();
 restoreBaseDir();
@@ -2632,9 +2640,6 @@ elif "썸네일 생성기" in menu:
     _tprods = []
     try:
         _tp, _ = load_planning()
-        _tseason = pick_season(_tp, "thumb_season")
-        if _tseason:
-            _tp = [p for p in _tp if season_of(p.get("스타일넘버","")) == _tseason]
         try:
             _tshoot = load_shoot()
         except Exception:
@@ -2643,7 +2648,8 @@ elif "썸네일 생성기" in menu:
             nm = p.get("제품명", {}) or {}
             _tprods.append({"label": nm.get("ko") or nm.get("en") or "?",
                             "name_en": nm.get("en") or nm.get("ko") or "Product",
-                            "shoot": shoot_of(p.get("스타일넘버", ""), _tshoot)})
+                            "shoot": shoot_of(p.get("스타일넘버", ""), _tshoot),
+                            "season": season_of(p.get("스타일넘버", ""))})
     except Exception as e:
         st.warning("기획 API 로드 실패: " + str(e))
     components.html(THUMB_HTML
@@ -2658,10 +2664,6 @@ elif "상세 생성기" in menu:
         prods, generated = load_planning()
     except Exception as e:
         st.warning("기획 API 로드 실패: " + str(e))
-
-    _season = pick_season(prods, "detail_season")
-    if _season:
-        prods = [p for p in prods if season_of(p.get("스타일넘버","")) == _season]
 
     try:
         _shoot_map = load_shoot()
@@ -2678,7 +2680,8 @@ elif "상세 생성기" in menu:
                          "colors": [{"ko": (c.get("ko") or ""), "en": (c.get("en") or "")} for c in sorted((p.get("컬러") or []), key=lambda c: c.get("순위",99))],
                          "sizeItems": items, "sizeVals": sv, "sizeNote": sizenote,
                          "made": made,
-                         "shoot": shoot_of(p.get("스타일넘버",""), _shoot_map)})
+                         "shoot": shoot_of(p.get("스타일넘버",""), _shoot_map),
+                         "season": season_of(p.get("스타일넘버",""))})
     if not PRODUCTS:
         PRODUCTS = [{"label": "(기본)", "name_en": "Salt and Sun Stripe Shirt", "desc": "-",
                      "fabric": "Cotton 90% Polyester 10%",
