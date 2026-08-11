@@ -1722,7 +1722,9 @@ function markThumbs(pname,entries){ if(!pname)return; const chans=[...new Set(en
 const THUMB_PRODUCTS=__THUMB_PRODUCTS__;
 function _tskey(p){ return (p.season||'')+'|'+(p.shoot||''); }
 function _tslabel(k){ const a=k.split('|'); return a[0]+(a[1]?(' · '+a[1]+'촬영'):''); }
-function fillTSeasons(){ const sel=document.getElementById('tseasonsel'); if(!sel)return; let keys=[...new Set(THUMB_PRODUCTS.map(_tskey))].filter(k=>k[0]!=='|'&&k!=='|'); keys.sort((a,b)=>{ const A=a.split('|'),B=b.split('|'); if(A[0]!==B[0])return B[0].localeCompare(A[0]); const o={F:0,W:1}; return (o[A[1]]!=null?o[A[1]]:2)-(o[B[1]]!=null?o[B[1]]:2); }); sel.innerHTML=keys.map(k=>'<option value="'+k+'">'+_tslabel(k)+'</option>').join(''); sel.value = keys.indexOf('26FW|F')>=0 ? '26FW|F' : (keys[0]||''); }
+function _tsrank(s){ if(!s||s.length<4)return 0; const y=parseInt(s.slice(0,2),10)||0; const h=s[2]==='S'?0:(s[2]==='F'?1:2); return y*2+h; }
+const _TSEASON_MIN=_tsrank('26FW');
+function fillTSeasons(){ const sel=document.getElementById('tseasonsel'); if(!sel)return; let keys=[...new Set(THUMB_PRODUCTS.map(_tskey))].filter(k=>{ const s=k.split('|')[0]; return s && _tsrank(s)>=_TSEASON_MIN; }); keys.sort((a,b)=>{ const A=a.split('|'),B=b.split('|'); const ra=_tsrank(A[0]),rb=_tsrank(B[0]); if(ra!==rb)return ra-rb; const o={F:0,W:1}; return (o[A[1]]!=null?o[A[1]]:2)-(o[B[1]]!=null?o[B[1]]:2); }); sel.innerHTML=keys.map(k=>'<option value="'+k+'">'+_tslabel(k)+'</option>').join(''); sel.value = keys.indexOf('26FW|F')>=0 ? '26FW|F' : (keys[0]||''); }
 function fillProdSel(){ const s=document.getElementById('prodsel'); if(!s)return; const sk=(document.getElementById('tseasonsel')||{}).value||''; const arr=THUMB_PRODUCTS.filter(p=>_tskey(p)===sk); if(!arr.length){ s.innerHTML='<option value="">상품 없음</option>'; return; } s.innerHTML='<option value="">상품 선택…</option>'+arr.map(p=>'<option value="'+String(p.name_en).replace(/"/g,'&quot;')+'">'+String(p.label).replace(/</g,'&lt;')+'</option>').join(''); }
 function onProdSel(){ const s=document.getElementById('prodsel'), pn=document.getElementById('pname'); if(s&&pn&&s.value)pn.value=s.value; }
 const CH=[
@@ -2331,7 +2333,10 @@ function selectProduct(i){ const p=PRODUCTS[+i]; if(!p)return; if(curProdIdx!==-
 let curSeasonKey='';
 function _skey(p){ return (p.season||'')+'|'+(p.shoot||''); }
 function _slabel(k){ const a=k.split('|'); return a[0]+(a[1]?(' · '+a[1]+'촬영'):''); }
-function fillSeasons(){ const sel=document.getElementById('seasonsel'); if(!sel)return; let keys=[...new Set(PRODUCTS.map(_skey))].filter(k=>k[0]!=='|'&&k!=='|'); keys.sort((a,b)=>{ const A=a.split('|'),B=b.split('|'); if(A[0]!==B[0])return B[0].localeCompare(A[0]); const o={F:0,W:1}; return (o[A[1]]!=null?o[A[1]]:2)-(o[B[1]]!=null?o[B[1]]:2); }); sel.innerHTML=keys.map(k=>'<option value="'+k+'">'+esc(_slabel(k))+'</option>').join(''); curSeasonKey = keys.indexOf('26FW|F')>=0 ? '26FW|F' : (keys[0]||''); sel.value=curSeasonKey; }
+function _srank(s){ if(!s||s.length<4)return 0; const y=parseInt(s.slice(0,2),10)||0; const h=s[2]==='S'?0:(s[2]==='F'?1:2); return y*2+h; }
+const _SEASON_MIN=_srank('26FW');
+function _skeysort(a,b){ const A=a.split('|'),B=b.split('|'); const ra=_srank(A[0]),rb=_srank(B[0]); if(ra!==rb)return ra-rb; const o={F:0,W:1}; return (o[A[1]]!=null?o[A[1]]:2)-(o[B[1]]!=null?o[B[1]]:2); }
+function fillSeasons(){ const sel=document.getElementById('seasonsel'); if(!sel)return; let keys=[...new Set(PRODUCTS.map(_skey))].filter(k=>{ const s=k.split('|')[0]; return s && _srank(s)>=_SEASON_MIN; }); keys.sort(_skeysort); sel.innerHTML=keys.map(k=>'<option value="'+k+'">'+esc(_slabel(k))+'</option>').join(''); curSeasonKey = keys.indexOf('26FW|F')>=0 ? '26FW|F' : (keys[0]||''); sel.value=curSeasonKey; }
 function onSeasonSel(v){ curSeasonKey=v; fillProducts(); }
 function fillProducts(){ const sel=document.getElementById('prodsel'); if(!sel)return; if(!PRODUCTS.length){sel.innerHTML='<option>상품 없음</option>'; const _c0=document.getElementById('prodcount'); if(_c0)_c0.textContent=''; return;} const filt=PRODUCTS.map((p,i)=>({p,i})).filter(o=>_skey(o.p)===curSeasonKey); sel.innerHTML=filt.map(o=>'<option value="'+o.i+'">'+esc(o.p.label||('상품 '+(o.i+1)))+'</option>').join(''); if(filt.length){ sel.value=String(filt[0].i); selectProduct(filt[0].i); } else { const _c=document.getElementById('prodcount'); if(_c)_c.textContent='0 / 0'; } }
 function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;');}
