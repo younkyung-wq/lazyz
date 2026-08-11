@@ -1695,7 +1695,6 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
     <select id="prodsel" onchange="onProdSel()" title="상품 선택 → 상품명 자동입력" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;max-width:210px;"></select>
     <span id="tprodcount" style="font-size:12px;color:#999;white-space:nowrap;"></span>
     <input id="pname" type="hidden">
-    <input id="tseason" value="26F" placeholder="시즌" title="시트 탭 이름 (예: 26F)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:60px;">
     <button class="btn btn-line" onclick="saveOne()">↓ 이 채널만</button>
     <button class="btn btn-red" onclick="saveAll()">📥 전체 저장</button>
     <span id="dirlabel" style="font-size:12px;color:#888;cursor:pointer;" onclick="pickDir()"></span>
@@ -1717,7 +1716,8 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
 // ── 시트 자동 기록 (제품폴더/썸네일 저장 시 해당 채널 열에 O) ──
 const WRITE_API='__WRITE_API__', WRITE_TOKEN='__WRITE_TOKEN__';
 const CHAN_HDR={'EQL':'EQL','무신사':'무신사','W컨셉':'w','29CM':'29','크림':'크림썸넬','공홈':'공홈','컬리':'컬리','조조타운':'조조타운'};
-function sheetCol(header,items){ try{ if(!WRITE_API||!WRITE_TOKEN||!header||!items||!items.length)return; const tab=((document.getElementById('tseason')||{}).value||'26F').trim(); fetch(WRITE_API,{method:'POST',mode:'no-cors',body:JSON.stringify({token:WRITE_TOKEN,sheet:tab,action:'setColumn',headerRow:2,nameCol:0,header:header,items:items})}); }catch(e){} }
+function _tSeasonCode(){ const a=((document.getElementById('tseasonsel')||{}).value||'').split('|'); return (a[0]||'').slice(0,2)+(a[1]||''); }  // 26FW|F -> 26F
+function sheetCol(header,items){ try{ if(!WRITE_API||!WRITE_TOKEN||!header||!items||!items.length)return; const tab=_tSeasonCode(); if(!tab)return; fetch(WRITE_API,{method:'POST',mode:'no-cors',body:JSON.stringify({token:WRITE_TOKEN,sheet:tab,action:'setColumn',headerRow:2,nameCol:0,header:header,items:items})}); }catch(e){} }
 function markThumbs(pname,entries){ if(!pname)return; const chans=[...new Set(entries.map(e=>e.chan))]; chans.forEach(k=>{ const h=CHAN_HDR[k]; if(h) sheetCol(h,[{name:pname,value:'O'}]); }); }
 // ── 상품 선택 드롭다운 (기획 API F/W 상품, 고르면 상품명칸 자동입력) ──
 const THUMB_PRODUCTS=__THUMB_PRODUCTS__;
@@ -2223,9 +2223,11 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
     </div>
     <input id="fdir" type="file" accept="image/*" webkitdirectory multiple style="display:none">
     <div class="lbl">또는 개별 이미지 선택</div>
-    <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 이미지 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
-    <button class="btn btn-line" onclick="clearImgs()">🗑 이미지 비우기</button>
+    <div style="display:flex;gap:6px;">
+      <button class="btn btn-dark" style="flex:1;" onclick="document.getElementById('fi').click()">📁 이미지 선택</button>
+      <button class="btn btn-line" style="flex:1;" onclick="clearImgs()">🗑 이미지 비우기</button>
+    </div>
     <div class="divider"></div>
     <details class="acc">
       <summary>👤 모델 관리</summary>
@@ -2243,8 +2245,6 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
     <div class="divider"></div>
     <div class="lbl">상세페이지 생성하기</div>
     <div class="optrow"><label><input type="checkbox" id="optWhole" checked>한통</label><label><input type="checkbox" id="optCrop" checked>크롭</label><label><input type="checkbox" id="optKream" checked>크림</label></div>
-    <div class="lbl">디스크엔 시즌</div>
-    <input id="seasonInp" class="psel" type="text" value="26F" placeholder="예: 26F" style="background:#fff;">
     <button class="btn btn-line" onclick="pickBaseDir()"><span id="basedirlabel">📁 저장 폴더 지정</span></button>
     <button class="btn btn-red" onclick="save('jpg')">📥 저장하기</button>
     <span id="prog"></span>
@@ -2257,7 +2257,8 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 const PRODUCTS = __PRODUCTS__;
 // ── 시트 자동 기록 (코드→B열, 크림상세→C열) ──
 const WRITE_API='__WRITE_API__', WRITE_TOKEN='__WRITE_TOKEN__';
-function sheetCol(header,items){ try{ if(!WRITE_API||!WRITE_TOKEN||!header||!items||!items.length)return; const tab=((document.getElementById('seasonInp')||{}).value||'26F').trim(); fetch(WRITE_API,{method:'POST',mode:'no-cors',body:JSON.stringify({token:WRITE_TOKEN,sheet:tab,action:'setColumn',headerRow:2,nameCol:0,header:header,items:items})}); }catch(e){} }
+function _disknSeason(){ const a=(curSeasonKey||'').split('|'); return (a[0]||'').slice(0,2)+(a[1]||''); }  // 26FW|F -> 26F, 26FW|W -> 26W
+function sheetCol(header,items){ try{ if(!WRITE_API||!WRITE_TOKEN||!header||!items||!items.length)return; const tab=_disknSeason(); if(!tab)return; fetch(WRITE_API,{method:'POST',mode:'no-cors',body:JSON.stringify({token:WRITE_TOKEN,sheet:tab,action:'setColumn',headerRow:2,nameCol:0,header:header,items:items})}); }catch(e){} }
 const _p0 = PRODUCTS[0] || {name_en:'Product',desc:'',fabric:'',sizeItems:['Total Length'],sizeVals:{'Free':['']},sizeNote:'',made:'국내'};
 const P={
  name_en: _p0.name_en,
@@ -2551,7 +2552,7 @@ async function ensureBaseDir(){ if(baseDir && await _verifyPerm(baseDir)) return
 async function restoreBaseDir(){ try{ const h=await _idbGet('baseDir'); if(h){ baseDir=h; _baseLabel(); } }catch(e){} }
 function _toBlob(cv,q){ return new Promise(res=>cv.toBlob(res,'image/jpeg',q||0.95)); }
 async function _blobUnder(cv,maxB){ let q=0.92, blob=await _toBlob(cv,q); while(blob.size>maxB && q>0.4){ q-=0.08; blob=await _toBlob(cv,q); } return blob; }
-function buildDisknCode(name,count){ const season=((document.getElementById('seasonInp')||{}).value||'26F').trim(); let ln=[]; for(let i=1;i<=count;i++){ const nn=String(i).padStart(2,'0'); ln.push('<img src="https://lazyz.diskn.com/product/'+season+'/'+name+'/'+name+'_'+nn+'.jpg" />'); } return '<center>\n'+ln.join('<br>\n')+'\n</center>'; }
+function buildDisknCode(name,count){ const season=_disknSeason()||'26F'; let ln=[]; for(let i=1;i<=count;i++){ const nn=String(i).padStart(2,'0'); ln.push('<img src="https://lazyz.diskn.com/product/'+season+'/'+name+'/'+name+'_'+nn+'.jpg" />'); } return '<center>\n'+ln.join('<br>\n')+'\n</center>'; }
 function _copyCode(){ const co=document.getElementById('codeOut'); if(!co||!co.value){ alert('먼저 크롭으로 저장하면 코드가 생성돼요.'); return; } co.select(); try{ document.execCommand('copy'); }catch(e){} try{ navigator.clipboard.writeText(co.value); }catch(e){} const b=window.event&&window.event.target; if(b&&b.textContent!==undefined){ const t=b.textContent; b.textContent='\u2713 복사됨'; setTimeout(()=>b.textContent=t,1200); } }
 async function _writeFile(dir,name,blob){ const fh=await dir.getFileHandle(name,{create:true}); const w=await fh.createWritable(); await w.write(blob); await w.close(); }
 function _downscale(big,tw){ const c=document.createElement('canvas'); c.width=tw; c.height=Math.max(1,Math.round(big.height*tw/big.width)); const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(big,0,0,c.width,c.height); return c; }
