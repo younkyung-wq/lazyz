@@ -39,6 +39,37 @@ def load_planning():
     data = _json.loads(raw)
     return data.get("products", []), data.get("generated", "")
 
+@st.cache_data(ttl=300, show_spinner=False)
+def load_shoot():
+    """StyleInfo 시트 V열(촬영차수)을 직접 읽어 {스타일넘버: 'F'/'W'} 반환. 없으면 {}."""
+    sid = _get_secret("STYLEINFO_SHEET"); gid = _get_secret("STYLEINFO_GID", "0")
+    if not sid:
+        return {}
+    url = "https://docs.google.com/spreadsheets/d/" + sid + "/gviz/tq?tqx=out:csv&gid=" + str(gid)
+    raw = _urlreq.urlopen(url, timeout=20, context=_SSLCTX).read().decode("utf-8")
+    rows = list(_csv.reader(io.StringIO(raw)))
+    if not rows:
+        return {}
+    h = rows[0]
+    try:
+        si = h.index("스타일넘버"); ci = h.index("촬영차수")
+    except ValueError:
+        return {}
+    m = {}
+    for r in rows[1:]:
+        if len(r) > max(si, ci):
+            s = (r[si] or "").strip(); c = (r[ci] or "").strip().upper()
+            if s:
+                m[s] = c
+    return m
+
+def shoot_of(sn, shoot_map):
+    """촬영차수 판정: 시트 V열 우선(F/W), 없거나 빈값이면 F_STYLES 폴백."""
+    v = shoot_map.get(sn)
+    if v in ("F", "W"):
+        return v
+    return "F" if sn in F_STYLES else "W"
+
 def _size_name(x):
     x = str(x).strip()
     if x.upper() == "F": return "Free"
@@ -2581,11 +2612,15 @@ elif "썸네일 생성기" in menu:
     _tprods = []
     try:
         _tp, _ = load_planning()
+        try:
+            _tshoot = load_shoot()
+        except Exception:
+            _tshoot = {}
         for p in _tp:
             nm = p.get("제품명", {}) or {}
             _tprods.append({"label": nm.get("ko") or nm.get("en") or "?",
                             "name_en": nm.get("en") or nm.get("ko") or "Product",
-                            "shoot": ("F" if p.get("스타일넘버", "") in F_STYLES else "W")})
+                            "shoot": shoot_of(p.get("스타일넘버", ""), _tshoot)})
     except Exception as e:
         st.warning("기획 API 로드 실패: " + str(e))
     components.html(THUMB_HTML
@@ -2601,6 +2636,10 @@ elif "상세 생성기" in menu:
     except Exception as e:
         st.warning("기획 API 로드 실패: " + str(e))
 
+    try:
+        _shoot_map = load_shoot()
+    except Exception:
+        _shoot_map = {}
     PRODUCTS = []
     for p in prods:
         name_en, desc, fabric, items, sv, sizenote, made = planning_extract(p)
@@ -2612,7 +2651,7 @@ elif "상세 생성기" in menu:
                          "colors": [{"ko": (c.get("ko") or ""), "en": (c.get("en") or "")} for c in sorted((p.get("컬러") or []), key=lambda c: c.get("순위",99))],
                          "sizeItems": items, "sizeVals": sv, "sizeNote": sizenote,
                          "made": made,
-                         "shoot": ("F" if p.get("스타일넘버","") in F_STYLES else "W")})
+                         "shoot": shoot_of(p.get("스타일넘버",""), _shoot_map)})
     if not PRODUCTS:
         PRODUCTS = [{"label": "(기본)", "name_en": "Salt and Sun Stripe Shirt", "desc": "-",
                      "fabric": "Cotton 90% Polyester 10%",
