@@ -1641,6 +1641,7 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <button class="btn btn-line" onclick="clearAll()">🗑 비우기</button>
     <input id="pname" placeholder="상품명 (폴더명)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:170px;">
+    <input id="tseason" value="26F" placeholder="시즌" title="시트 탭 이름 (예: 26F)" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;width:60px;">
     <button class="btn btn-line" onclick="saveOne()">↓ 이 채널만</button>
     <button class="btn btn-red" onclick="saveAll()">📥 전체 저장</button>
     <span id="dirlabel" style="font-size:12px;color:#888;cursor:pointer;" onclick="pickDir()"></span>
@@ -1659,6 +1660,11 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
   </div>
 </div>
 <script>
+// ── 시트 자동 기록 (제품폴더/썸네일 저장 시 해당 채널 열에 O) ──
+const WRITE_API='__WRITE_API__', WRITE_TOKEN='__WRITE_TOKEN__';
+const CHAN_COL={'EQL':4,'무신사':5,'W컨셉':6,'29CM':7,'크림':8,'공홈':9,'컬리':10,'조조타운':11};
+function sheetWrite(items){ try{ if(!WRITE_API||!WRITE_TOKEN||!items||!items.length)return; const tab=((document.getElementById('tseason')||{}).value||'26F').trim(); fetch(WRITE_API,{method:'POST',mode:'no-cors',body:JSON.stringify({token:WRITE_TOKEN,sheet:tab,action:'cells',headerRow:2,nameCol:0,items:items})}); }catch(e){} }
+function markThumbs(pname,entries){ if(!pname)return; const chans=[...new Set(entries.map(e=>e.chan))]; const items=chans.map(k=>({name:pname,col:CHAN_COL[k],value:'O'})).filter(x=>x.col); sheetWrite(items); }
 const CH=[
  {k:'EQL',w:1500,h:2000,bg:'#ffffff',grp:'g_eqlw'},
  {k:'무신사',w:1500,h:1800,bg:'#ffffff',grp:'g_musinsa'},
@@ -1989,6 +1995,7 @@ async function makeZip(chanList){
         i++; pr.textContent='저장 중… '+i+'/'+entries.length;
       }
       pr.textContent='저장 완료! ('+entries.length+'개) → '+(pname||dir.name);
+      markThumbs(pname, entries);
       return;
     }catch(err){
       if(err.name==='AbortError'){pr.textContent='취소됨'; return;}
@@ -2004,6 +2011,7 @@ async function makeZip(chanList){
   const a=document.createElement('a');
   a.href=URL.createObjectURL(out); a.download=(pname||'썸네일')+suffix+'.zip'; a.click();
   setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  markThumbs(pname, entries);
   pr.textContent='완료! ('+entries.length+'개)';
 }
 (function(){
@@ -2180,6 +2188,9 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 <script>
 // 시트에서 가져온 제품 정보(수정 가능)
 const PRODUCTS = __PRODUCTS__;
+// ── 시트 자동 기록 (코드→B열, 크림상세→C열) ──
+const WRITE_API='__WRITE_API__', WRITE_TOKEN='__WRITE_TOKEN__';
+function sheetWrite(items){ try{ if(!WRITE_API||!WRITE_TOKEN||!items||!items.length)return; const tab=((document.getElementById('seasonInp')||{}).value||'26F').trim(); fetch(WRITE_API,{method:'POST',mode:'no-cors',body:JSON.stringify({token:WRITE_TOKEN,sheet:tab,action:'cells',headerRow:2,nameCol:0,items:items})}); }catch(e){} }
 const _p0 = PRODUCTS[0] || {name_en:'Product',desc:'',fabric:'',sizeItems:['Total Length'],sizeVals:{'Free':['']},sizeNote:'',made:'국내'};
 const P={
  name_en: _p0.name_en,
@@ -2515,7 +2526,7 @@ async function save(fmt){
       const OUTW=1000, _sf=OUTW/bw; const imgDir = dir? await dir.getDirectoryHandle('images',{create:true}) : null;
       let ci=1;
       for(let k=0;k<cuts.length-1;k++){ const y=cuts[k], h=cuts[k+1]-y; if(h<=0) continue; const oh=Math.max(1,Math.round(h*_sf)); const sc2=document.createElement('canvas'); sc2.width=OUTW; sc2.height=oh; const g2=sc2.getContext('2d'); g2.imageSmoothingEnabled=true; g2.imageSmoothingQuality='high'; g2.drawImage(big,0,y,bw,h,0,0,OUTW,oh); await put(imgDir, name+'_'+String(ci).padStart(2,'0')+'.jpg', await _toBlob(sc2,0.95)); ci++; }
-      const _cnt=ci-1; if(_cnt>0){ const _code=buildDisknCode(name,_cnt); const _co=document.getElementById('codeOut'); if(_co)_co.value=_code; try{ await put(dir, name+'_code.txt', new Blob([_code],{type:'text/plain'})); }catch(e){} }
+      const _cnt=ci-1; if(_cnt>0){ const _code=buildDisknCode(name,_cnt); const _co=document.getElementById('codeOut'); if(_co)_co.value=_code; try{ await put(dir, name+'_code.txt', new Blob([_code],{type:'text/plain'})); }catch(e){} sheetWrite([{name:P.name_en,col:2,value:_code}]); }
       done++;
     }
   }
@@ -2539,6 +2550,7 @@ async function save(fmt){
         const kmulti = kcuts.length-1 > 1;
         for(let ci=0; ci<kcuts.length-1; ci++){ const y=kcuts[ci], h=kcuts[ci+1]-y; if(h<=0) continue; const cc=document.createElement('canvas'); cc.width=KW; cc.height=h; cc.getContext('2d').drawImage(kw,0,y,KW,h,0,0,KW,h); const fn = kmulti ? (name+'_'+cn+'_'+String(ci+1).padStart(2,'0')+'.jpg') : (name+'_'+cn+'.jpg'); await put(kDir, fn, await _blobUnder(cc, MAXB)); }
       }
+      sheetWrite([{name:P.name_en,col:3,value:'O'}]);
       done++;
     }
   }
@@ -2557,7 +2569,9 @@ if "스토리 모듈" in menu:
     components.html(STORY_EDITOR_HTML, height=820, scrolling=False)
 
 elif "썸네일 생성기" in menu:
-    components.html(THUMB_HTML, height=820, scrolling=False)
+    _wr_api = _get_secret("PLANNING_WRITE_API", "")
+    _wr_tok = _get_secret("PLANNING_WRITE_TOKEN", "")
+    components.html(THUMB_HTML.replace("__WRITE_API__", _wr_api).replace("__WRITE_TOKEN__", _wr_tok), height=820, scrolling=False)
 
 elif "상세 생성기" in menu:
     prods, generated = [], ""
@@ -2589,6 +2603,8 @@ elif "상세 생성기" in menu:
     html = (DETAIL_HTML
             .replace("__INIT_IMAGES__", "[]")
             .replace("__MODELS__", _default_models)
+            .replace("__WRITE_API__", _get_secret("PLANNING_WRITE_API", ""))
+            .replace("__WRITE_TOKEN__", _get_secret("PLANNING_WRITE_TOKEN", ""))
             .replace("__PRODUCTS__", _json.dumps(PRODUCTS, ensure_ascii=False)))
     components.html(html, height=820, scrolling=False)
 
