@@ -2078,7 +2078,7 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
 .divider{height:1px;background:#eee;margin:4px 0;}
 .optrow{display:flex;gap:16px;font-size:12.5px;color:#444;font-weight:600;padding:2px 2px;}
 .optrow label{display:flex;align-items:center;gap:5px;cursor:pointer;}
-.optrow input{width:15px;height:15px;cursor:pointer;accent-color:#9a9a9a;}
+.optrow input{width:15px;height:15px;cursor:pointer;accent-color:#d0d0d0;}
 .acc{border:1px solid #eee;border-radius:9px;overflow:hidden;}
 .acc>summary{list-style:none;cursor:pointer;padding:11px 14px;font-size:13px;font-weight:700;color:#333;background:#fafafa;user-select:none;display:flex;align-items:center;justify-content:space-between;}
 .acc>summary::-webkit-details-marker{display:none;}
