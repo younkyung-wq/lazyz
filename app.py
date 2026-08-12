@@ -2705,14 +2705,14 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
 .mL{width:900px;height:1080px;background:#e9e9e9 no-repeat center/cover;position:relative;cursor:grab;flex-shrink:0;overflow:hidden;}
 .mL .hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#999;font-size:22px;}
 .mR{flex:1;height:1080px;padding:0 70px 50px;display:flex;flex-direction:column;position:relative;}
-.mR .title{margin-top:340px;font-family:'Pretendard',-apple-system,sans-serif;font-size:20pt;font-weight:800;line-height:1.3;}
+.mR .title{margin-top:340px;font-family:'Pretendard',-apple-system,sans-serif;font-size:24pt;font-weight:800;line-height:1.45;}
 .mR .title .ten{letter-spacing:0;}
 .mR .title .tko{letter-spacing:-0.04em;}
-.mR .desc{margin-top:18px;font-size:21px;color:#333;line-height:1.5;}
-.mR .desc div{margin-bottom:4px;}
-.mR .ptit{margin-top:40px;font-size:23px;font-weight:800;}
-.mR .point{margin-top:12px;font-size:21px;color:#333;line-height:1.6;}
-.mR .point div{margin-bottom:6px;}
+.mR .desc{margin-top:38px;font-size:21px;color:#333;line-height:1.7;}
+.mR .desc div{margin-bottom:8px;}
+.mR .ptit{margin-top:44px;font-size:23px;font-weight:800;}
+.mR .point{margin-top:14px;font-size:21px;color:#333;line-height:1.75;}
+.mR .point div{margin-bottom:10px;}
 .mR .nukirow{margin-top:auto;display:flex;gap:20px;justify-content:center;align-items:flex-end;flex-wrap:nowrap;padding-bottom:20px;}
 .mR .nkitem{position:relative;flex:1 1 0;min-width:0;max-width:340px;display:flex;flex-direction:column;align-items:center;}
 .mR .nk{width:100%;height:300px;background:no-repeat center bottom/contain;}
