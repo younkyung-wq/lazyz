@@ -2711,10 +2711,11 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
 .mR .ptit{margin-top:40px;font-size:23px;font-weight:800;}
 .mR .point{margin-top:12px;font-size:21px;color:#333;line-height:1.6;}
 .mR .point div{margin-bottom:6px;}
-.mR .nukiwrap{margin-top:auto;display:flex;flex-direction:column;align-items:center;}
-.mR .nuki{width:360px;height:360px;background:no-repeat center/contain;cursor:pointer;}
-.mR .nuki.empty{border:2px dashed #ccc;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:16px;}
-.mR .cname{margin-top:14px;font-size:22px;font-weight:600;letter-spacing:0.04em;}
+.mR .nukirow{margin-top:auto;display:flex;gap:26px;justify-content:center;align-items:flex-end;flex-wrap:wrap;padding-bottom:20px;}
+.mR .nkitem{display:flex;flex-direction:column;align-items:center;}
+.mR .nk{width:300px;height:300px;background:no-repeat center bottom/contain;}
+.mR .cn{margin-top:12px;font-size:22px;font-weight:600;letter-spacing:0.04em;text-align:center;}
+.mR .nukihint{color:#bbb;font-size:18px;margin:auto;}
 .mR .disc{position:absolute;right:70px;bottom:34px;font-size:15px;color:#999;}
 [contenteditable]:focus{outline:1px solid #ffd24a;background:#fffef2;}
 .count{font-size:12px;color:#999;margin-left:6px;}
@@ -2728,10 +2729,7 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
         <div class="desc" contenteditable id="s_desc"></div>
         <div class="ptit">POINT</div>
         <div class="point" contenteditable id="s_point"></div>
-        <div class="nukiwrap">
-          <div class="nuki empty" id="s_nuki" onclick="document.getElementById('fn').click()">누끼 선택</div>
-          <div class="cname" contenteditable id="s_cname">COLOR</div>
-        </div>
+        <div class="nukirow" id="s_nukis"><div class="nukihint">폴더 불러오면 누끼가 여기 정렬돼요</div></div>
         <div class="disc">*본 자료는 레이지지 내부 자료로 사전 허가 없이 무단 사용 및 배포는 금지합니다.</div>
       </div>
     </div></div>
@@ -2743,9 +2741,10 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
     <div class="lbl">상품 선택 <span class="count" id="s_count"></span></div>
     <select id="s_prod" class="sel" onchange="selSProd()"></select>
     <input id="fm" type="file" accept="image/*" style="display:none">
-    <input id="fn" type="file" accept="image/*" style="display:none">
-    <button class="btn btn-line" onclick="document.getElementById('fm').click()">🧍 모델컷 선택</button>
-    <button class="btn btn-line" onclick="document.getElementById('fn').click()">🩱 누끼 선택</button>
+    <input id="ffolder" type="file" webkitdirectory multiple style="display:none">
+    <div class="lbl">이미지 폴더 나스 경로</div>
+    <button class="btn btn-dark" onclick="document.getElementById('ffolder').click()">📂 불러오기</button>
+    <button class="btn btn-line" onclick="document.getElementById('fm').click()">🧍 모델컷 교체</button>
     <div class="lbl">저장</div>
     <button class="btn btn-dark" onclick="pickBaseDir()"><span id="s_basedir">📁 나스폴더 지정</span></button>
     <button class="btn btn-red" onclick="saveSeed()">💾 저장하기 (JPG)</button>
@@ -2767,17 +2766,48 @@ function selSProd(){const arr=_curArr();const i=+document.getElementById('s_prod
   document.getElementById('s_title').textContent=p.name_en+(p.name_ko?(' / '+p.name_ko):'');
   document.getElementById('s_desc').innerHTML=(p.desc||[]).map(d=>'<div>• '+esc(d)+'</div>').join('');
   document.getElementById('s_point').innerHTML=(p.usp||[]).map(d=>'<div>- '+esc(d)+'</div>').join('');
-  const col=(p.colors&&p.colors[0])?(p.colors[0].en||p.colors[0].ko||''):'';
-  document.getElementById('s_cname').textContent=(col||'COLOR').toUpperCase();
+  curColors=p.colors||[];
+}
+// ── 색상/분류 ──
+const CODE_NAME={BK:'BLACK',BR:'BROWN',WH:'WHITE',IV:'IVORY',GR:'GRAY',CH:'CHARCOAL',PK:'PINK',BE:'BEIGE',NV:'NAVY',BL:'BLUE',RD:'RED',GN:'GREEN',SK:'SKY',LV:'LAVENDER',LG:'LIGHT GRAY',CO:'COCOA',MT:'MINT',CR:'CREAM',LB:'LEMON BUTTER'};
+const CODE_ALIAS=[['WH','IV','CR'],['GR','GY','LG'],['CO','BR']];
+let curColors=[];
+function sameColor(a,b){if(!a||!b)return false;if(a===b)return true;for(const g of CODE_ALIAS){if(g.indexOf(a)>=0&&g.indexOf(b)>=0)return true;}return false;}
+function codeOfColor(c){const en=(c.en||'').toString().toUpperCase().trim();for(const code in CODE_NAME){if(CODE_NAME[code]===en)return code;}return '';}
+function colorCodeOf(fname){const f=(fname||'').toUpperCase();for(const code in CODE_NAME){if(new RegExp('(^|[^A-Z])'+code+'([^A-Z]|$)').test(f))return code;}return '';}
+function colorRankT(fname){if(curColors.length){const code=colorCodeOf(fname);if(code){for(let i=0;i<curColors.length;i++){if(sameColor(codeOfColor(curColors[i]),code))return i;}}return 99;}return 99;}
+function colorNameForCode(code){if(!code)return '';if(curColors.length){for(const c of curColors){if(sameColor(codeOfColor(c),code))return c.en||c.ko||'';}}return CODE_NAME[code]||code;}
+function grpT(n){if(n.includes('누끼'))return 1;if(/앞|뒤/.test(n))return 2;if(/\d{2}[A-Za-z]{2,}\d{2}/.test(n))return 0;return 2;}
+function numOfT(n){const m=(n||'').match(/(\d+)(?=\.\w+$)/);return m?parseInt(m[1]):0;}
+// ── 폴더 불러오기: 메인컬러 첫 모델컷 자동 + 전 컬러 누끼 가로정렬 ──
+document.getElementById('ffolder').onchange=e=>{
+  const files=[...e.target.files].filter(f=>/\.(jpe?g|png)$/i.test(f.name));
+  if(!files.length)return;
+  const pr=document.getElementById('s_prog');pr.textContent='불러오는 중…';
+  let loaded=[],n=files.length;
+  files.forEach(f=>{const im=new Image();const u=URL.createObjectURL(f);im.onload=()=>{loaded.push({name:(f.name||'').normalize('NFC'),img:im,url:u});if(loaded.length===n)done();};im.onerror=()=>{if(--n<=loaded.length)done();};im.src=u;});
+  function done(){
+    const models=loaded.filter(o=>grpT(o.name)===0);
+    models.sort((a,b)=>colorRankT(a.name)-colorRankT(b.name)||numOfT(a.name)-numOfT(b.name)||a.name.localeCompare(b.name));
+    if(models[0]){const el=document.getElementById('mL');el.style.backgroundImage='url('+models[0].url+')';el.style.backgroundSize='cover';el.style.backgroundPosition='center';mlPos={x:50,y:50};const h=document.getElementById('mLhint');if(h)h.style.display='none';}
+    const nukis=loaded.filter(o=>grpT(o.name)===1 && !/누끼[\-_ ]*[A-Za-z]+\d/.test(o.name));
+    nukis.sort((a,b)=>colorRankT(a.name)-colorRankT(b.name)||a.name.localeCompare(b.name));
+    renderNukis(nukis);
+    pr.textContent='완료! 모델컷 '+(models[0]?1:0)+' · 누끼 '+nukis.length;
+  }
+};
+function renderNukis(list){
+  const row=document.getElementById('s_nukis');
+  if(!list.length){row.innerHTML='<div class="nukihint">누끼(누끼_컬러) 이미지가 없어요</div>';return;}
+  row.innerHTML=list.map(o=>{const cn=(colorNameForCode(colorCodeOf(o.name))||'').toUpperCase();return '<div class="nkitem"><div class="nk" style="background-image:url('+o.url+')"></div><div class="cn" contenteditable>'+esc(cn)+'</div></div>';}).join('');
 }
 // ── 이미지 업로드 ──
 let mlPos={x:50,y:50};
 document.getElementById('fm').onchange=e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f);const el=document.getElementById('mL');el.style.backgroundImage='url('+u+')';el.style.backgroundSize='cover';el.style.backgroundPosition='center';mlPos={x:50,y:50};const h=document.getElementById('mLhint');if(h)h.style.display='none';};
-document.getElementById('fn').onchange=e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f);const el=document.getElementById('s_nuki');el.style.backgroundImage='url('+u+')';el.classList.remove('empty');el.textContent='';};
 // 모델컷 드래그로 위치 조정
 (function(){const el=document.getElementById('mL');let drag=null;el.addEventListener('mousedown',e=>{if(!el.style.backgroundImage)return;drag={x:e.clientX,y:e.clientY};el.style.cursor='grabbing';});window.addEventListener('mousemove',e=>{if(!drag)return;mlPos.x=Math.max(0,Math.min(100,mlPos.x-(e.clientX-drag.x)*0.1));mlPos.y=Math.max(0,Math.min(100,mlPos.y-(e.clientY-drag.y)*0.1));el.style.backgroundPosition=mlPos.x+'% '+mlPos.y+'%';drag={x:e.clientX,y:e.clientY};});window.addEventListener('mouseup',()=>{if(drag){drag=null;el.style.cursor='grab';}});})();
 // ── 화면맞춤 스케일 ──
-function fitScale(){const pw=document.querySelector('.pagewrap');const availW=pw.clientWidth-2;const availH=Math.max(300,window.innerHeight-40);const sc=Math.min(1,availW/1920,availH/1080);const pg=document.getElementById('page');pg.style.transform='scale('+sc+')';pw.style.height=(1080*sc)+'px';}
+function fitScale(){const pw=document.querySelector('.pagewrap');const availW=pw.parentElement.clientWidth-2;const availH=Math.max(300,window.innerHeight-40);const sc=Math.min(1,availW/1920,availH/1080);const pg=document.getElementById('page');pg.style.transform='scale('+sc+')';pw.style.width=(1920*sc)+'px';pw.style.height=(1080*sc)+'px';}
 window.addEventListener('resize',fitScale);
 // ── 저장 폴더(IndexedDB 공유) ──
 function _idb(){return new Promise((res,rej)=>{const r=indexedDB.open('lzfs',1);r.onupgradeneeded=()=>r.result.createObjectStore('h');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
