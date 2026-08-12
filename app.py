@@ -1688,12 +1688,12 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
 </style></head><body>
 <div class="wrap">
   <div class="top">
+    <select id="tseasonsel" onchange="fillProdSel()" title="시즌 선택" style="padding:8px 34px 8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;max-width:160px;"></select>
+    <select id="prodsel" onchange="onProdSel()" title="상품 선택 → 상품명 자동입력" style="padding:8px 34px 8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;max-width:220px;"></select>
+    <span id="tprodcount" style="font-size:12px;color:#999;white-space:nowrap;"></span>
     <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 파일 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <button class="btn btn-line" onclick="clearAll()">🗑 비우기</button>
-    <select id="tseasonsel" onchange="fillProdSel()" title="시즌 선택" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;max-width:150px;"></select>
-    <select id="prodsel" onchange="onProdSel()" title="상품 선택 → 상품명 자동입력" style="padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;max-width:210px;"></select>
-    <span id="tprodcount" style="font-size:12px;color:#999;white-space:nowrap;"></span>
     <input id="pname" type="hidden">
     <button class="btn btn-line" onclick="saveOne()">↓ 이 채널만</button>
     <button class="btn btn-red" onclick="saveAll()">📥 전체 저장</button>
