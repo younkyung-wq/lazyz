@@ -2296,7 +2296,7 @@ function sameColor(a,b){ if(!a||!b)return false; if(a===b)return true; for(const
 function niColorName(fname){ const m=(fname||'').match(/누끼[\-_ ]*([A-Za-z]+)/); if(!m) return ''; const code=m[1].toUpperCase(); const cols=(typeof P!=='undefined'&&P.colors)?P.colors:[]; for(const c of cols){ if(sameColor(codeOfColor(c),code)) return (c.en||'').toUpperCase(); } return CODE_NAME[code] || code; }
 function baseCode(name){ const m=(name||'').match(/누끼[\-_ ]*([A-Za-z]+)/); return m ? m[1].toUpperCase() : ''; }
 function codeOfColor(c){ const en=(c.en||'').toString().toUpperCase().trim(); for(const code in CODE_NAME){ if(CODE_NAME[code]===en) return code; } return ''; }
-function colorCodeOf(fname){ const f=(fname||'').toUpperCase(); for(const code in CODE_NAME){ if(new RegExp('[\\-_]'+code+'(?=[0-9\\-_.]|$)').test(f)) return code; } return ''; }
+function colorCodeOf(fname){ const f=(fname||'').toUpperCase(); for(const code in CODE_NAME){ if(new RegExp('(^|[^A-Z])'+code+'([^A-Z]|$)').test(f)) return code; } return ''; }
 function colorRankAPI(fname){ const cols=(typeof P!=='undefined'&&P.colors)?P.colors:[]; if(cols.length){ const code=colorCodeOf(fname); if(code){ for(let i=0;i<cols.length;i++){ if(sameColor(codeOfColor(cols[i]),code)) return i; } } return 99; } return colorRank(fname); }
 function apbk(n){ if(/앞/.test(n))return 0; if(/뒤/.test(n))return 1; return 2; }
 function sortImgs(){ imgs.sort((a,b)=> grp(a.name)-grp(b.name) || colorRankAPI(a.name)-colorRankAPI(b.name) || apbk(a.name)-apbk(b.name) || numOf(a.name)-numOf(b.name) || a.name.localeCompare(b.name)); }
