@@ -1659,6 +1659,7 @@ body{background:#f8f8f8;height:812px;overflow:hidden;color:#222;}
 .btn-dark{background:#111;color:#fff;}
 .btn-line{background:#fff;border:1.5px solid #ddd;color:#555;}
 .btn-red{background:#ff4b4b;color:#fff;}
+.tsel{appearance:none;-webkit-appearance:none;border:1.5px solid #ddd;border-radius:8px;font-size:13px;padding:8px 36px 8px 12px;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 12px center;cursor:pointer;}
 .hint{font-size:12px;color:#999;}
 .mid{display:flex;gap:14px;flex:1;min-height:0;}
 .left{width:150px;overflow-y:auto;display:flex;flex-direction:column;gap:7px;flex-shrink:0;}
@@ -1688,16 +1689,16 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
 </style></head><body>
 <div class="wrap">
   <div class="top">
-    <select id="tseasonsel" onchange="fillProdSel()" title="시즌 선택" style="padding:8px 34px 8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;max-width:160px;"></select>
-    <select id="prodsel" onchange="onProdSel()" title="상품 선택 → 상품명 자동입력" style="padding:8px 34px 8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;max-width:220px;"></select>
+    <select id="tseasonsel" class="tsel" onchange="fillProdSel()" title="시즌 선택" style="max-width:160px;"></select>
+    <select id="prodsel" class="tsel" onchange="onProdSel()" title="상품 선택 → 상품명 자동입력" style="max-width:220px;"></select>
     <span id="tprodcount" style="font-size:12px;color:#999;white-space:nowrap;"></span>
     <button class="btn btn-dark" onclick="document.getElementById('fi').click()">📁 파일 선택</button>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <button class="btn btn-line" onclick="clearAll()">🗑 비우기</button>
     <input id="pname" type="hidden">
     <button class="btn btn-line" onclick="saveOne()">↓ 이 채널만</button>
+    <button id="dirlabel" class="btn btn-dark" onclick="pickDir()">📁 나스폴더 지정</button>
     <button class="btn btn-red" onclick="saveAll()">📥 전체 저장</button>
-    <span id="dirlabel" style="font-size:12px;color:#888;cursor:pointer;" onclick="pickDir()"></span>
     <span id="prog"></span>
   </div>
   <div style="font-size:11px;color:#aaa;margin-top:-4px;">이미지 드래그=이동 · 휠=확대/축소 · 화살표=미세조정 · Delete=삭제</div>
@@ -1988,7 +1989,7 @@ async function _idbGet(k){ const db=await _idb(); return new Promise((res,rej)=>
 async function _verifyPerm(h){ try{ let p=await h.queryPermission({mode:'readwrite'}); if(p==='granted')return true; p=await h.requestPermission({mode:'readwrite'}); return p==='granted'; }catch(e){ return false; } }
 function updateDirLabel(){
   const el=document.getElementById('dirlabel');
-  if(el) el.textContent=savedDir?('📁 나스폴더 지정 · '+savedDir.name+' (변경)'):'📁 나스폴더 지정';
+  if(el) el.textContent=savedDir?'📁 나스폴더 지정 ✓':'📁 나스폴더 지정';
 }
 async function ensureDir(){
   if(savedDir && await _verifyPerm(savedDir)) return savedDir;
@@ -2552,7 +2553,7 @@ async function _idbSet(k,v){ const db=await _idb(); return new Promise((res,rej)
 async function _idbGet(k){ const db=await _idb(); return new Promise((res,rej)=>{ const t=db.transaction('h','readonly'); const q=t.objectStore('h').get(k); q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); }); }
 let baseDir=null;
 async function _verifyPerm(h){ try{ let p=await h.queryPermission({mode:'readwrite'}); if(p==='granted')return true; p=await h.requestPermission({mode:'readwrite'}); return p==='granted'; }catch(e){ return false; } }
-function _baseLabel(){ const el=document.getElementById('basedirlabel'); if(el) el.textContent = baseDir ? ('📁 나스폴더 지정 · '+baseDir.name+' (변경)') : '📁 나스폴더 지정'; }
+function _baseLabel(){ const el=document.getElementById('basedirlabel'); if(el) el.textContent = baseDir ? '📁 나스폴더 지정 ✓' : '📁 나스폴더 지정'; }
 async function pickBaseDir(){ if(!window.showDirectoryPicker){ alert('이 브라우저는 폴더 지정을 지원 안 해요 (Chrome/Edge 권장)'); return; } try{ baseDir=await window.showDirectoryPicker({mode:'readwrite'}); try{ await _idbSet('baseDir',baseDir); }catch(e){} _baseLabel(); }catch(e){} }
 async function ensureBaseDir(){ if(baseDir && await _verifyPerm(baseDir)) return baseDir; try{ const h=await _idbGet('baseDir'); if(h && await _verifyPerm(h)){ baseDir=h; _baseLabel(); return h; } }catch(e){} return null; }
 async function restoreBaseDir(){ try{ const h=await _idbGet('baseDir'); if(h){ baseDir=h; _baseLabel(); } }catch(e){} }
