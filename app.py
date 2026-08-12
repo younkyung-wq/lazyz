@@ -29,13 +29,26 @@ def _get_secret(key, default=""):
         pass
     return os.environ.get(key, default)
 
+def _fetch(url, tries=3, timeout=45):
+    """URL 요청 + 재시도(콜드스타트/일시 타임아웃 대비)."""
+    import time as _time
+    last = None
+    for i in range(tries):
+        try:
+            return _urlreq.urlopen(url, timeout=timeout, context=_SSLCTX).read().decode("utf-8")
+        except Exception as e:
+            last = e
+            if i < tries - 1:
+                _time.sleep(1.5)
+    raise last
+
 @st.cache_data(ttl=120, show_spinner=False)
 def load_planning():
     base = _get_secret("PLANNING_API"); ro = _get_secret("PLANNING_RO")
     if not base or not ro:
         raise RuntimeError("PLANNING_API / PLANNING_RO 시크릿이 설정되지 않았어요 (.streamlit/secrets.toml).")
     url = base + ("&" if "?" in base else "?") + "ro=" + ro
-    raw = _urlreq.urlopen(url, timeout=20, context=_SSLCTX).read().decode("utf-8")
+    raw = _fetch(url)
     data = _json.loads(raw)
     return data.get("products", []), data.get("generated", "")
 
@@ -66,7 +79,7 @@ def load_shoot():
     if not sid:
         return {}
     url = "https://docs.google.com/spreadsheets/d/" + sid + "/gviz/tq?tqx=out:csv&gid=" + str(gid)
-    raw = _urlreq.urlopen(url, timeout=20, context=_SSLCTX).read().decode("utf-8")
+    raw = _fetch(url)
     rows = list(_csv.reader(io.StringIO(raw)))
     if not rows:
         return {}
