@@ -2036,7 +2036,7 @@ async function makeZip(chanList){
   const fmt='jpg';  // 기본 JPG (크림만 PNG 강제)
   const pname=(document.getElementById('pname').value||'').trim();
   const pr=document.getElementById('prog');
-  const listFor=c=>{ let l=(gImgs[c.grp]||[]); if(c.one)l=l.slice(0,1); return l; };
+  const listFor=c=>(gImgs[c.grp]||[]);  // 전체 저장 (공홈·컬리 '1장'은 라벨 표시용일 뿐)
   let total=0; chanList.forEach(c=>total+=listFor(c).length);
   let done=0;
   // 1) 렌더 → 결과 모으기
@@ -2069,8 +2069,7 @@ async function makeZip(chanList){
       const cf=c.png?'png':fmt;
       const cm=cf==='png'?'image/png':'image/jpeg';
       const blob=await new Promise(res=>oc.toBlob(res,cm,cf==='png'?undefined:1.0));
-      const base=o.name.replace(/\.[^.]+$/,'');  // 원본 파일명(확장자 제외)
-      entries.push({chan:c.k, name:base+'_'+n+'.'+cf, blob});
+      entries.push({chan:c.k, name:c.k+'_'+n+'.'+cf, blob});  // 채널명_순번 (우선순위 정렬 순서)
       done++; pr.textContent='제작 중… '+done+'/'+total;
     }
   }
