@@ -2713,12 +2713,12 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
 .mR .ptit{margin-top:44px;font-size:23px;font-weight:800;}
 .mR .point{margin-top:14px;font-size:21px;color:#333;line-height:1.55;}
 .mR .point div{margin-bottom:10px;}
-.mR .nukirow{margin-top:auto;display:flex;gap:0;justify-content:center;align-items:flex-end;flex-wrap:nowrap;padding-bottom:100px;}
-.mR .nkitem{position:relative;flex:0 1 230px;min-width:0;max-width:230px;display:flex;flex-direction:column;align-items:center;}
-.mR .nk{width:100%;height:300px;background:no-repeat center bottom/contain;}
+.mR .nukirow{margin-top:auto;display:flex;gap:16px;justify-content:center;align-items:flex-end;flex-wrap:nowrap;padding-bottom:100px;}
+.mR .nkitem{position:relative;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;}
+.mR .nk{display:block;height:300px;width:auto;}
 .mR .nkx{position:absolute;top:4px;right:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.6);color:#fff;font-size:22px;line-height:34px;text-align:center;cursor:pointer;opacity:0;transition:opacity .12s;z-index:3;}
 .mR .nkitem:hover .nkx{opacity:1;}
-.mR .cn{margin-top:-8px;font-family:'Pretendard',-apple-system,sans-serif;font-size:18px;font-weight:400;letter-spacing:0.04em;text-align:center;}
+.mR .cn{margin-top:14px;font-family:'Pretendard',-apple-system,sans-serif;font-size:18px;font-weight:400;letter-spacing:0.04em;text-align:center;}
 .mR .nukihint{color:#bbb;font-size:18px;margin:auto;}
 .mR .disc{position:absolute;right:70px;bottom:34px;font-size:15px;color:#999;}
 [contenteditable]:focus{outline:1px solid #ffd24a;background:#fffef2;}
@@ -2801,11 +2801,22 @@ document.getElementById('ffolder').onchange=e=>{
   }
 };
 let nukiList=[];
+const NKH=300;  // 누끼 표시 높이(px) — 크기 유지
+function nukiBBox(img){ const w=Math.min(360,img.width||360); const h=Math.max(1,Math.round(w*(img.height/img.width))); const c=document.createElement('canvas'); c.width=w;c.height=h; const g=c.getContext('2d'); g.drawImage(img,0,0,w,h); let d; try{d=g.getImageData(0,0,w,h).data;}catch(e){return null;} let minX=w,minY=h,maxX=-1,maxY=-1; for(let y=0;y<h;y++){for(let x=0;x<w;x++){ if(d[(y*w+x)*4+3]>10){ if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; } }} if(maxX<0)return null; return {x:minX/w,y:minY/h,w:(maxX-minX+1)/w,h:(maxY-minY+1)/h}; }
+function makeNukiCanvas(img){ const bb=nukiBBox(img); let sx=0,sy=0,sw=img.width,sh=img.height; if(bb){sx=bb.x*img.width;sy=bb.y*img.height;sw=bb.w*img.width;sh=bb.h*img.height;} const cw=Math.max(1,Math.round(NKH*sw/sh)); const c=document.createElement('canvas'); c.width=cw*2;c.height=NKH*2; c.className='nk'; c.style.width=cw+'px';c.style.height=NKH+'px'; const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(img,sx,sy,sw,sh,0,0,cw*2,NKH*2); return c; }
 function renderNukis(list){
   if(list)nukiList=list;
   const row=document.getElementById('s_nukis');
+  row.innerHTML='';
   if(!nukiList.length){row.innerHTML='<div class="nukihint">누끼(누끼_컬러) 이미지가 없어요</div>';return;}
-  row.innerHTML=nukiList.map((o,i)=>{const cn=(colorNameForCode(colorCodeOf(o.name))||'').toUpperCase();return '<div class="nkitem"><div class="nkx" onclick="delNuki('+i+')">×</div><div class="nk" style="background-image:url('+o.url+')"></div><div class="cn" contenteditable>'+esc(cn)+'</div></div>';}).join('');
+  nukiList.forEach((o,i)=>{
+    const cn=(colorNameForCode(colorCodeOf(o.name))||'').toUpperCase();
+    const item=document.createElement('div');item.className='nkitem';
+    const x=document.createElement('div');x.className='nkx';x.textContent='×';x.onclick=()=>delNuki(i);item.appendChild(x);
+    item.appendChild(makeNukiCanvas(o.img));
+    const cap=document.createElement('div');cap.className='cn';cap.contentEditable=true;cap.textContent=cn;item.appendChild(cap);
+    row.appendChild(item);
+  });
 }
 function delNuki(i){nukiList.splice(i,1);renderNukis();}
 document.getElementById('faddnuki').onchange=e=>{const files=[...e.target.files].filter(f=>/\.(jpe?g|png)$/i.test(f.name));if(!files.length)return;let n=files.length,acc=[];files.forEach(f=>{const im=new Image();const u=URL.createObjectURL(f);im.onload=()=>{acc.push({name:(f.name||'').normalize('NFC'),img:im,url:u});if(acc.length===n){nukiList=nukiList.concat(acc);nukiList.sort((a,b)=>colorRankT(a.name)-colorRankT(b.name)||a.name.localeCompare(b.name));renderNukis();}};im.onerror=()=>{if(--n===acc.length&&n>0){nukiList=nukiList.concat(acc);renderNukis();}};im.src=u;});};
