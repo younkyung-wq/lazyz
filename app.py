@@ -2801,19 +2801,24 @@ document.getElementById('ffolder').onchange=e=>{
   }
 };
 let nukiList=[];
-const NKH=300;  // 누끼 표시 높이(px) — 크기 유지
+const NK_AVAILW=840;   // 오른쪽 패널 내부 폭(px, 1920캔버스 기준)
+const NK_MAXH=300;     // 누끼 최대 높이(px)
+const NK_GAP=16;
 function nukiBBox(img){ const w=Math.min(360,img.width||360); const h=Math.max(1,Math.round(w*(img.height/img.width))); const c=document.createElement('canvas'); c.width=w;c.height=h; const g=c.getContext('2d'); g.drawImage(img,0,0,w,h); let d; try{d=g.getImageData(0,0,w,h).data;}catch(e){return null;} let minX=w,minY=h,maxX=-1,maxY=-1; for(let y=0;y<h;y++){for(let x=0;x<w;x++){ if(d[(y*w+x)*4+3]>10){ if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; } }} if(maxX<0)return null; return {x:minX/w,y:minY/h,w:(maxX-minX+1)/w,h:(maxY-minY+1)/h}; }
-function makeNukiCanvas(img){ const bb=nukiBBox(img); let sx=0,sy=0,sw=img.width,sh=img.height; if(bb){sx=bb.x*img.width;sy=bb.y*img.height;sw=bb.w*img.width;sh=bb.h*img.height;} const cw=Math.max(1,Math.round(NKH*sw/sh)); const c=document.createElement('canvas'); c.width=cw*2;c.height=NKH*2; c.className='nk'; c.style.width=cw+'px';c.style.height=NKH+'px'; const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(img,sx,sy,sw,sh,0,0,cw*2,NKH*2); return c; }
+function makeNukiCanvas(img,bb,H){ let sx=0,sy=0,sw=img.width,sh=img.height; if(bb){sx=bb.x*img.width;sy=bb.y*img.height;sw=bb.w*img.width;sh=bb.h*img.height;} const cw=Math.max(1,Math.round(H*sw/sh)); const c=document.createElement('canvas'); c.width=cw*2;c.height=Math.round(H*2); c.className='nk'; c.style.width=cw+'px';c.style.height=Math.round(H)+'px'; const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height); return c; }
 function renderNukis(list){
   if(list)nukiList=list;
   const row=document.getElementById('s_nukis');
   row.innerHTML='';
   if(!nukiList.length){row.innerHTML='<div class="nukihint">누끼(누끼_컬러) 이미지가 없어요</div>';return;}
-  nukiList.forEach((o,i)=>{
-    const cn=(colorNameForCode(colorCodeOf(o.name))||'').toUpperCase();
+  const metas=nukiList.map(o=>{const bb=nukiBBox(o.img);const sw=bb?bb.w*o.img.width:o.img.width;const sh=bb?bb.h*o.img.height:o.img.height;return {o,bb,aspect:sw/Math.max(1,sh)};});
+  const n=metas.length, sumA=metas.reduce((s,m)=>s+m.aspect,0)||1;
+  const H=Math.min(NK_MAXH,(NK_AVAILW-NK_GAP*(n-1))/sumA);
+  metas.forEach((m,i)=>{
+    const cn=(colorNameForCode(colorCodeOf(m.o.name))||'').toUpperCase();
     const item=document.createElement('div');item.className='nkitem';
     const x=document.createElement('div');x.className='nkx';x.textContent='×';x.onclick=()=>delNuki(i);item.appendChild(x);
-    item.appendChild(makeNukiCanvas(o.img));
+    item.appendChild(makeNukiCanvas(m.o.img,m.bb,H));
     const cap=document.createElement('div');cap.className='cn';cap.contentEditable=true;cap.textContent=cn;item.appendChild(cap);
     row.appendChild(item);
   });
