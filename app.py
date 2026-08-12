@@ -2705,7 +2705,7 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
 .mL{width:900px;height:1080px;background:#e9e9e9 no-repeat center/cover;position:relative;cursor:grab;flex-shrink:0;overflow:hidden;}
 .mL .hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#999;font-size:22px;}
 .mR{flex:1;height:1080px;padding:0 70px 50px;display:flex;flex-direction:column;position:relative;}
-.mR .title{margin-top:340px;font-family:'Pretendard',-apple-system,sans-serif;font-size:24pt;font-weight:800;line-height:1.45;}
+.mR .title{margin-top:250px;font-family:'Pretendard',-apple-system,sans-serif;font-size:24pt;font-weight:800;line-height:1.45;}
 .mR .title .ten{letter-spacing:0;}
 .mR .title .tko{letter-spacing:-0.04em;}
 .mR .desc{margin-top:38px;font-size:21px;color:#333;line-height:1.7;}
