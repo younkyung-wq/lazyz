@@ -1743,7 +1743,18 @@ function fillTSeasons(){ const sel=document.getElementById('tseasonsel'); if(!se
 function _curArr(){ const sk=(document.getElementById('tseasonsel')||{}).value||''; return THUMB_PRODUCTS.filter(p=>_tskey(p)===sk); }
 function _updCount(){ const c=document.getElementById('tprodcount'); if(!c)return; const arr=_curArr(); const s=document.getElementById('prodsel'); const v=s?s.value:''; if(!v){ c.textContent='총 '+arr.length+'개'; return; } const pos=arr.findIndex(p=>p.name_en===v); c.textContent=(pos+1)+' / '+arr.length; }
 function fillProdSel(){ const s=document.getElementById('prodsel'); if(!s)return; const arr=_curArr(); if(!arr.length){ s.innerHTML='<option value="">상품 없음</option>'; _updCount(); return; } s.innerHTML='<option value="">상품 선택…</option>'+arr.map(p=>'<option value="'+String(p.name_en).replace(/"/g,'&quot;')+'">'+String(p.label).replace(/</g,'&lt;')+'</option>').join(''); _updCount(); }
-function onProdSel(){ const s=document.getElementById('prodsel'), pn=document.getElementById('pname'); if(s&&pn&&s.value)pn.value=s.value; _updCount(); }
+function onProdSel(){ const s=document.getElementById('prodsel'), pn=document.getElementById('pname'); if(s&&pn&&s.value)pn.value=s.value; const p=THUMB_PRODUCTS.find(x=>x.name_en===(s?s.value:'')); curColors=(p&&p.colors)?p.colors:[]; Object.keys(gImgs).forEach(g=>{ if(gImgs[g]) sortThumb(gImgs[g]); }); try{ renderStrip(); draw(); }catch(e){} _updCount(); }
+// ── 정렬(모델컷→누끼→앞뒤, 메인컬러 먼저) ──
+const CODE_NAME={BK:'BLACK',BR:'BROWN',WH:'WHITE',IV:'IVORY',GR:'GRAY',CH:'CHARCOAL',PK:'PINK',BE:'BEIGE',NV:'NAVY',BL:'BLUE',RD:'RED',GN:'GREEN',SK:'SKY',LV:'LAVENDER',LG:'LIGHT GRAY',CO:'COCOA',MT:'MINT',CR:'CREAM',LB:'LEMON BUTTER'};
+const CODE_ALIAS=[['WH','IV','CR'],['GR','GY','LG'],['CO','BR']];
+function sameColor(a,b){ if(!a||!b)return false; if(a===b)return true; for(const g of CODE_ALIAS){ if(g.indexOf(a)>=0&&g.indexOf(b)>=0)return true; } return false; }
+function codeOfColor(c){ const en=(c.en||'').toString().toUpperCase().trim(); for(const code in CODE_NAME){ if(CODE_NAME[code]===en) return code; } return ''; }
+function colorCodeOf(fname){ const f=(fname||'').toUpperCase(); for(const code in CODE_NAME){ if(new RegExp('(^|[^A-Z])'+code+'([^A-Z]|$)').test(f)) return code; } return ''; }
+let curColors=[];
+function colorRankT(fname){ if(curColors.length){ const code=colorCodeOf(fname); if(code){ for(let i=0;i<curColors.length;i++){ if(sameColor(codeOfColor(curColors[i]),code)) return i; } } return 99; } return 99; }
+function grpT(n){ if(n.includes('누끼'))return 1; if(/앞|뒤/.test(n))return 2; if(/\d{2}[A-Za-z]{2,}\d{2}/.test(n))return 0; return 2; }
+function numOfT(n){ const m=(n||'').match(/(\d+)(?=\.\w+$)/); return m?parseInt(m[1]):0; }
+function sortThumb(arr){ arr.sort((a,b)=> grpT(a.name)-grpT(b.name) || colorRankT(a.name)-colorRankT(b.name) || numOfT(a.name)-numOfT(b.name) || a.name.localeCompare(b.name)); }
 const CH=[
  {k:'EQL',w:1500,h:2000,bg:'#ffffff',grp:'g_eqlw'},
  {k:'무신사',w:1500,h:1800,bg:'#ffffff',grp:'g_musinsa'},
@@ -1958,7 +1969,8 @@ function distribute(pool){
     if(!gImgs[grp]) gImgs[grp]=[];
     if(gAi[grp]==null) gAi[grp]=0;
     const src=GROUPS[grp].png ? pool.filter(p=>/\.png$/i.test(p.name)) : pool.slice();  // 누끼=PNG만, 나머지=전부
-    src.forEach(p=>gImgs[grp].push({name:p.name,img:p.img,url:p.url,tf:{z:1,cx:0.5,cy:0.5},el:null}));
+    src.forEach(p=>gImgs[grp].push({name:(p.name||'').normalize('NFC'),img:p.img,url:p.url,tf:{z:1,cx:0.5,cy:0.5},el:null}));
+    sortThumb(gImgs[grp]);  // 모델컷→누끼→앞뒤, 메인컬러 먼저
   });
   renderTabs(); renderStrip(); draw();
 }
@@ -2678,7 +2690,8 @@ elif "썸네일 생성기" in menu:
             _tprods.append({"label": nm.get("ko") or nm.get("en") or "?",
                             "name_en": nm.get("en") or nm.get("ko") or "Product",
                             "shoot": shoot_of(p.get("스타일넘버", ""), _tshoot),
-                            "season": season_of(p.get("스타일넘버", ""))})
+                            "season": season_of(p.get("스타일넘버", "")),
+                            "colors": [{"ko": (c.get("ko") or ""), "en": (c.get("en") or "")} for c in sorted((p.get("컬러") or []), key=lambda c: c.get("순위", 99))]})
     except Exception as e:
         st.warning("기획 API 로드 실패: " + str(e))
     components.html(THUMB_HTML
