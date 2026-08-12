@@ -59,6 +59,19 @@ def season_of(sn):
         return sn[:4].upper()
     return ""
 
+def season_rank(s):
+    """시즌 시간순 랭크 (SS 먼저, FW 나중). 형식 안 맞으면 -1."""
+    s = (s or "").upper()
+    if len(s) >= 3 and s[:2].isdigit():
+        h = 0 if s[2] == "S" else (1 if s[2] == "F" else 2)
+        return int(s[:2]) * 2 + h
+    return -1
+
+SEASON_MIN_RANK = season_rank("26FW")  # 이 시즌부터만 앱에 노출/주입
+
+def recent_only(prods):
+    return [p for p in prods if season_rank(season_of(p.get("스타일넘버", ""))) >= SEASON_MIN_RANK]
+
 def list_seasons(prods):
     """상품들에서 시즌 목록 추출, 최신순 정렬."""
     ss = sorted({season_of(p.get("스타일넘버","")) for p in prods} - {""}, reverse=True)
@@ -2683,6 +2696,7 @@ elif "썸네일 생성기" in menu:
     _tprods = []
     try:
         _tp, _ = load_planning()
+        _tp = recent_only(_tp)
         try:
             _tshoot = load_shoot()
         except Exception:
@@ -2709,6 +2723,7 @@ elif "상세 생성기" in menu:
     except Exception as e:
         st.warning("기획 API 로드 실패: " + str(e))
 
+    prods = recent_only(prods)
     try:
         _shoot_map = load_shoot()
     except Exception:
