@@ -2288,7 +2288,7 @@ function loadInit(){
     im.src=it.src; });
 }
 function colorRank(n){n=n.toUpperCase(); if(n.includes('WH')||n.includes('화이트'))return 0; if(n.includes('BR')||n.includes('브라운'))return 1; if(n.includes('BK')||n.includes('블랙'))return 2; return 9;}
-function grp(n){ if(n.includes('누끼'))return 1; if(/-F-/i.test(n))return 0; return 2; }
+function grp(n){ if(n.includes('누끼'))return 1; if(/앞|뒤/.test(n))return 2; if(/\d{2}[A-Za-z]{2,}\d{2}/.test(n))return 0; return 2; }
 function numOf(n){const m=n.match(/(\d+)(?=\.\w+$)/); return m?parseInt(m[1]):0;}
 const CODE_NAME={BK:'BLACK',BR:'BROWN',WH:'WHITE',IV:'IVORY',GR:'GRAY',CH:'CHARCOAL',PK:'PINK',BE:'BEIGE',NV:'NAVY',BL:'BLUE',RD:'RED',GN:'GREEN',SK:'SKY',LV:'LAVENDER',LG:'LIGHT GRAY',CO:'COCOA',MT:'MINT',CR:'CREAM',LB:'LEMON BUTTER'};
 const CODE_ALIAS=[['WH','IV','CR'],['GR','GY','LG'],['CO','BR']];
