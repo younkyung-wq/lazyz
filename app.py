@@ -2803,7 +2803,7 @@ document.getElementById('ffolder').onchange=e=>{
 let nukiList=[];
 const NK_AVAILW=840;   // 오른쪽 패널 내부 폭(px, 1920캔버스 기준)
 const NK_MAXH=240;     // 누끼 최대 높이(px)
-const NK_GAP=60;
+const NK_GAP=40;
 function nukiBBox(img){ const w=Math.min(360,img.width||360); const h=Math.max(1,Math.round(w*(img.height/img.width))); const c=document.createElement('canvas'); c.width=w;c.height=h; const g=c.getContext('2d'); g.drawImage(img,0,0,w,h); let d; try{d=g.getImageData(0,0,w,h).data;}catch(e){return null;} let minX=w,minY=h,maxX=-1,maxY=-1; for(let y=0;y<h;y++){for(let x=0;x<w;x++){ if(d[(y*w+x)*4+3]>10){ if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; } }} if(maxX<0)return null; return {x:minX/w,y:minY/h,w:(maxX-minX+1)/w,h:(maxY-minY+1)/h}; }
 function makeNukiCanvas(img,bb,H){ let sx=0,sy=0,sw=img.width,sh=img.height; if(bb){sx=bb.x*img.width;sy=bb.y*img.height;sw=bb.w*img.width;sh=bb.h*img.height;} const cw=Math.max(1,Math.round(H*sw/sh)); const c=document.createElement('canvas'); c.width=cw*2;c.height=Math.round(H*2); c.className='nk'; c.style.width=cw+'px';c.style.height=Math.round(H)+'px'; const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(img,sx,sy,sw,sh,0,0,c.width,c.height); return c; }
 function renderNukis(list){
