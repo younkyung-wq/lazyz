@@ -2720,7 +2720,7 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
 .mR .nkitem:hover .nkx{opacity:1;}
 .mR .cn{margin-top:14px;font-family:'Pretendard',-apple-system,sans-serif;font-size:18px;font-weight:400;letter-spacing:0.04em;text-align:center;}
 .mR .nukihint{color:#bbb;font-size:18px;margin:auto;}
-.mR .disc{position:absolute;right:70px;bottom:34px;font-size:15px;color:#999;}
+.mR .disc{position:absolute;right:40px;bottom:34px;font-size:15px;color:#999;}
 [contenteditable]:focus{outline:1px solid #ffd24a;background:#fffef2;}
 .count{font-size:12px;color:#999;margin-left:6px;}
 </style></head><body>
@@ -2749,6 +2749,15 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
     <button class="btn btn-line" onclick="document.getElementById('fm').click()">🧍 모델컷 교체</button>
     <input id="faddnuki" type="file" accept="image/*" multiple style="display:none">
     <button class="btn btn-line" onclick="document.getElementById('faddnuki').click()">🩱 누끼 추가</button>
+    <div class="lbl">방식</div>
+    <div style="display:flex;gap:6px;">
+      <button id="modeAll" class="btn btn-dark" style="flex:1;padding:9px;" onclick="setSeedMode('all')">전체 1장</button>
+      <button id="modeEach" class="btn btn-line" style="flex:1;padding:9px;" onclick="setSeedMode('each')">컬러별 N장</button>
+    </div>
+    <div id="s_colorwrap" style="display:none;">
+      <div class="lbl">미리보기 컬러</div>
+      <select id="s_color" class="sel" onchange="onEachColor()"></select>
+    </div>
     <div class="lbl">저장</div>
     <button class="btn btn-dark" onclick="pickBaseDir()"><span id="s_basedir">📁 나스폴더 지정</span></button>
     <button class="btn btn-red" onclick="saveSeed()">💾 저장하기 (JPG)</button>
@@ -2791,13 +2800,9 @@ document.getElementById('ffolder').onchange=e=>{
   let loaded=[],n=files.length;
   files.forEach(f=>{const im=new Image();const u=URL.createObjectURL(f);im.onload=()=>{loaded.push({name:(f.name||'').normalize('NFC'),img:im,url:u});if(loaded.length===n)done();};im.onerror=()=>{if(--n<=loaded.length)done();};im.src=u;});
   function done(){
-    const models=loaded.filter(o=>grpT(o.name)===0);
-    models.sort((a,b)=>colorRankT(a.name)-colorRankT(b.name)||numOfT(a.name)-numOfT(b.name)||a.name.localeCompare(b.name));
-    if(models[0]){setModel(models[0].url);}
-    const nukis=loaded.filter(o=>grpT(o.name)===1 && !/누끼[\-_ ]*[A-Za-z]+\d/.test(o.name));
-    nukis.sort((a,b)=>colorRankT(a.name)-colorRankT(b.name)||a.name.localeCompare(b.name));
-    renderNukis(nukis);
-    pr.textContent='완료! 모델컷 '+(models[0]?1:0)+' · 누끼 '+nukis.length;
+    loadedImgs=loaded;
+    renderFromLoaded();
+    pr.textContent='완료! 모델컷 '+modelsOf().length+' · 누끼 '+nukisMain().length;
   }
 };
 let nukiList=[];
@@ -2830,6 +2835,37 @@ let mlImg=null, mlZoom=1, mlPos={x:50,y:50};
 function setModel(url){const im=new Image();im.onload=()=>{mlImg={url:url,w:im.width,h:im.height};mlZoom=1;mlPos={x:50,y:50};applyModel();const h=document.getElementById('mLhint');if(h)h.style.display='none';};im.src=url;}
 function applyModel(){if(!mlImg)return;const el=document.getElementById('mL');const base=Math.max(900/mlImg.w,1080/mlImg.h);const bw=mlImg.w*base*mlZoom,bh=mlImg.h*base*mlZoom;el.style.backgroundImage='url('+mlImg.url+')';el.style.backgroundRepeat='no-repeat';el.style.backgroundSize=bw+'px '+bh+'px';el.style.backgroundPosition=mlPos.x+'% '+mlPos.y+'%';}
 document.getElementById('fm').onchange=e=>{const f=e.target.files[0];if(!f)return;setModel(URL.createObjectURL(f));};
+function setModelFromObj(o){mlImg={url:o.url,w:o.img.width,h:o.img.height};mlZoom=1;mlPos={x:50,y:50};applyModel();const h=document.getElementById('mLhint');if(h)h.style.display='none';}
+// ── 방식: 전체 1장 / 컬러별 N장 ──
+let loadedImgs=[], seedMode='all', eachColors=[], eachIdx=0;
+function modelsOf(){return loadedImgs.filter(o=>grpT(o.name)===0);}
+function nukisMain(){return loadedImgs.filter(o=>grpT(o.name)===1 && !/누끼[\-_ ]*[A-Za-z]+\d/.test(o.name));}
+function colorsPresent(){const codes=[];[...modelsOf(),...nukisMain()].forEach(o=>{const c=colorCodeOf(o.name);if(c&&!codes.some(x=>sameColor(x,c)))codes.push(c);});const rk=x=>{if(!curColors.length)return 99;const i=curColors.findIndex(y=>sameColor(codeOfColor(y),x));return i<0?99:i;};codes.sort((a,b)=>rk(a)-rk(b));return codes;}
+function renderFromLoaded(){
+  if(seedMode==='all'){
+    document.getElementById('s_colorwrap').style.display='none';
+    const ms=modelsOf().slice().sort((a,b)=>colorRankT(a.name)-colorRankT(b.name)||numOfT(a.name)-numOfT(b.name));
+    if(ms[0])setModelFromObj(ms[0]);
+    const ns=nukisMain().slice().sort((a,b)=>colorRankT(a.name)-colorRankT(b.name)||a.name.localeCompare(b.name));
+    renderNukis(ns);
+  } else {
+    eachColors=colorsPresent();
+    const sel=document.getElementById('s_color');
+    sel.innerHTML=eachColors.map((c,i)=>'<option value="'+i+'">'+esc((colorNameForCode(c)||c).toUpperCase())+'</option>').join('');
+    document.getElementById('s_colorwrap').style.display='';
+    if(eachIdx>=eachColors.length)eachIdx=0;
+    sel.value=eachIdx;
+    if(eachColors.length)renderEach(eachColors[eachIdx]);
+  }
+}
+function renderEach(code){
+  const ms=modelsOf().filter(o=>sameColor(colorCodeOf(o.name),code)).sort((a,b)=>numOfT(a.name)-numOfT(b.name));
+  const ns=nukisMain().filter(o=>sameColor(colorCodeOf(o.name),code));
+  if(ms[0])setModelFromObj(ms[0]);
+  renderNukis(ns.slice(0,1));
+}
+function setSeedMode(m){seedMode=m;document.getElementById('modeAll').className='btn '+(m==='all'?'btn-dark':'btn-line');document.getElementById('modeEach').className='btn '+(m==='each'?'btn-dark':'btn-line');renderFromLoaded();}
+function onEachColor(){eachIdx=+document.getElementById('s_color').value||0;renderEach(eachColors[eachIdx]);}
 // 모델컷 드래그로 위치 조정
 (function(){const el=document.getElementById('mL');let drag=null;el.addEventListener('mousedown',e=>{if(!mlImg)return;drag={x:e.clientX,y:e.clientY};el.style.cursor='grabbing';});window.addEventListener('mousemove',e=>{if(!drag)return;mlPos.x=Math.max(0,Math.min(100,mlPos.x-(e.clientX-drag.x)*0.1));mlPos.y=Math.max(0,Math.min(100,mlPos.y-(e.clientY-drag.y)*0.1));applyModel();drag={x:e.clientX,y:e.clientY};});window.addEventListener('mouseup',()=>{if(drag){drag=null;el.style.cursor='grab';}});el.addEventListener('wheel',e=>{if(!mlImg)return;e.preventDefault();mlZoom=Math.max(1,Math.min(4,mlZoom*(e.deltaY<0?1.05:0.95)));applyModel();},{passive:false});})();
 // ── 화면맞춤 스케일 ──
@@ -2846,16 +2882,19 @@ async function pickBaseDir(){if(!window.showDirectoryPicker){alert('Chrome/Edge 
 async function ensureBaseDir(){if(baseDir&&await _verifyPerm(baseDir))return baseDir;try{const h=await _idbGet('baseDir');if(h&&await _verifyPerm(h)){baseDir=h;_bl();return h;}}catch(e){}return null;}
 (async()=>{try{const h=await _idbGet('baseDir');if(h){baseDir=h;_bl();}}catch(e){}})();
 // ── 저장 ──
+function _seedName(){return (document.getElementById('s_title').textContent.split('/')[0]||'시딩').trim().replace(/[\\/:*?"<>|]/g,'_');}
+async function _renderPageBlob(){const pg=document.getElementById('page');const oz=pg.style.transform;pg.style.transform='none';let canvas;try{canvas=await html2canvas(pg,{scale:2,backgroundColor:'#ffffff',useCORS:true,width:1920,height:1080});}finally{pg.style.transform=oz;}return await new Promise(r=>canvas.toBlob(r,'image/jpeg',0.95));}
+async function _saveBlob(blob,fname){const name=_seedName();let dir=await ensureBaseDir();if(dir){try{const pf=await dir.getDirectoryHandle(name,{create:true});const sf=await pf.getDirectoryHandle('시딩',{create:true});const fh=await sf.getFileHandle(fname,{create:true});const w=await fh.createWritable();await w.write(blob);await w.close();return true;}catch(e){}}const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fname;a.click();return false;}
 async function saveSeed(){
-  const pr=document.getElementById('s_prog');pr.textContent='렌더링 중…';
-  const pg=document.getElementById('page');const oz=pg.style.transform;pg.style.transform='none';
-  let canvas;try{canvas=await html2canvas(pg,{scale:2,backgroundColor:'#ffffff',useCORS:true,width:1920,height:1080});}catch(e){pr.textContent='렌더 실패';pg.style.transform=oz;return;}
-  pg.style.transform=oz;
-  const name=(document.getElementById('s_title').textContent.split('/')[0]||'시딩').trim().replace(/[\\/:*?"<>|]/g,'_');
-  const blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',0.95));
-  let dir=await ensureBaseDir();
-  if(dir){try{const pf=await dir.getDirectoryHandle(name,{create:true});const sf=await pf.getDirectoryHandle('시딩',{create:true});const fh=await sf.getFileHandle(name+'_시딩.jpg',{create:true});const w=await fh.createWritable();await w.write(blob);await w.close();pr.textContent='저장 완료! → '+name+'/시딩/';return;}catch(e){}}
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'_시딩.jpg';a.click();pr.textContent='다운로드 완료';
+  const pr=document.getElementById('s_prog');const name=_seedName();
+  try{
+    if(seedMode==='each' && eachColors.length){
+      for(let i=0;i<eachColors.length;i++){pr.textContent='저장 중… '+(i+1)+'/'+eachColors.length;eachIdx=i;document.getElementById('s_color').value=i;renderEach(eachColors[i]);await new Promise(r=>setTimeout(r,180));const blob=await _renderPageBlob();const cn=(colorNameForCode(eachColors[i])||eachColors[i]).toUpperCase().replace(/[\\/:*?"<>|]/g,'_');await _saveBlob(blob,name+'_시딩_'+cn+'.jpg');}
+      pr.textContent='저장 완료! ('+eachColors.length+'장) → '+name+'/시딩/';
+    } else {
+      pr.textContent='렌더링 중…';const blob=await _renderPageBlob();const ok=await _saveBlob(blob,name+'_시딩.jpg');pr.textContent=ok?('저장 완료! → '+name+'/시딩/'):'다운로드 완료';
+    }
+  }catch(e){pr.textContent='실패: '+(e.message||e);}
 }
 fillSSeason();fillSProd();fitScale();
 </script></body></html>
