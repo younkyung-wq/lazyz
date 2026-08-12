@@ -2700,7 +2700,7 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
 .btn-line{background:#fff;border:1.5px solid #ddd;color:#555;}
 .btn-red{background:#ff4b4b;color:#fff;}
 .sel{width:100%;appearance:none;-webkit-appearance:none;border:1.5px solid #ddd;border-radius:8px;font-size:13px;padding:9px 34px 9px 12px;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 12px center;cursor:pointer;margin-bottom:6px;}
-.pagewrap{overflow:auto;background:#ddd;border-radius:12px;padding:0;}
+.pagewrap{overflow:hidden;background:#ddd;border-radius:12px;padding:0;}
 #page{width:1920px;height:1080px;background:#fff;display:flex;transform-origin:top left;}
 .mL{width:900px;height:1080px;background:#e9e9e9 no-repeat center/cover;position:relative;cursor:grab;flex-shrink:0;overflow:hidden;}
 .mL .hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#999;font-size:22px;}
@@ -2777,7 +2777,7 @@ document.getElementById('fn').onchange=e=>{const f=e.target.files[0];if(!f)retur
 // 모델컷 드래그로 위치 조정
 (function(){const el=document.getElementById('mL');let drag=null;el.addEventListener('mousedown',e=>{if(!el.style.backgroundImage)return;drag={x:e.clientX,y:e.clientY};el.style.cursor='grabbing';});window.addEventListener('mousemove',e=>{if(!drag)return;mlPos.x=Math.max(0,Math.min(100,mlPos.x-(e.clientX-drag.x)*0.1));mlPos.y=Math.max(0,Math.min(100,mlPos.y-(e.clientY-drag.y)*0.1));el.style.backgroundPosition=mlPos.x+'% '+mlPos.y+'%';drag={x:e.clientX,y:e.clientY};});window.addEventListener('mouseup',()=>{if(drag){drag=null;el.style.cursor='grab';}});})();
 // ── 화면맞춤 스케일 ──
-function fitScale(){const pw=document.querySelector('.pagewrap');const avail=pw.clientWidth-2;const sc=Math.min(1,avail/1920);const pg=document.getElementById('page');pg.style.transform='scale('+sc+')';pw.style.height=(1080*sc)+'px';}
+function fitScale(){const pw=document.querySelector('.pagewrap');const availW=pw.clientWidth-2;const availH=Math.max(300,window.innerHeight-40);const sc=Math.min(1,availW/1920,availH/1080);const pg=document.getElementById('page');pg.style.transform='scale('+sc+')';pw.style.height=(1080*sc)+'px';}
 window.addEventListener('resize',fitScale);
 // ── 저장 폴더(IndexedDB 공유) ──
 function _idb(){return new Promise((res,rej)=>{const r=indexedDB.open('lzfs',1);r.onupgradeneeded=()=>r.result.createObjectStore('h');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
@@ -2903,7 +2903,7 @@ elif "시딩 가이드" in menu:
         })
     components.html(
         SEEDING_HTML.replace("__SEED_PRODUCTS__", _json.dumps(sprods, ensure_ascii=False)),
-        height=860, scrolling=True)
+        height=820, scrolling=False)
 
 elif "피드 기획" in menu:
     st.markdown("""
