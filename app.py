@@ -2265,10 +2265,9 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
     <input id="folderpath" type="hidden">
     <button class="btn btn-dark" style="width:100%;" onclick="pickFolder()">불러오기</button>
     <input id="fdir" type="file" accept="image/*" webkitdirectory multiple style="display:none">
-    <div class="lbl">또는 개별 이미지 선택</div>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <div style="display:flex;gap:6px;">
-      <button class="btn btn-line" style="flex:1;" onclick="document.getElementById('fi').click()">이미지 선택</button>
+      <button class="btn btn-line" style="flex:1;" onclick="document.getElementById('fi').click()">개별 이미지 선택</button>
       <button class="btn btn-line" style="flex:1;" onclick="clearImgs()">🗑 비우기</button>
     </div>
     <div class="divider"></div>
