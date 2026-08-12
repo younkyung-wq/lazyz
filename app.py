@@ -2016,9 +2016,10 @@ window.addEventListener('mouseup',()=>{drag=null;if(guideV){guideV=false;draw();
 cvs.addEventListener('wheel',e=>{
   if(!curList().length)return; e.preventDefault();
   const cur=curList()[curAi()]; const t=cur.tf;
+  const _isNuki=/누끼/.test(cur.name);
   t.z*=(e.deltaY<0?1.03:0.97);  // 더 세밀하게
-  t.z=Math.max(0.15,Math.min(5,t.z));  // 모든 채널 축소 가능
-  if(/누끼/.test(cur.name)){ curList().forEach(o=>{ if(o!==cur && /누끼/.test(o.name)) o.tf.z=t.z; }); }  // 같은 채널 누끼 크기 연동
+  t.z=Math.max(_isNuki?0.15:1, Math.min(5,t.z));  // 누끼만 축소 가능, 나머지는 100%~ (확대만)
+  if(_isNuki){ curList().forEach(o=>{ if(o!==cur && /누끼/.test(o.name)) o.tf.z=t.z; }); }  // 같은 채널 누끼 크기 연동
   draw();
 },{passive:false});
 
