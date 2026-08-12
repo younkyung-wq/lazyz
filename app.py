@@ -1723,7 +1723,7 @@ select{padding:8px 10px;border:1.5px solid #ddd;border-radius:8px;font-size:13px
     <button class="btn btn-line" onclick="clearAll()">🗑 비우기</button>
     <input id="pname" type="hidden">
     <button class="btn btn-line" onclick="saveOne()">↓ 이 채널만</button>
-    <button id="dirlabel" class="btn btn-dark" onclick="pickDir()">📁 나스폴더 지정</button>
+    <button id="dirlabel" class="btn btn-line" onclick="pickDir()">📁 나스폴더 지정</button>
     <button class="btn btn-red" onclick="saveAll()">📥 전체 저장</button>
     <span id="prog"></span>
   </div>
