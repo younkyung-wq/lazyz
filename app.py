@@ -2718,7 +2718,7 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
 .mR .nk{width:100%;height:300px;background:no-repeat center bottom/contain;}
 .mR .nkx{position:absolute;top:4px;right:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.6);color:#fff;font-size:22px;line-height:34px;text-align:center;cursor:pointer;opacity:0;transition:opacity .12s;z-index:3;}
 .mR .nkitem:hover .nkx{opacity:1;}
-.mR .cn{margin-top:12px;font-size:22px;font-weight:600;letter-spacing:0.04em;text-align:center;}
+.mR .cn{margin-top:12px;font-family:'Pretendard',-apple-system,sans-serif;font-size:18px;font-weight:400;letter-spacing:0.04em;text-align:center;}
 .mR .nukihint{color:#bbb;font-size:18px;margin:auto;}
 .mR .disc{position:absolute;right:70px;bottom:34px;font-size:15px;color:#999;}
 [contenteditable]:focus{outline:1px solid #ffd24a;background:#fffef2;}
@@ -2749,6 +2749,8 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
     <div class="lbl">이미지 폴더 나스 경로</div>
     <button class="btn btn-dark" onclick="document.getElementById('ffolder').click()">📂 불러오기</button>
     <button class="btn btn-line" onclick="document.getElementById('fm').click()">🧍 모델컷 교체</button>
+    <input id="faddnuki" type="file" accept="image/*" multiple style="display:none">
+    <button class="btn btn-line" onclick="document.getElementById('faddnuki').click()">🩱 누끼 추가</button>
     <div class="lbl">저장</div>
     <button class="btn btn-dark" onclick="pickBaseDir()"><span id="s_basedir">📁 나스폴더 지정</span></button>
     <button class="btn btn-red" onclick="saveSeed()">💾 저장하기 (JPG)</button>
@@ -2808,6 +2810,7 @@ function renderNukis(list){
   row.innerHTML=nukiList.map((o,i)=>{const cn=(colorNameForCode(colorCodeOf(o.name))||'').toUpperCase();return '<div class="nkitem"><div class="nkx" onclick="delNuki('+i+')">×</div><div class="nk" style="background-image:url('+o.url+')"></div><div class="cn" contenteditable>'+esc(cn)+'</div></div>';}).join('');
 }
 function delNuki(i){nukiList.splice(i,1);renderNukis();}
+document.getElementById('faddnuki').onchange=e=>{const files=[...e.target.files].filter(f=>/\.(jpe?g|png)$/i.test(f.name));if(!files.length)return;let n=files.length,acc=[];files.forEach(f=>{const im=new Image();const u=URL.createObjectURL(f);im.onload=()=>{acc.push({name:(f.name||'').normalize('NFC'),img:im,url:u});if(acc.length===n){nukiList=nukiList.concat(acc);nukiList.sort((a,b)=>colorRankT(a.name)-colorRankT(b.name)||a.name.localeCompare(b.name));renderNukis();}};im.onerror=()=>{if(--n===acc.length&&n>0){nukiList=nukiList.concat(acc);renderNukis();}};im.src=u;});};
 // ── 이미지 업로드 ──
 let mlImg=null, mlZoom=1, mlPos={x:50,y:50};
 function setModel(url){const im=new Image();im.onload=()=>{mlImg={url:url,w:im.width,h:im.height};mlZoom=1;mlPos={x:50,y:50};applyModel();const h=document.getElementById('mLhint');if(h)h.style.display='none';};im.src=url;}
