@@ -1660,7 +1660,7 @@ with st.sidebar:
 
     menu = st.radio(
         "",
-        ["📱  스토리 모듈", "🖼  썸네일 생성기", "📄  상세 생성기"],
+        ["📱  스토리 모듈", "🖼  썸네일 생성기", "📄  상세 생성기", "🌱  시딩 가이드"],
         label_visibility="collapsed"
     )
 
@@ -2684,6 +2684,127 @@ restoreBaseDir();
 </script></body></html>
 """
 
+SEEDING_HTML = r"""
+<!doctype html><html><head><meta charset="utf-8">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f4f4;color:#222;}
+.wrap{display:flex;gap:16px;padding:14px;}
+.stage{flex:1;min-width:0;}
+.panel{width:280px;flex-shrink:0;background:#fff;border:1px solid #eee;border-radius:12px;padding:16px;height:fit-content;}
+.panel h3{font-size:15px;margin-bottom:12px;}
+.lbl{font-size:12px;font-weight:700;color:#555;margin:12px 0 6px;}
+.btn{width:100%;padding:11px 15px;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;margin-top:6px;}
+.btn-dark{background:#111;color:#fff;}
+.btn-line{background:#fff;border:1.5px solid #ddd;color:#555;}
+.btn-red{background:#ff4b4b;color:#fff;}
+.sel{width:100%;appearance:none;-webkit-appearance:none;border:1.5px solid #ddd;border-radius:8px;font-size:13px;padding:9px 34px 9px 12px;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>") no-repeat right 12px center;cursor:pointer;margin-bottom:6px;}
+.pagewrap{overflow:auto;background:#ddd;border-radius:12px;padding:0;}
+#page{width:1920px;height:1080px;background:#fff;display:flex;transform-origin:top left;}
+.mL{width:900px;height:1080px;background:#e9e9e9 no-repeat center/cover;position:relative;cursor:grab;flex-shrink:0;overflow:hidden;}
+.mL .hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#999;font-size:22px;}
+.mR{flex:1;height:1080px;padding:70px 70px 50px;display:flex;flex-direction:column;position:relative;}
+.mR .title{font-size:34px;font-weight:800;letter-spacing:-0.01em;line-height:1.3;}
+.mR .desc{margin-top:18px;font-size:21px;color:#333;line-height:1.5;}
+.mR .desc div{margin-bottom:4px;}
+.mR .ptit{margin-top:40px;font-size:23px;font-weight:800;}
+.mR .point{margin-top:12px;font-size:21px;color:#333;line-height:1.6;}
+.mR .point div{margin-bottom:6px;}
+.mR .nukiwrap{margin-top:auto;display:flex;flex-direction:column;align-items:center;}
+.mR .nuki{width:360px;height:360px;background:no-repeat center/contain;cursor:pointer;}
+.mR .nuki.empty{border:2px dashed #ccc;border-radius:12px;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:16px;}
+.mR .cname{margin-top:14px;font-size:22px;font-weight:600;letter-spacing:0.04em;}
+.mR .disc{position:absolute;right:70px;bottom:34px;font-size:15px;color:#999;}
+[contenteditable]:focus{outline:1px solid #ffd24a;background:#fffef2;}
+.count{font-size:12px;color:#999;margin-left:6px;}
+</style></head><body>
+<div class="wrap">
+  <div class="stage">
+    <div class="pagewrap"><div id="page">
+      <div class="mL" id="mL"><div class="hint" id="mLhint">모델컷 선택 →</div></div>
+      <div class="mR">
+        <div class="title" contenteditable id="s_title">상품명</div>
+        <div class="desc" contenteditable id="s_desc"></div>
+        <div class="ptit">POINT</div>
+        <div class="point" contenteditable id="s_point"></div>
+        <div class="nukiwrap">
+          <div class="nuki empty" id="s_nuki" onclick="document.getElementById('fn').click()">누끼 선택</div>
+          <div class="cname" contenteditable id="s_cname">COLOR</div>
+        </div>
+        <div class="disc">*본 자료는 레이지지 내부 자료로 사전 허가 없이 무단 사용 및 배포는 금지합니다.</div>
+      </div>
+    </div></div>
+  </div>
+  <div class="panel">
+    <h3>시딩 가이드</h3>
+    <div class="lbl">시즌</div>
+    <select id="s_season" class="sel" onchange="fillSProd()"></select>
+    <div class="lbl">상품 선택 <span class="count" id="s_count"></span></div>
+    <select id="s_prod" class="sel" onchange="selSProd()"></select>
+    <input id="fm" type="file" accept="image/*" style="display:none">
+    <input id="fn" type="file" accept="image/*" style="display:none">
+    <button class="btn btn-line" onclick="document.getElementById('fm').click()">🧍 모델컷 선택</button>
+    <button class="btn btn-line" onclick="document.getElementById('fn').click()">🩱 누끼 선택</button>
+    <div class="lbl">저장</div>
+    <button class="btn btn-dark" onclick="pickBaseDir()"><span id="s_basedir">📁 나스폴더 지정</span></button>
+    <button class="btn btn-red" onclick="saveSeed()">💾 저장하기 (JPG)</button>
+    <div id="s_prog" style="font-size:12px;color:#888;margin-top:8px;text-align:center;"></div>
+  </div>
+</div>
+<script>
+const SEED=__SEED_PRODUCTS__;
+function esc(s){return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+// ── 시즌/상품 드롭다운 ──
+function _sk(p){return (p.season||'')+'|'+(p.shoot||'');}
+function _sl(k){const a=k.split('|');return a[0]+(a[1]?(' · '+a[1]+'촬영'):'');}
+function _srank(s){if(!s||s.length<4)return 0;const y=parseInt(s.slice(0,2),10)||0;const h=s[2]==='S'?0:(s[2]==='F'?1:2);return y*2+h;}
+const _SMIN=_srank('26FW');
+function fillSSeason(){const sel=document.getElementById('s_season');let keys=[...new Set(SEED.map(_sk))].filter(k=>{const s=k.split('|')[0];return s&&_srank(s)>=_SMIN;});keys.sort((a,b)=>{const A=a.split('|'),B=b.split('|');const ra=_srank(A[0]),rb=_srank(B[0]);if(ra!==rb)return ra-rb;const o={F:0,W:1};return (o[A[1]]!=null?o[A[1]]:2)-(o[B[1]]!=null?o[B[1]]:2);});sel.innerHTML=keys.map(k=>'<option value="'+k+'">'+esc(_sl(k))+'</option>').join('');sel.value=keys.indexOf('26FW|F')>=0?'26FW|F':(keys[0]||'');}
+function _curArr(){const sk=document.getElementById('s_season').value||'';return SEED.filter(p=>_sk(p)===sk);}
+function fillSProd(){const s=document.getElementById('s_prod');const arr=_curArr();s.innerHTML=arr.length?arr.map((p,i)=>'<option value="'+i+'">'+esc(p.label)+'</option>').join(''):'<option>상품 없음</option>';document.getElementById('s_count').textContent='총 '+arr.length+'개';if(arr.length)selSProd();}
+function selSProd(){const arr=_curArr();const i=+document.getElementById('s_prod').value||0;const p=arr[i];if(!p)return;const c=document.getElementById('s_count');c.textContent=(i+1)+' / '+arr.length;
+  document.getElementById('s_title').textContent=p.name_en+(p.name_ko?(' / '+p.name_ko):'');
+  document.getElementById('s_desc').innerHTML=(p.desc||[]).map(d=>'<div>• '+esc(d)+'</div>').join('');
+  document.getElementById('s_point').innerHTML=(p.usp||[]).map(d=>'<div>- '+esc(d)+'</div>').join('');
+  const col=(p.colors&&p.colors[0])?(p.colors[0].en||p.colors[0].ko||''):'';
+  document.getElementById('s_cname').textContent=(col||'COLOR').toUpperCase();
+}
+// ── 이미지 업로드 ──
+let mlPos={x:50,y:50};
+document.getElementById('fm').onchange=e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f);const el=document.getElementById('mL');el.style.backgroundImage='url('+u+')';el.style.backgroundSize='cover';el.style.backgroundPosition='center';mlPos={x:50,y:50};const h=document.getElementById('mLhint');if(h)h.style.display='none';};
+document.getElementById('fn').onchange=e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f);const el=document.getElementById('s_nuki');el.style.backgroundImage='url('+u+')';el.classList.remove('empty');el.textContent='';};
+// 모델컷 드래그로 위치 조정
+(function(){const el=document.getElementById('mL');let drag=null;el.addEventListener('mousedown',e=>{if(!el.style.backgroundImage)return;drag={x:e.clientX,y:e.clientY};el.style.cursor='grabbing';});window.addEventListener('mousemove',e=>{if(!drag)return;mlPos.x=Math.max(0,Math.min(100,mlPos.x-(e.clientX-drag.x)*0.1));mlPos.y=Math.max(0,Math.min(100,mlPos.y-(e.clientY-drag.y)*0.1));el.style.backgroundPosition=mlPos.x+'% '+mlPos.y+'%';drag={x:e.clientX,y:e.clientY};});window.addEventListener('mouseup',()=>{if(drag){drag=null;el.style.cursor='grab';}});})();
+// ── 화면맞춤 스케일 ──
+function fitScale(){const pw=document.querySelector('.pagewrap');const avail=pw.clientWidth-2;const sc=Math.min(1,avail/1920);const pg=document.getElementById('page');pg.style.transform='scale('+sc+')';pw.style.height=(1080*sc)+'px';}
+window.addEventListener('resize',fitScale);
+// ── 저장 폴더(IndexedDB 공유) ──
+function _idb(){return new Promise((res,rej)=>{const r=indexedDB.open('lzfs',1);r.onupgradeneeded=()=>r.result.createObjectStore('h');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function _idbSet(k,v){const db=await _idb();return new Promise((res,rej)=>{const t=db.transaction('h','readwrite');t.objectStore('h').put(v,k);t.oncomplete=()=>res();t.onerror=()=>rej(t.error);});}
+async function _idbGet(k){const db=await _idb();return new Promise((res,rej)=>{const t=db.transaction('h','readonly');const q=t.objectStore('h').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error);});}
+async function _verifyPerm(h){try{let p=await h.queryPermission({mode:'readwrite'});if(p==='granted')return true;p=await h.requestPermission({mode:'readwrite'});return p==='granted';}catch(e){return false;}}
+let baseDir=null;
+function _bl(){const el=document.getElementById('s_basedir');if(el)el.textContent=baseDir?'📁 나스폴더 지정 ✓':'📁 나스폴더 지정';}
+async function pickBaseDir(){if(!window.showDirectoryPicker){alert('Chrome/Edge 권장');return;}try{baseDir=await window.showDirectoryPicker({mode:'readwrite'});try{await _idbSet('baseDir',baseDir);}catch(e){}_bl();}catch(e){}}
+async function ensureBaseDir(){if(baseDir&&await _verifyPerm(baseDir))return baseDir;try{const h=await _idbGet('baseDir');if(h&&await _verifyPerm(h)){baseDir=h;_bl();return h;}}catch(e){}return null;}
+(async()=>{try{const h=await _idbGet('baseDir');if(h){baseDir=h;_bl();}}catch(e){}})();
+// ── 저장 ──
+async function saveSeed(){
+  const pr=document.getElementById('s_prog');pr.textContent='렌더링 중…';
+  const pg=document.getElementById('page');const oz=pg.style.transform;pg.style.transform='none';
+  let canvas;try{canvas=await html2canvas(pg,{scale:2,backgroundColor:'#ffffff',useCORS:true,width:1920,height:1080});}catch(e){pr.textContent='렌더 실패';pg.style.transform=oz;return;}
+  pg.style.transform=oz;
+  const name=(document.getElementById('s_title').textContent.split('/')[0]||'시딩').trim().replace(/[\\/:*?"<>|]/g,'_');
+  const blob=await new Promise(r=>canvas.toBlob(r,'image/jpeg',0.95));
+  let dir=await ensureBaseDir();
+  if(dir){try{const pf=await dir.getDirectoryHandle(name,{create:true});const sf=await pf.getDirectoryHandle('시딩',{create:true});const fh=await sf.getFileHandle(name+'_시딩.jpg',{create:true});const w=await fh.createWritable();await w.write(blob);await w.close();pr.textContent='저장 완료! → '+name+'/시딩/';return;}catch(e){}}
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'_시딩.jpg';a.click();pr.textContent='다운로드 완료';
+}
+fillSSeason();fillSProd();fitScale();
+</script></body></html>
+"""
+
 # ── Main content ─────────────────────────────────────────────
 if "스토리 모듈" in menu:
     components.html(STORY_EDITOR_HTML, height=820, scrolling=False)
@@ -2754,6 +2875,35 @@ elif "상세 생성기" in menu:
             .replace("__WRITE_TOKEN__", _get_secret("PLANNING_WRITE_TOKEN", ""))
             .replace("__PRODUCTS__", _json.dumps(PRODUCTS, ensure_ascii=False)))
     components.html(html, height=820, scrolling=False)
+
+elif "시딩 가이드" in menu:
+    sprods = []
+    try:
+        _sp, _ = load_planning()
+    except Exception as e:
+        _sp = []
+        st.warning("기획 API 로드 실패: " + str(e))
+    _sp = recent_only(_sp)
+    try:
+        _sshoot = load_shoot()
+    except Exception:
+        _sshoot = {}
+    for p in _sp:
+        nm = p.get("제품명", {}) or {}
+        sprods.append({
+            "label": nm.get("ko") or nm.get("en") or "?",
+            "name_en": nm.get("en") or nm.get("ko") or "Product",
+            "name_ko": nm.get("ko") or "",
+            "desc": [str(s).strip() for s in (p.get("설명") or []) if str(s).strip()],
+            "usp": [str(s).strip() for s in (p.get("USP") or []) if str(s).strip()],
+            "colors": [{"ko": (c.get("ko") or ""), "en": (c.get("en") or "")}
+                       for c in sorted((p.get("컬러") or []), key=lambda c: c.get("순위", 99))],
+            "shoot": shoot_of(p.get("스타일넘버", ""), _sshoot),
+            "season": season_of(p.get("스타일넘버", "")),
+        })
+    components.html(
+        SEEDING_HTML.replace("__SEED_PRODUCTS__", _json.dumps(sprods, ensure_ascii=False)),
+        height=860, scrolling=True)
 
 elif "피드 기획" in menu:
     st.markdown("""
