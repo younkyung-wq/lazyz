@@ -2704,8 +2704,10 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
 #page{width:1920px;height:1080px;background:#fff;display:flex;transform-origin:top left;}
 .mL{width:900px;height:1080px;background:#e9e9e9 no-repeat center/cover;position:relative;cursor:grab;flex-shrink:0;overflow:hidden;}
 .mL .hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#999;font-size:22px;}
-.mR{flex:1;height:1080px;padding:70px 70px 50px;display:flex;flex-direction:column;position:relative;}
-.mR .title{font-size:34px;font-weight:800;letter-spacing:-0.01em;line-height:1.3;}
+.mR{flex:1;height:1080px;padding:0 70px 50px;display:flex;flex-direction:column;position:relative;}
+.mR .title{margin-top:340px;font-family:'Pretendard',-apple-system,sans-serif;font-size:8pt;font-weight:800;line-height:1.3;}
+.mR .title .ten{letter-spacing:0;}
+.mR .title .tko{letter-spacing:-0.04em;}
 .mR .desc{margin-top:18px;font-size:21px;color:#333;line-height:1.5;}
 .mR .desc div{margin-bottom:4px;}
 .mR .ptit{margin-top:40px;font-size:23px;font-weight:800;}
@@ -2765,7 +2767,7 @@ function fillSSeason(){const sel=document.getElementById('s_season');let keys=[.
 function _curArr(){const sk=document.getElementById('s_season').value||'';return SEED.filter(p=>_sk(p)===sk);}
 function fillSProd(){const s=document.getElementById('s_prod');const arr=_curArr();s.innerHTML=arr.length?arr.map((p,i)=>'<option value="'+i+'">'+esc(p.label)+'</option>').join(''):'<option>상품 없음</option>';document.getElementById('s_count').textContent='총 '+arr.length+'개';if(arr.length)selSProd();}
 function selSProd(){const arr=_curArr();const i=+document.getElementById('s_prod').value||0;const p=arr[i];if(!p)return;const c=document.getElementById('s_count');c.textContent=(i+1)+' / '+arr.length;
-  document.getElementById('s_title').textContent=p.name_en+(p.name_ko?(' / '+p.name_ko):'');
+  document.getElementById('s_title').innerHTML='<span class="ten">'+esc(p.name_en)+'</span>'+(p.name_ko?(' <span class="ten">/</span> <span class="tko">'+esc(p.name_ko)+'</span>'):'');
   document.getElementById('s_desc').innerHTML=(p.desc||[]).map(d=>'<div>• '+esc(d)+'</div>').join('');
   document.getElementById('s_point').innerHTML=(p.usp||[]).map(d=>'<div>- '+esc(d)+'</div>').join('');
   curColors=p.colors||[];
