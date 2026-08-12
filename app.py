@@ -2731,10 +2731,10 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
       <div class="mR">
         <div class="title" contenteditable id="s_title">상품명</div>
         <div class="desc" contenteditable id="s_desc"></div>
-        <div class="ptit">POINT</div>
+        <div class="ptit" contenteditable>POINT</div>
         <div class="point" contenteditable id="s_point"></div>
         <div class="nukirow" id="s_nukis"><div class="nukihint">폴더 불러오면 누끼가 여기 정렬돼요</div></div>
-        <div class="disc">*본 자료는 레이지지 내부 자료로 사전 허가 없이 무단 사용 및 배포는 금지합니다.</div>
+        <div class="disc" contenteditable>*본 자료는 레이지지 내부 자료로 사전 허가 없이 무단 사용 및 배포는 금지합니다.</div>
       </div>
     </div></div>
   </div>
