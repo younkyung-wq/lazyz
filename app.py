@@ -2711,9 +2711,9 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
 .mR .ptit{margin-top:40px;font-size:23px;font-weight:800;}
 .mR .point{margin-top:12px;font-size:21px;color:#333;line-height:1.6;}
 .mR .point div{margin-bottom:6px;}
-.mR .nukirow{margin-top:auto;display:flex;gap:26px;justify-content:center;align-items:flex-end;flex-wrap:wrap;padding-bottom:20px;}
-.mR .nkitem{display:flex;flex-direction:column;align-items:center;}
-.mR .nk{width:300px;height:300px;background:no-repeat center bottom/contain;}
+.mR .nukirow{margin-top:auto;display:flex;gap:20px;justify-content:center;align-items:flex-end;flex-wrap:nowrap;padding-bottom:20px;}
+.mR .nkitem{flex:1 1 0;min-width:0;max-width:340px;display:flex;flex-direction:column;align-items:center;}
+.mR .nk{width:100%;height:300px;background:no-repeat center bottom/contain;}
 .mR .cn{margin-top:12px;font-size:22px;font-weight:600;letter-spacing:0.04em;text-align:center;}
 .mR .nukihint{color:#bbb;font-size:18px;margin:auto;}
 .mR .disc{position:absolute;right:70px;bottom:34px;font-size:15px;color:#999;}
