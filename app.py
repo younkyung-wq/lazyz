@@ -29,8 +29,8 @@ def _get_secret(key, default=""):
         pass
     return os.environ.get(key, default)
 
-def _fetch(url, tries=3, timeout=45):
-    """URL 요청 + 재시도(콜드스타트/일시 타임아웃 대비)."""
+def _fetch(url, tries=2, timeout=25):
+    """URL 요청 + 재시도(콜드스타트/일시 타임아웃 대비). 너무 오래 매달리지 않게 짧게."""
     import time as _time
     last = None
     for i in range(tries):
@@ -39,10 +39,10 @@ def _fetch(url, tries=3, timeout=45):
         except Exception as e:
             last = e
             if i < tries - 1:
-                _time.sleep(1.5)
+                _time.sleep(1.0)
     raise last
 
-@st.cache_data(ttl=120, show_spinner=False)
+@st.cache_data(ttl=600, show_spinner="기획 상품 불러오는 중… (최초 1회 약 10초, 이후 빠름)")
 def load_planning():
     base = _get_secret("PLANNING_API"); ro = _get_secret("PLANNING_RO")
     if not base or not ro:
@@ -85,7 +85,7 @@ def pick_season(prods, key):
     idx = seasons.index(PLANNING_SEASON) if PLANNING_SEASON in seasons else 0
     return st.selectbox("시즌 선택", seasons, index=idx, key=key)
 
-@st.cache_data(ttl=300, show_spinner=False)
+@st.cache_data(ttl=1800, show_spinner=False)
 def load_shoot():
     """StyleInfo 시트 V열(촬영차수)을 직접 읽어 {스타일넘버: 'F'/'W'} 반환. 없으면 {}."""
     sid = _get_secret("STYLEINFO_SHEET"); gid = _get_secret("STYLEINFO_GID", "0")
