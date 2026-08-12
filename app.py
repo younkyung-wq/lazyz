@@ -2712,8 +2712,10 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
 .mR .point{margin-top:12px;font-size:21px;color:#333;line-height:1.6;}
 .mR .point div{margin-bottom:6px;}
 .mR .nukirow{margin-top:auto;display:flex;gap:20px;justify-content:center;align-items:flex-end;flex-wrap:nowrap;padding-bottom:20px;}
-.mR .nkitem{flex:1 1 0;min-width:0;max-width:340px;display:flex;flex-direction:column;align-items:center;}
+.mR .nkitem{position:relative;flex:1 1 0;min-width:0;max-width:340px;display:flex;flex-direction:column;align-items:center;}
 .mR .nk{width:100%;height:300px;background:no-repeat center bottom/contain;}
+.mR .nkx{position:absolute;top:4px;right:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.6);color:#fff;font-size:22px;line-height:34px;text-align:center;cursor:pointer;opacity:0;transition:opacity .12s;z-index:3;}
+.mR .nkitem:hover .nkx{opacity:1;}
 .mR .cn{margin-top:12px;font-size:22px;font-weight:600;letter-spacing:0.04em;text-align:center;}
 .mR .nukihint{color:#bbb;font-size:18px;margin:auto;}
 .mR .disc{position:absolute;right:70px;bottom:34px;font-size:15px;color:#999;}
@@ -2789,23 +2791,28 @@ document.getElementById('ffolder').onchange=e=>{
   function done(){
     const models=loaded.filter(o=>grpT(o.name)===0);
     models.sort((a,b)=>colorRankT(a.name)-colorRankT(b.name)||numOfT(a.name)-numOfT(b.name)||a.name.localeCompare(b.name));
-    if(models[0]){const el=document.getElementById('mL');el.style.backgroundImage='url('+models[0].url+')';el.style.backgroundSize='cover';el.style.backgroundPosition='center';mlPos={x:50,y:50};const h=document.getElementById('mLhint');if(h)h.style.display='none';}
+    if(models[0]){setModel(models[0].url);}
     const nukis=loaded.filter(o=>grpT(o.name)===1 && !/누끼[\-_ ]*[A-Za-z]+\d/.test(o.name));
     nukis.sort((a,b)=>colorRankT(a.name)-colorRankT(b.name)||a.name.localeCompare(b.name));
     renderNukis(nukis);
     pr.textContent='완료! 모델컷 '+(models[0]?1:0)+' · 누끼 '+nukis.length;
   }
 };
+let nukiList=[];
 function renderNukis(list){
+  if(list)nukiList=list;
   const row=document.getElementById('s_nukis');
-  if(!list.length){row.innerHTML='<div class="nukihint">누끼(누끼_컬러) 이미지가 없어요</div>';return;}
-  row.innerHTML=list.map(o=>{const cn=(colorNameForCode(colorCodeOf(o.name))||'').toUpperCase();return '<div class="nkitem"><div class="nk" style="background-image:url('+o.url+')"></div><div class="cn" contenteditable>'+esc(cn)+'</div></div>';}).join('');
+  if(!nukiList.length){row.innerHTML='<div class="nukihint">누끼(누끼_컬러) 이미지가 없어요</div>';return;}
+  row.innerHTML=nukiList.map((o,i)=>{const cn=(colorNameForCode(colorCodeOf(o.name))||'').toUpperCase();return '<div class="nkitem"><div class="nkx" onclick="delNuki('+i+')">×</div><div class="nk" style="background-image:url('+o.url+')"></div><div class="cn" contenteditable>'+esc(cn)+'</div></div>';}).join('');
 }
+function delNuki(i){nukiList.splice(i,1);renderNukis();}
 // ── 이미지 업로드 ──
-let mlPos={x:50,y:50};
-document.getElementById('fm').onchange=e=>{const f=e.target.files[0];if(!f)return;const u=URL.createObjectURL(f);const el=document.getElementById('mL');el.style.backgroundImage='url('+u+')';el.style.backgroundSize='cover';el.style.backgroundPosition='center';mlPos={x:50,y:50};const h=document.getElementById('mLhint');if(h)h.style.display='none';};
+let mlImg=null, mlZoom=1, mlPos={x:50,y:50};
+function setModel(url){const im=new Image();im.onload=()=>{mlImg={url:url,w:im.width,h:im.height};mlZoom=1;mlPos={x:50,y:50};applyModel();const h=document.getElementById('mLhint');if(h)h.style.display='none';};im.src=url;}
+function applyModel(){if(!mlImg)return;const el=document.getElementById('mL');const base=Math.max(900/mlImg.w,1080/mlImg.h);const bw=mlImg.w*base*mlZoom,bh=mlImg.h*base*mlZoom;el.style.backgroundImage='url('+mlImg.url+')';el.style.backgroundRepeat='no-repeat';el.style.backgroundSize=bw+'px '+bh+'px';el.style.backgroundPosition=mlPos.x+'% '+mlPos.y+'%';}
+document.getElementById('fm').onchange=e=>{const f=e.target.files[0];if(!f)return;setModel(URL.createObjectURL(f));};
 // 모델컷 드래그로 위치 조정
-(function(){const el=document.getElementById('mL');let drag=null;el.addEventListener('mousedown',e=>{if(!el.style.backgroundImage)return;drag={x:e.clientX,y:e.clientY};el.style.cursor='grabbing';});window.addEventListener('mousemove',e=>{if(!drag)return;mlPos.x=Math.max(0,Math.min(100,mlPos.x-(e.clientX-drag.x)*0.1));mlPos.y=Math.max(0,Math.min(100,mlPos.y-(e.clientY-drag.y)*0.1));el.style.backgroundPosition=mlPos.x+'% '+mlPos.y+'%';drag={x:e.clientX,y:e.clientY};});window.addEventListener('mouseup',()=>{if(drag){drag=null;el.style.cursor='grab';}});})();
+(function(){const el=document.getElementById('mL');let drag=null;el.addEventListener('mousedown',e=>{if(!mlImg)return;drag={x:e.clientX,y:e.clientY};el.style.cursor='grabbing';});window.addEventListener('mousemove',e=>{if(!drag)return;mlPos.x=Math.max(0,Math.min(100,mlPos.x-(e.clientX-drag.x)*0.1));mlPos.y=Math.max(0,Math.min(100,mlPos.y-(e.clientY-drag.y)*0.1));applyModel();drag={x:e.clientX,y:e.clientY};});window.addEventListener('mouseup',()=>{if(drag){drag=null;el.style.cursor='grab';}});el.addEventListener('wheel',e=>{if(!mlImg)return;e.preventDefault();mlZoom=Math.max(1,Math.min(4,mlZoom*(e.deltaY<0?1.05:0.95)));applyModel();},{passive:false});})();
 // ── 화면맞춤 스케일 ──
 function fitScale(){const pw=document.querySelector('.pagewrap');const availW=pw.parentElement.clientWidth-2;const availH=Math.max(300,window.innerHeight-40);const sc=Math.min(1,availW/1920,availH/1080);const pg=document.getElementById('page');pg.style.transform='scale('+sc+')';pw.style.width=(1920*sc)+'px';pw.style.height=(1080*sc)+'px';}
 window.addEventListener('resize',fitScale);
