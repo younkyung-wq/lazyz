@@ -2264,13 +2264,13 @@ body{background:#eee;height:812px;overflow:hidden;color:#222;}
     <div class="lbl">이미지 폴더 나스 경로</div>
     <div style="display:flex;gap:6px;">
       <input id="folderpath" type="text" placeholder="폴더 선택 →" readonly style="flex:1;min-width:0;padding:9px 11px;border:1.5px solid #e2e2e2;border-radius:9px;font-size:11px;color:#555;background:#fafafa;">
-      <button class="btn btn-line" style="width:auto;padding:9px 13px;white-space:nowrap;flex-shrink:0;" onclick="pickFolder()">불러오기</button>
+      <button class="btn btn-dark" style="flex:1;padding:9px 13px;white-space:nowrap;" onclick="pickFolder()">불러오기</button>
     </div>
     <input id="fdir" type="file" accept="image/*" webkitdirectory multiple style="display:none">
     <div class="lbl">또는 개별 이미지 선택</div>
     <input id="fi" type="file" accept="image/*" multiple style="display:none">
     <div style="display:flex;gap:6px;">
-      <button class="btn btn-dark" style="flex:1;" onclick="document.getElementById('fi').click()">📁 이미지 선택</button>
+      <button class="btn btn-line" style="flex:1;" onclick="document.getElementById('fi').click()">이미지 선택</button>
       <button class="btn btn-line" style="flex:1;" onclick="clearImgs()">🗑 이미지 비우기</button>
     </div>
     <div class="divider"></div>
