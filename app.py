@@ -2769,7 +2769,8 @@ function fillSSeason(){const sel=document.getElementById('s_season');let keys=[.
 function _curArr(){const sk=document.getElementById('s_season').value||'';return SEED.filter(p=>_sk(p)===sk);}
 function fillSProd(){const s=document.getElementById('s_prod');const arr=_curArr();s.innerHTML=arr.length?arr.map((p,i)=>'<option value="'+i+'">'+esc(p.label)+'</option>').join(''):'<option>상품 없음</option>';document.getElementById('s_count').textContent='총 '+arr.length+'개';if(arr.length)selSProd();}
 function selSProd(){const arr=_curArr();const i=+document.getElementById('s_prod').value||0;const p=arr[i];if(!p)return;const c=document.getElementById('s_count');c.textContent=(i+1)+' / '+arr.length;
-  document.getElementById('s_title').innerHTML='<span class="ten">'+esc(p.name_en)+'</span>'+(p.name_ko?(' <span class="ten">/</span> <span class="tko">'+esc(p.name_ko)+'</span>'):'');
+  const _en=p.name_en?(p.name_en.charAt(0).toUpperCase()+p.name_en.slice(1)):'';
+  document.getElementById('s_title').innerHTML='<span class="ten">'+esc(_en)+'</span>'+(p.name_ko?(' <span class="ten">/</span> <span class="tko">'+esc(p.name_ko)+'</span>'):'');
   document.getElementById('s_desc').innerHTML=(p.desc||[]).map(d=>'<div>• '+esc(d)+'</div>').join('');
   document.getElementById('s_point').innerHTML=(p.usp||[]).map(d=>'<div>- '+esc(d)+'</div>').join('');
   curColors=p.colors||[];
