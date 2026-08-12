@@ -2713,8 +2713,8 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
 .mR .ptit{margin-top:44px;font-size:23px;font-weight:800;}
 .mR .point{margin-top:14px;font-size:21px;color:#333;line-height:1.55;}
 .mR .point div{margin-bottom:10px;}
-.mR .nukirow{margin-top:auto;display:flex;gap:6px;justify-content:center;align-items:flex-end;flex-wrap:nowrap;padding-bottom:130px;}
-.mR .nkitem{position:relative;flex:1 1 0;min-width:0;max-width:340px;display:flex;flex-direction:column;align-items:center;}
+.mR .nukirow{margin-top:auto;display:flex;gap:0;justify-content:center;align-items:flex-end;flex-wrap:nowrap;padding-bottom:100px;}
+.mR .nkitem{position:relative;flex:0 1 230px;min-width:0;max-width:230px;display:flex;flex-direction:column;align-items:center;}
 .mR .nk{width:100%;height:300px;background:no-repeat center bottom/contain;}
 .mR .nkx{position:absolute;top:4px;right:8px;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,0.6);color:#fff;font-size:22px;line-height:34px;text-align:center;cursor:pointer;opacity:0;transition:opacity .12s;z-index:3;}
 .mR .nkitem:hover .nkx{opacity:1;}
