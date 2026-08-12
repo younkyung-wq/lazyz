@@ -1968,7 +1968,9 @@ function distribute(pool){
   Object.keys(GROUPS).forEach(grp=>{
     if(!gImgs[grp]) gImgs[grp]=[];
     if(gAi[grp]==null) gAi[grp]=0;
-    const src=GROUPS[grp].png ? pool.filter(p=>/\.png$/i.test(p.name)) : pool.slice();  // 누끼=PNG만, 나머지=전부
+    const NO_NUKI={g_home:1, g_kurly:1};  // 공홈·컬리는 누끼(PNG) 제외
+    let src=GROUPS[grp].png ? pool.filter(p=>/\.png$/i.test(p.name)) : pool.slice();  // 누끼=PNG만, 나머지=전부
+    if(NO_NUKI[grp]) src=src.filter(p=>!/\.png$/i.test(p.name) && !/누끼/.test((p.name||'').normalize('NFC')));
     src.forEach(p=>gImgs[grp].push({name:(p.name||'').normalize('NFC'),img:p.img,url:p.url,tf:{z:1,cx:0.5,cy:0.5},el:null}));
     sortThumb(gImgs[grp]);  // 모델컷→누끼→앞뒤, 메인컬러 먼저
   });
@@ -2000,9 +2002,10 @@ window.addEventListener('mouseup',()=>{drag=null;if(guideV){guideV=false;draw();
 // 휠 확대
 cvs.addEventListener('wheel',e=>{
   if(!curList().length)return; e.preventDefault();
-  const t=curList()[curAi()].tf;
+  const cur=curList()[curAi()]; const t=cur.tf;
   t.z*=(e.deltaY<0?1.03:0.97);  // 더 세밀하게
   t.z=Math.max(0.15,Math.min(5,t.z));  // 모든 채널 축소 가능
+  if(/누끼/.test(cur.name)){ curList().forEach(o=>{ if(o!==cur && /누끼/.test(o.name)) o.tf.z=t.z; }); }  // 같은 채널 누끼 크기 연동
   draw();
 },{passive:false});
 
