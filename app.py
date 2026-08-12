@@ -2731,8 +2731,6 @@ body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;backgr
       <div class="mR">
         <div class="title" contenteditable id="s_title">상품명</div>
         <div class="desc" contenteditable id="s_desc"></div>
-        <div class="ptit" contenteditable>POINT</div>
-        <div class="point" contenteditable id="s_point"></div>
         <div class="nukirow" id="s_nukis"><div class="nukihint">폴더 불러오면 누끼가 여기 정렬돼요</div></div>
         <div class="disc" contenteditable>*본 자료는 레이지지 내부 자료로 사전 허가 없이 무단 사용 및 배포는 금지합니다.</div>
       </div>
@@ -2772,7 +2770,6 @@ function selSProd(){const arr=_curArr();const i=+document.getElementById('s_prod
   const _en=p.name_en?(p.name_en.charAt(0).toUpperCase()+p.name_en.slice(1)):'';
   document.getElementById('s_title').innerHTML='<span class="ten">'+esc(_en)+'</span>'+(p.name_ko?(' <span class="ten">/</span> <span class="tko">'+esc(p.name_ko)+'</span>'):'');
   document.getElementById('s_desc').innerHTML=(p.desc||[]).map(d=>'<div>• '+esc(d)+'</div>').join('');
-  document.getElementById('s_point').innerHTML=(p.usp||[]).map(d=>'<div>- '+esc(d)+'</div>').join('');
   curColors=p.colors||[];
 }
 // ── 색상/분류 ──
