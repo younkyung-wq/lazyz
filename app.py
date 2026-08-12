@@ -2815,6 +2815,7 @@ function renderNukis(list){
   if(list)nukiList=list;
   const row=document.getElementById('s_nukis');
   row.innerHTML='';row.style.gap=NK_GAP+'px';
+  row.style.justifyContent=(seedMode==='each')?'flex-end':'center';  // 컬러별=오른쪽하단, 전체=가운데
   if(!nukiList.length){row.innerHTML='<div class="nukihint">누끼(누끼_컬러) 이미지가 없어요</div>';return;}
   const metas=nukiList.map(o=>{const bb=nukiBBox(o.img);const sw=bb?bb.w*o.img.width:o.img.width;const sh=bb?bb.h*o.img.height:o.img.height;return {o,bb,aspect:sw/Math.max(1,sh)};});
   const n=metas.length, sumA=metas.reduce((s,m)=>s+m.aspect,0)||1;
