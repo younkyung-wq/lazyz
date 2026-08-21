@@ -2972,44 +2972,44 @@ function pickFolder(){
 }
 function coverCanvas(img,tw,th){ const c=document.createElement('canvas'); c.width=tw;c.height=th; const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; const s=Math.max(tw/img.width,th/img.height); const iw=img.width*s, ih=img.height*s; g.drawImage(img,(tw-iw)/2,(th-ih)/2,iw,ih); return c; }
 function baseName(n){ return n.replace(/\.[^.]+$/,''); }
-// ── 미리보기 그리드 + 부드러운 드래그 정렬(FLIP) ──
+// ── 미리보기 그리드 + 부드러운 드래그 정렬(FLIP, DOM 재사용) ──
 function renderGrid(){
   const grid=document.getElementById('grid'); grid.innerHTML='';
   items.forEach((it,i)=>{
     const or=it.img.width>it.img.height?'가로':'세로';
-    const g=document.createElement('div'); g.className='gitem'; g.dataset.i=i; g.dataset.u=it.url;
+    const g=document.createElement('div'); g.className='gitem'; g.dataset.i=i;
     g.innerHTML='<span class="o">'+or+'</span><span class="num">'+String(i+1).padStart(2,'0')+'</span>';
     const im=document.createElement('img'); im.src=it.url; g.appendChild(im);
-    g.addEventListener('mousedown',e=>startDrag(e,i));
-    grid.appendChild(g);
+    g.addEventListener('mousedown',e=>startDrag(e,it));
+    it.el=g; grid.appendChild(g);
   });
 }
-let drag=null;
-function startDrag(e,i){
+let drag=null, lastXY=null, pendingMove=false;
+function startDrag(e,it){
   e.preventDefault();
-  const g=e.currentTarget; const r=g.getBoundingClientRect();
-  const clone=g.cloneNode(true); clone.style.position='fixed'; clone.style.left=r.left+'px'; clone.style.top=r.top+'px'; clone.style.width=r.width+'px'; clone.style.height=r.height+'px'; clone.style.margin='0'; clone.style.pointerEvents='none'; clone.style.zIndex='9999'; clone.style.opacity='0.95'; clone.style.transform='scale(1.06)'; clone.style.boxShadow='0 10px 26px rgba(0,0,0,0.28)'; clone.style.cursor='grabbing'; document.body.appendChild(clone);
-  drag={clone, offx:e.clientX-r.left, offy:e.clientY-r.top, idx:i};
-  g.classList.add('placeholder');
+  const g=it.el; const r=g.getBoundingClientRect();
+  const clone=g.cloneNode(true); Object.assign(clone.style,{position:'fixed',left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px',margin:'0',pointerEvents:'none',zIndex:'9999',opacity:'0.95',transform:'scale(1.06)',boxShadow:'0 10px 26px rgba(0,0,0,0.28)',cursor:'grabbing'}); document.body.appendChild(clone);
+  drag={clone, offx:e.clientX-r.left, offy:e.clientY-r.top}; g.classList.add('placeholder');
 }
 window.addEventListener('mousemove',e=>{
   if(!drag)return;
   drag.clone.style.left=(e.clientX-drag.offx)+'px'; drag.clone.style.top=(e.clientY-drag.offy)+'px';
-  const el=document.elementFromPoint(e.clientX,e.clientY); const g=el&&el.closest?el.closest('.gitem'):null;
-  if(g && g.dataset.i!=null){ const ti=+g.dataset.i; if(ti!==drag.idx){ moveItem(drag.idx,ti); drag.idx=ti; } }
+  lastXY=[e.clientX,e.clientY];
+  if(pendingMove)return; pendingMove=true;
+  requestAnimationFrame(()=>{ pendingMove=false; if(!drag||!lastXY)return;
+    const el=document.elementFromPoint(lastXY[0],lastXY[1]); const g=el&&el.closest?el.closest('.gitem'):null;
+    if(g && g.dataset.i!=null){ const ti=+g.dataset.i; const from=items.findIndex(x=>x.el&&x.el.classList.contains('placeholder')); if(from>=0 && ti!==from) moveItem(from,ti); }
+  });
 });
-window.addEventListener('mouseup',()=>{ if(!drag)return; drag.clone.remove(); [...document.getElementById('grid').children].forEach(c=>c.classList.remove('placeholder')); drag=null; });
+window.addEventListener('mouseup',()=>{ if(!drag)return; drag.clone.remove(); items.forEach(it=>it.el&&it.el.classList.remove('placeholder')); drag=null; lastXY=null; });
 function moveItem(from,to){
   const grid=document.getElementById('grid');
-  const first=new Map(); [...grid.children].forEach(ch=>{ if(ch.dataset.u) first.set(ch.dataset.u, ch.getBoundingClientRect()); });
+  const first=new Map(); items.forEach(it=>first.set(it.el, it.el.getBoundingClientRect()));  // 이동 전 위치
   const [m]=items.splice(from,1); items.splice(to,0,m);
-  renderGrid();
-  const grid2=document.getElementById('grid');
-  [...grid2.children].forEach((ch,idx)=>{
-    if(idx===to) ch.classList.add('placeholder');   // 드래그 중인 항목 표시 유지
-    const f=first.get(ch.dataset.u); if(!f)return; const l=ch.getBoundingClientRect(); const dx=f.left-l.left, dy=f.top-l.top;
-    if(dx||dy){ ch.style.transition='none'; ch.style.transform='translate('+dx+'px,'+dy+'px)'; requestAnimationFrame(()=>{ ch.style.transition='transform .18s cubic-bezier(.2,.7,.3,1)'; ch.style.transform=''; }); }
-  });
+  items.forEach((it,idx)=>{ grid.appendChild(it.el); it.el.dataset.i=idx; const num=it.el.querySelector('.num'); if(num)num.textContent=String(idx+1).padStart(2,'0'); });
+  // FLIP: 이동 전→후 위치차만큼 되돌렸다가 0으로 애니메이션
+  items.forEach(it=>{ const f=first.get(it.el); if(!f)return; const l=it.el.getBoundingClientRect(); const dx=f.left-l.left, dy=f.top-l.top; if(dx||dy){ it.el.style.transition='none'; it.el.style.transform='translate('+dx+'px,'+dy+'px)'; } });
+  requestAnimationFrame(()=>{ items.forEach(it=>{ it.el.style.transition='transform .16s cubic-bezier(.2,.7,.3,1)'; it.el.style.transform=''; }); });
 }
 async function runResize(){
   if(!dirHandle){alert('먼저 폴더를 불러오세요.');return;}
