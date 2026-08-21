@@ -3066,7 +3066,7 @@ async function runResize(){
         const cv=coverCanvas(it.img,tw,th);
         const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.95));
         const fh=await sub.getFileHandle(String(idx+1).padStart(2,'0')+'.jpg',{create:true});  // 순서대로 01,02,03…
-        const w=await fh.createWritable(); await w.write(blob); await w.close();
+        const w=await fh.createWritable({keepExistingData:false}); await w.write(blob); await w.close();  // 중복=덮어쓰기
         done++; fill.style.width=Math.round(done/total*100)+'%'; prog.textContent='저장 중… '+done+'/'+total+'  ('+sz+')';
       }
     }
