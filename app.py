@@ -2977,7 +2977,18 @@ function pickFolder(){
     }catch(e){ if(e.name!=='AbortError') document.getElementById('folderinfo').textContent='실패: '+(e.message||e); }
   })();
 }
-function coverCanvas(img,tw,th){ const c=document.createElement('canvas'); c.width=tw;c.height=th; const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; const s=Math.max(tw/img.width,th/img.height); const iw=img.width*s, ih=img.height*s; g.drawImage(img,(tw-iw)/2,(th-ih)/2,iw,ih); return c; }
+function coverCanvas(img,tw,th){
+  const s=Math.max(tw/img.width,th/img.height);
+  const sw=tw/s, sh=th/s, sx=(img.width-sw)/2, sy=(img.height-sh)/2;  // 크롭 영역(원본px)
+  let cw=Math.max(1,Math.round(sw)), ch=Math.max(1,Math.round(sh));
+  let src=document.createElement('canvas'); src.width=cw; src.height=ch;
+  { const g=src.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(img,sx,sy,sw,sh,0,0,cw,ch); }
+  while(cw>tw*2 || ch>th*2){  // 절반씩 단계 축소 → 선명
+    const nw=Math.max(tw,Math.round(cw/2)), nh=Math.max(th,Math.round(ch/2));
+    const c2=document.createElement('canvas'); c2.width=nw; c2.height=nh; const g2=c2.getContext('2d'); g2.imageSmoothingEnabled=true; g2.imageSmoothingQuality='high'; g2.drawImage(src,0,0,cw,ch,0,0,nw,nh); src=c2; cw=nw; ch=nh;
+  }
+  const out=document.createElement('canvas'); out.width=tw; out.height=th; const g=out.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(src,0,0,cw,ch,0,0,tw,th); return out;
+}
 function baseName(n){ return n.replace(/\.[^.]+$/,''); }
 // ── 미리보기 그리드 + 부드러운 드래그 정렬(FLIP, DOM 재사용) ──
 let selected=new Set(), anchor=-1;
@@ -3053,7 +3064,7 @@ async function runResize(){
         const land = it.img.width>it.img.height;
         const tw = land?ph:pw, th = land?pw:ph;   // 가로 이미지는 반전
         const cv=coverCanvas(it.img,tw,th);
-        const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.92));
+        const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.95));
         const fh=await sub.getFileHandle(String(idx+1).padStart(2,'0')+'.jpg',{create:true});  // 순서대로 01,02,03…
         const w=await fh.createWritable(); await w.write(blob); await w.close();
         done++; fill.style.width=Math.round(done/total*100)+'%'; prog.textContent='저장 중… '+done+'/'+total+'  ('+sz+')';
