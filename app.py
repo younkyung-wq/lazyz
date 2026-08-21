@@ -2944,9 +2944,9 @@ h3{font-size:18px;margin-bottom:4px;}
   </div>
   <div class="row">
     <button class="btn btn-line" onclick="pickOutFolder()">📁 저장 폴더 지정</button>
+    <button class="btn btn-red" onclick="runResize()">💾 리사이징 저장</button>
     <span id="outinfo" style="font-size:13px;color:#888;">지정 안 하면 불러온 폴더에 저장</span>
   </div>
-  <button class="btn btn-red" onclick="runResize()">💾 리사이징 저장</button>
   <div class="bar" id="bar"><div id="barfill"></div></div>
   <div id="prog"></div>
   <div class="grid" id="grid"></div>
