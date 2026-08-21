@@ -2917,10 +2917,12 @@ h3{font-size:18px;margin-bottom:4px;}
 .szbox{border:1px solid #eee;border-radius:10px;padding:12px 14px;margin-bottom:14px;background:#fafafa;}
 .szbox .lbl{font-size:12px;font-weight:700;color:#555;margin-bottom:8px;}
 .szopt{display:inline-flex;align-items:center;gap:6px;margin-right:16px;font-size:13px;color:#333;}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;max-height:340px;overflow:auto;margin-top:12px;padding:4px;border:1px solid #f0f0f0;border-radius:10px;}
-.gitem{position:relative;}
-.gitem img{width:100%;height:120px;object-fit:cover;border-radius:8px;display:block;background:#eee;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;max-height:480px;overflow:auto;margin-top:12px;padding:4px;border:1px solid #f0f0f0;border-radius:10px;}
+.gitem{position:relative;cursor:grab;will-change:transform;}
+.gitem.placeholder{opacity:0.22;}
+.gitem img{width:100%;height:120px;object-fit:cover;border-radius:8px;display:block;background:#eee;pointer-events:none;}
 .gitem .o{position:absolute;top:4px;left:4px;background:rgba(0,0,0,0.6);color:#fff;font-size:10px;padding:2px 5px;border-radius:5px;}
+.gitem .num{position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,0.72);color:#fff;font-size:11px;font-weight:700;padding:2px 6px;border-radius:5px;}
 #prog{font-size:13px;color:#555;margin-top:12px;min-height:18px;}
 .bar{height:8px;background:#eee;border-radius:5px;overflow:hidden;margin-top:8px;display:none;}
 .bar > div{height:100%;background:#111;width:0;transition:width .1s;}
@@ -2955,23 +2957,60 @@ function pickFolder(){
       const files=[];
       for await (const ent of dirHandle.values()){ if(ent.kind==='file' && /\.(jpe?g|png|webp)$/i.test(ent.name)){ files.push(ent); } }
       items=[]; let done=0;
-      const grid=document.getElementById('grid'); grid.innerHTML='';
+      document.getElementById('grid').innerHTML='';
       if(!files.length){ document.getElementById('folderinfo').textContent='이미지가 없어요'; return; }
       for(const ent of files){
         const f=await ent.getFile(); const url=URL.createObjectURL(f); const img=new Image();
         await new Promise(res=>{ img.onload=res; img.onerror=res; img.src=url; });
-        if(img.width){ const it={name:ent.name, img}; items.push(it);
-          const or = img.width>img.height?'가로':'세로';
-          const g=document.createElement('div'); g.className='gitem'; g.innerHTML='<span class="o">'+or+'</span>'; const im=document.createElement('img'); im.src=url; g.appendChild(im); grid.appendChild(g);
-        }
+        if(img.width){ items.push({name:ent.name, img, url}); }
         done++; document.getElementById('folderinfo').textContent='불러오는 중… '+done+'/'+files.length;
       }
-      document.getElementById('folderinfo').textContent='📁 '+dirHandle.name+' · '+items.length+'장';
+      renderGrid();
+      document.getElementById('folderinfo').textContent='📁 '+dirHandle.name+' · '+items.length+'장 (드래그로 순서 변경)';
     }catch(e){ if(e.name!=='AbortError') document.getElementById('folderinfo').textContent='실패: '+(e.message||e); }
   })();
 }
 function coverCanvas(img,tw,th){ const c=document.createElement('canvas'); c.width=tw;c.height=th; const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; const s=Math.max(tw/img.width,th/img.height); const iw=img.width*s, ih=img.height*s; g.drawImage(img,(tw-iw)/2,(th-ih)/2,iw,ih); return c; }
 function baseName(n){ return n.replace(/\.[^.]+$/,''); }
+// ── 미리보기 그리드 + 부드러운 드래그 정렬(FLIP) ──
+function renderGrid(){
+  const grid=document.getElementById('grid'); grid.innerHTML='';
+  items.forEach((it,i)=>{
+    const or=it.img.width>it.img.height?'가로':'세로';
+    const g=document.createElement('div'); g.className='gitem'; g.dataset.i=i; g.dataset.u=it.url;
+    g.innerHTML='<span class="o">'+or+'</span><span class="num">'+String(i+1).padStart(2,'0')+'</span>';
+    const im=document.createElement('img'); im.src=it.url; g.appendChild(im);
+    g.addEventListener('mousedown',e=>startDrag(e,i));
+    grid.appendChild(g);
+  });
+}
+let drag=null;
+function startDrag(e,i){
+  e.preventDefault();
+  const g=e.currentTarget; const r=g.getBoundingClientRect();
+  const clone=g.cloneNode(true); clone.style.position='fixed'; clone.style.left=r.left+'px'; clone.style.top=r.top+'px'; clone.style.width=r.width+'px'; clone.style.height=r.height+'px'; clone.style.margin='0'; clone.style.pointerEvents='none'; clone.style.zIndex='9999'; clone.style.opacity='0.95'; clone.style.transform='scale(1.06)'; clone.style.boxShadow='0 10px 26px rgba(0,0,0,0.28)'; clone.style.cursor='grabbing'; document.body.appendChild(clone);
+  drag={clone, offx:e.clientX-r.left, offy:e.clientY-r.top, idx:i};
+  g.classList.add('placeholder');
+}
+window.addEventListener('mousemove',e=>{
+  if(!drag)return;
+  drag.clone.style.left=(e.clientX-drag.offx)+'px'; drag.clone.style.top=(e.clientY-drag.offy)+'px';
+  const el=document.elementFromPoint(e.clientX,e.clientY); const g=el&&el.closest?el.closest('.gitem'):null;
+  if(g && g.dataset.i!=null){ const ti=+g.dataset.i; if(ti!==drag.idx){ moveItem(drag.idx,ti); drag.idx=ti; } }
+});
+window.addEventListener('mouseup',()=>{ if(!drag)return; drag.clone.remove(); [...document.getElementById('grid').children].forEach(c=>c.classList.remove('placeholder')); drag=null; });
+function moveItem(from,to){
+  const grid=document.getElementById('grid');
+  const first=new Map(); [...grid.children].forEach(ch=>{ if(ch.dataset.u) first.set(ch.dataset.u, ch.getBoundingClientRect()); });
+  const [m]=items.splice(from,1); items.splice(to,0,m);
+  renderGrid();
+  const grid2=document.getElementById('grid');
+  [...grid2.children].forEach((ch,idx)=>{
+    if(idx===to) ch.classList.add('placeholder');   // 드래그 중인 항목 표시 유지
+    const f=first.get(ch.dataset.u); if(!f)return; const l=ch.getBoundingClientRect(); const dx=f.left-l.left, dy=f.top-l.top;
+    if(dx||dy){ ch.style.transition='none'; ch.style.transform='translate('+dx+'px,'+dy+'px)'; requestAnimationFrame(()=>{ ch.style.transition='transform .18s cubic-bezier(.2,.7,.3,1)'; ch.style.transform=''; }); }
+  });
+}
 async function runResize(){
   if(!dirHandle){alert('먼저 폴더를 불러오세요.');return;}
   if(!items.length){alert('이미지가 없어요.');return;}
@@ -2983,12 +3022,13 @@ async function runResize(){
     for(const sz of sizes){
       const [pw,ph]=SIZES[sz];
       const sub=await dirHandle.getDirectoryHandle(sz,{create:true});
-      for(const it of items){
+      for(let idx=0; idx<items.length; idx++){
+        const it=items[idx];
         const land = it.img.width>it.img.height;
         const tw = land?ph:pw, th = land?pw:ph;   // 가로 이미지는 반전
         const cv=coverCanvas(it.img,tw,th);
         const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.92));
-        const fh=await sub.getFileHandle(baseName(it.name)+'.jpg',{create:true});
+        const fh=await sub.getFileHandle(String(idx+1).padStart(2,'0')+'.jpg',{create:true});  // 순서대로 01,02,03…
         const w=await fh.createWritable(); await w.write(blob); await w.close();
         done++; fill.style.width=Math.round(done/total*100)+'%'; prog.textContent='저장 중… '+done+'/'+total+'  ('+sz+')';
       }
