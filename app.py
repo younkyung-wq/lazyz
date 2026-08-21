@@ -3004,12 +3004,14 @@ window.addEventListener('mousemove',e=>{
 window.addEventListener('mouseup',()=>{ if(!drag)return; drag.clone.remove(); items.forEach(it=>it.el&&it.el.classList.remove('placeholder')); drag=null; lastXY=null; });
 function moveItem(from,to){
   const grid=document.getElementById('grid');
-  const first=new Map(); items.forEach(it=>first.set(it.el, it.el.getBoundingClientRect()));  // 이동 전 위치
+  const dragged=items[from];
   const [m]=items.splice(from,1); items.splice(to,0,m);
-  items.forEach((it,idx)=>{ grid.appendChild(it.el); it.el.dataset.i=idx; const num=it.el.querySelector('.num'); if(num)num.textContent=String(idx+1).padStart(2,'0'); });
-  // FLIP: 이동 전→후 위치차만큼 되돌렸다가 0으로 애니메이션
-  items.forEach(it=>{ const f=first.get(it.el); if(!f)return; const l=it.el.getBoundingClientRect(); const dx=f.left-l.left, dy=f.top-l.top; if(dx||dy){ it.el.style.transition='none'; it.el.style.transform='translate('+dx+'px,'+dy+'px)'; } });
-  requestAnimationFrame(()=>{ items.forEach(it=>{ it.el.style.transition='transform .16s cubic-bezier(.2,.7,.3,1)'; it.el.style.transform=''; }); });
+  // 드래그된 노드 하나만 DOM에서 이동 (나머지는 그대로 → 매우 가벼움)
+  const refIdx = to+1<items.length ? to+1 : -1;
+  if(refIdx>=0) grid.insertBefore(dragged.el, items[refIdx].el); else grid.appendChild(dragged.el);
+  // 번호/인덱스 갱신 (영향받은 범위만)
+  const lo=Math.min(from,to), hi=Math.max(from,to);
+  for(let i=lo;i<=hi;i++){ items[i].el.dataset.i=i; const num=items[i].el.querySelector('.num'); if(num)num.textContent=String(i+1).padStart(2,'0'); }
 }
 async function runResize(){
   if(!dirHandle){alert('먼저 폴더를 불러오세요.');return;}
