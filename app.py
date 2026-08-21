@@ -2942,6 +2942,10 @@ h3{font-size:18px;margin-bottom:4px;}
     <label class="szopt"><input type="checkbox" class="sz" value="710x887" checked> 710×887</label>
     <label class="szopt"><input type="checkbox" class="sz" value="1200x1800" checked> 1200×1800</label>
   </div>
+  <div class="row">
+    <button class="btn btn-line" onclick="pickOutFolder()">📁 저장 폴더 지정</button>
+    <span id="outinfo" style="font-size:13px;color:#888;">지정 안 하면 불러온 폴더에 저장</span>
+  </div>
   <button class="btn btn-red" onclick="runResize()">💾 리사이징 저장</button>
   <div class="bar" id="bar"><div id="barfill"></div></div>
   <div id="prog"></div>
@@ -2949,7 +2953,8 @@ h3{font-size:18px;margin-bottom:4px;}
 </div>
 <script>
 const SIZES={'800x1200':[800,1200],'710x887':[710,887],'1200x1800':[1200,1800]};
-let dirHandle=null, items=[];  // items: {name, img}
+let dirHandle=null, outHandle=null, items=[];  // items: {name, img}
+function pickOutFolder(){ if(!window.showDirectoryPicker){alert('이 브라우저는 폴더 지정을 지원 안 해요 (Chrome/Edge 권장)');return;} (async()=>{ try{ outHandle=await window.showDirectoryPicker({mode:'readwrite'}); document.getElementById('outinfo').textContent='📁 저장 위치: '+outHandle.name; }catch(e){} })(); }
 function pickFolder(){
   if(!window.showDirectoryPicker){alert('이 브라우저는 폴더 접근을 지원 안 해요 (Chrome/Edge 권장)');return;}
   (async()=>{
@@ -3036,12 +3041,13 @@ async function runResize(){
   if(!items.length){alert('이미지가 없어요.');return;}
   const sizes=[...document.querySelectorAll('.sz:checked')].map(c=>c.value);
   if(!sizes.length){alert('사이즈를 하나 이상 선택하세요.');return;}
+  const dest = outHandle || dirHandle;  // 저장 폴더 지정했으면 거기, 아니면 불러온 폴더
   const prog=document.getElementById('prog'); const bar=document.getElementById('bar'); const fill=document.getElementById('barfill'); bar.style.display='block';
   const total=items.length*sizes.length; let done=0;
   try{
     for(const sz of sizes){
       const [pw,ph]=SIZES[sz];
-      const sub=await dirHandle.getDirectoryHandle(sz,{create:true});
+      const sub=await dest.getDirectoryHandle(sz,{create:true});
       for(let idx=0; idx<items.length; idx++){
         const it=items[idx];
         const land = it.img.width>it.img.height;
@@ -3053,7 +3059,7 @@ async function runResize(){
         done++; fill.style.width=Math.round(done/total*100)+'%'; prog.textContent='저장 중… '+done+'/'+total+'  ('+sz+')';
       }
     }
-    prog.textContent='✅ 완료! '+total+'개 저장 → '+dirHandle.name+' 안에 사이즈별 폴더 생성됨';
+    prog.textContent='✅ 완료! '+total+'개 저장 → '+dest.name+' 안에 사이즈별 폴더 생성됨';
   }catch(e){ prog.textContent='실패: '+(e.message||e); }
 }
 </script></body></html>
