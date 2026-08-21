@@ -1660,7 +1660,7 @@ with st.sidebar:
 
     menu = st.radio(
         "",
-        ["📱  스토리 모듈", "🖼  썸네일 생성기", "📝  상세 생성기", "🌱  시딩 가이드"],
+        ["📱  스토리 모듈", "🖼  썸네일 생성기", "📝  상세 생성기", "🌱  시딩 가이드", "📐  룩북 리사이징"],
         label_visibility="collapsed"
     )
 
@@ -2901,6 +2901,104 @@ fillSSeason();fillSProd();fitScale();
 </script></body></html>
 """
 
+LOOKBOOK_HTML = r"""
+<!doctype html><html><head><meta charset="utf-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;background:#f4f4f4;color:#222;padding:18px;}
+.card{background:#fff;border:1px solid #eee;border-radius:14px;padding:22px;max-width:900px;margin:0 auto;}
+h3{font-size:18px;margin-bottom:4px;}
+.sub{font-size:13px;color:#888;margin-bottom:18px;}
+.btn{padding:12px 18px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;}
+.btn-dark{background:#111;color:#fff;}
+.btn-red{background:#ff4b4b;color:#fff;}
+.btn-line{background:#fff;border:1.5px solid #ddd;color:#555;}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+.szbox{border:1px solid #eee;border-radius:10px;padding:12px 14px;margin-bottom:14px;background:#fafafa;}
+.szbox .lbl{font-size:12px;font-weight:700;color:#555;margin-bottom:8px;}
+.szopt{display:inline-flex;align-items:center;gap:6px;margin-right:16px;font-size:13px;color:#333;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;max-height:340px;overflow:auto;margin-top:12px;padding:4px;border:1px solid #f0f0f0;border-radius:10px;}
+.gitem{position:relative;}
+.gitem img{width:100%;height:120px;object-fit:cover;border-radius:8px;display:block;background:#eee;}
+.gitem .o{position:absolute;top:4px;left:4px;background:rgba(0,0,0,0.6);color:#fff;font-size:10px;padding:2px 5px;border-radius:5px;}
+#prog{font-size:13px;color:#555;margin-top:12px;min-height:18px;}
+.bar{height:8px;background:#eee;border-radius:5px;overflow:hidden;margin-top:8px;display:none;}
+.bar > div{height:100%;background:#111;width:0;transition:width .1s;}
+</style></head><body>
+<div class="card">
+  <h3>룩북 리사이징</h3>
+  <div class="sub">폴더를 불러오면 이미지들을 지정 사이즈로 리사이징해서, 사이즈명 폴더에 저장해요. (세로/가로 자동 판별)</div>
+  <div class="row">
+    <button class="btn btn-dark" onclick="pickFolder()">📂 폴더 불러오기</button>
+    <span id="folderinfo" style="font-size:13px;color:#888;"></span>
+  </div>
+  <div class="szbox">
+    <div class="lbl">저장할 사이즈 (세로 기준 · 가로 이미지는 자동으로 가로세로 반전)</div>
+    <label class="szopt"><input type="checkbox" class="sz" value="800x1200" checked> 800×1200</label>
+    <label class="szopt"><input type="checkbox" class="sz" value="710x887" checked> 710×887</label>
+    <label class="szopt"><input type="checkbox" class="sz" value="1200x1800" checked> 1200×1800</label>
+  </div>
+  <button class="btn btn-red" onclick="runResize()">💾 리사이징 저장</button>
+  <div class="bar" id="bar"><div id="barfill"></div></div>
+  <div id="prog"></div>
+  <div class="grid" id="grid"></div>
+</div>
+<script>
+const SIZES={'800x1200':[800,1200],'710x887':[710,887],'1200x1800':[1200,1800]};
+let dirHandle=null, items=[];  // items: {name, img}
+function pickFolder(){
+  if(!window.showDirectoryPicker){alert('이 브라우저는 폴더 접근을 지원 안 해요 (Chrome/Edge 권장)');return;}
+  (async()=>{
+    try{
+      dirHandle=await window.showDirectoryPicker({mode:'readwrite'});
+      document.getElementById('folderinfo').textContent='불러오는 중…';
+      const files=[];
+      for await (const ent of dirHandle.values()){ if(ent.kind==='file' && /\.(jpe?g|png|webp)$/i.test(ent.name)){ files.push(ent); } }
+      items=[]; let done=0;
+      const grid=document.getElementById('grid'); grid.innerHTML='';
+      if(!files.length){ document.getElementById('folderinfo').textContent='이미지가 없어요'; return; }
+      for(const ent of files){
+        const f=await ent.getFile(); const url=URL.createObjectURL(f); const img=new Image();
+        await new Promise(res=>{ img.onload=res; img.onerror=res; img.src=url; });
+        if(img.width){ const it={name:ent.name, img}; items.push(it);
+          const or = img.width>img.height?'가로':'세로';
+          const g=document.createElement('div'); g.className='gitem'; g.innerHTML='<span class="o">'+or+'</span>'; const im=document.createElement('img'); im.src=url; g.appendChild(im); grid.appendChild(g);
+        }
+        done++; document.getElementById('folderinfo').textContent='불러오는 중… '+done+'/'+files.length;
+      }
+      document.getElementById('folderinfo').textContent='📁 '+dirHandle.name+' · '+items.length+'장';
+    }catch(e){ if(e.name!=='AbortError') document.getElementById('folderinfo').textContent='실패: '+(e.message||e); }
+  })();
+}
+function coverCanvas(img,tw,th){ const c=document.createElement('canvas'); c.width=tw;c.height=th; const g=c.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; const s=Math.max(tw/img.width,th/img.height); const iw=img.width*s, ih=img.height*s; g.drawImage(img,(tw-iw)/2,(th-ih)/2,iw,ih); return c; }
+function baseName(n){ return n.replace(/\.[^.]+$/,''); }
+async function runResize(){
+  if(!dirHandle){alert('먼저 폴더를 불러오세요.');return;}
+  if(!items.length){alert('이미지가 없어요.');return;}
+  const sizes=[...document.querySelectorAll('.sz:checked')].map(c=>c.value);
+  if(!sizes.length){alert('사이즈를 하나 이상 선택하세요.');return;}
+  const prog=document.getElementById('prog'); const bar=document.getElementById('bar'); const fill=document.getElementById('barfill'); bar.style.display='block';
+  const total=items.length*sizes.length; let done=0;
+  try{
+    for(const sz of sizes){
+      const [pw,ph]=SIZES[sz];
+      const sub=await dirHandle.getDirectoryHandle(sz,{create:true});
+      for(const it of items){
+        const land = it.img.width>it.img.height;
+        const tw = land?ph:pw, th = land?pw:ph;   // 가로 이미지는 반전
+        const cv=coverCanvas(it.img,tw,th);
+        const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.92));
+        const fh=await sub.getFileHandle(baseName(it.name)+'.jpg',{create:true});
+        const w=await fh.createWritable(); await w.write(blob); await w.close();
+        done++; fill.style.width=Math.round(done/total*100)+'%'; prog.textContent='저장 중… '+done+'/'+total+'  ('+sz+')';
+      }
+    }
+    prog.textContent='✅ 완료! '+total+'개 저장 → '+dirHandle.name+' 안에 사이즈별 폴더 생성됨';
+  }catch(e){ prog.textContent='실패: '+(e.message||e); }
+}
+</script></body></html>
+"""
+
 # ── Main content ─────────────────────────────────────────────
 if "스토리 모듈" in menu:
     components.html(STORY_EDITOR_HTML, height=820, scrolling=False)
@@ -3000,6 +3098,9 @@ elif "시딩 가이드" in menu:
     components.html(
         SEEDING_HTML.replace("__SEED_PRODUCTS__", _json.dumps(sprods, ensure_ascii=False)),
         height=820, scrolling=False)
+
+elif "룩북 리사이징" in menu:
+    components.html(LOOKBOOK_HTML, height=820, scrolling=True)
 
 elif "피드 기획" in menu:
     st.markdown("""
