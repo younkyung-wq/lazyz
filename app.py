@@ -2985,12 +2985,13 @@ function renderGrid(){
     const g=document.createElement('div'); g.className='gitem'+(selected.has(it)?' selected':''); g.dataset.i=i; g._item=it; it.el=g;
     g.innerHTML='<span class="o">'+or+'</span><span class="num">'+String(i+1).padStart(2,'0')+'</span>';
     const im=document.createElement('img'); im.src=it.url; g.appendChild(im);
+    it.numEl=g.querySelector('.num');
     g.addEventListener('mousedown',e=>{ e.preventDefault(); down={it, x:e.clientX, y:e.clientY, shift:e.shiftKey, meta:(e.ctrlKey||e.metaKey)}; });
     grid.appendChild(g);
   });
 }
 function syncSel(){ items.forEach(it=>{ if(it.el) it.el.classList.toggle('selected', selected.has(it)); }); }
-function applyOrder(){ const grid=document.getElementById('grid'); items.forEach((it,idx)=>{ grid.appendChild(it.el); it.el.dataset.i=idx; const num=it.el.querySelector('.num'); if(num)num.textContent=String(idx+1).padStart(2,'0'); }); }
+function renumber(){ items.forEach((it,idx)=>{ if(+it.el.dataset.i!==idx){ it.el.dataset.i=idx; if(it.numEl)it.numEl.textContent=String(idx+1).padStart(2,'0'); } }); }
 function startDrag(){
   const it=down.it;
   let block;
@@ -3008,7 +3009,12 @@ function reorderTo(target){
   const targetOrig=items.indexOf(target), firstBlock=items.indexOf(block[0]);
   const rest=items.filter(x=>!bs.has(x)); let ins=rest.indexOf(target);
   if(firstBlock<targetOrig) ins+=1;
-  items=rest.slice(0,ins).concat(block, rest.slice(ins)); applyOrder();
+  items=rest.slice(0,ins).concat(block, rest.slice(ins));
+  // DOM: 블록 노드만 새 위치로 이동 (나머지는 그대로 → 가벼움)
+  const grid=document.getElementById('grid');
+  const after=items[ins+block.length]; const ref=after?after.el:null;
+  block.forEach(b=>grid.insertBefore(b.el, ref));
+  renumber();
 }
 window.addEventListener('mousemove',e=>{
   if(drag){ drag.clone.style.left=(e.clientX-drag.offx)+'px'; drag.clone.style.top=(e.clientY-drag.offy)+'px'; lastXY=[e.clientX,e.clientY];
