@@ -2989,6 +2989,10 @@ function coverCanvas(img,tw,th){
   }
   const out=document.createElement('canvas'); out.width=tw; out.height=th; const g=out.getContext('2d'); g.imageSmoothingEnabled=true; g.imageSmoothingQuality='high'; g.drawImage(src,0,0,cw,ch,0,0,tw,th); return out;
 }
+// 크롭 없이 tw×th로 단계 축소
+function stepDown(img,tw,th){ let cw=img.width, ch=img.height, src=img; while(cw>tw*2||ch>th*2){ const nw=Math.max(tw,Math.round(cw/2)), nh=Math.max(th,Math.round(ch/2)); const c2=document.createElement('canvas'); c2.width=nw;c2.height=nh; const g=c2.getContext('2d'); g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high'; g.drawImage(src,0,0,cw,ch,0,0,nw,nh); src=c2;cw=nw;ch=nh; } const out=document.createElement('canvas'); out.width=Math.round(tw);out.height=Math.round(th); const g=out.getContext('2d'); g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high'; g.drawImage(src,0,0,cw,ch,0,0,out.width,out.height); return out; }
+// 가로 이미지용: 세로를 꽉 채우고(세로 크롭X) 좌우만 크롭/중앙배치
+function heightFitCanvas(img,tw,th){ const s=th/img.height; const dw=Math.round(img.width*s); const scaled=stepDown(img,dw,th); const out=document.createElement('canvas'); out.width=tw; out.height=th; const g=out.getContext('2d'); g.fillStyle='#fff'; g.fillRect(0,0,tw,th); g.imageSmoothingEnabled=true;g.imageSmoothingQuality='high'; g.drawImage(scaled, Math.round((tw-dw)/2), 0); return out; }
 function baseName(n){ return n.replace(/\.[^.]+$/,''); }
 // ── 미리보기 그리드 + 부드러운 드래그 정렬(FLIP, DOM 재사용) ──
 let selected=new Set(), anchor=-1;
@@ -3063,7 +3067,7 @@ async function runResize(){
         const it=items[idx];
         const land = it.img.width>it.img.height;
         const tw = land?ph:pw, th = land?pw:ph;   // 가로 이미지는 반전
-        const cv=coverCanvas(it.img,tw,th);
+        const cv = land ? heightFitCanvas(it.img,tw,th) : coverCanvas(it.img,tw,th);  // 가로=세로안자름(좌우크롭), 세로=cover
         const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.95));
         const fh=await sub.getFileHandle(String(idx+1).padStart(2,'0')+'.jpg',{create:true});  // 순서대로 01,02,03…
         const w=await fh.createWritable({keepExistingData:false}); await w.write(blob); await w.close();  // 중복=덮어쓰기
